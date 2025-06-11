@@ -126,11 +126,21 @@
 
                         <div class="mb-3">
                             <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-secondary me-2">Level 3+</span>
-                                <strong class="small">Complex Derivatives</strong>
+                                <span class="badge bg-secondary me-2">Level 3</span>
+                                <strong class="small">Complex Ratios</strong>
                             </div>
                             <small class="text-muted">
-                                Processed indicators: credit scores, synthetic metrics
+                                Multi-variable calculations: valuation multiples, peer comparisons
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-danger me-2">Level 4</span>
+                                <strong class="small">Market Sentiment</strong>
+                            </div>
+                            <small class="text-muted">
+                                Behavioral indicators: analyst sentiment, options flow
                             </small>
                         </div>
 
@@ -506,17 +516,31 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!signalsByLevel) return '<p class="text-muted">No signals classified</p>';
         
         const levelBadges = {
+            'Level_0_Raw_Economic': 'bg-success',
+            'Level_1_Simple_Aggregation': 'bg-info', 
+            'Level_2_Derived_Metrics': 'bg-warning',
+            'Level_3_Complex_Ratios': 'bg-secondary',
+            'Level_4_Market_Sentiment': 'bg-danger',
+            // Legacy mappings for backwards compatibility
             'Raw Economic Activity': 'bg-success',
             'Simple Aggregation': 'bg-info',
             'Derived Metrics': 'bg-warning',
             'Complex Derivatives': 'bg-secondary',
-            'Synthetic Indicators': 'bg-dark'
+            'Synthetic Indicators': 'bg-danger'
+        };
+        
+        const levelDisplayNames = {
+            'Level_0_Raw_Economic': 'Level_0_Raw_Economic',
+            'Level_1_Simple_Aggregation': 'Level_1_Simple_Aggregation',
+            'Level_2_Derived_Metrics': 'Level_2_Derived_Metrics', 
+            'Level_3_Complex_Ratios': 'Level_3_Complex_Ratios',
+            'Level_4_Market_Sentiment': 'Level_4_Market_Sentiment'
         };
         
         return Object.entries(signalsByLevel).map(([level, signals]) => `
             <div class="mb-2">
                 <span class="badge ${levelBadges[level] || 'bg-secondary'}">${signals.length}</span>
-                <small class="ms-2">${level}</small>
+                <small class="ms-2">${levelDisplayNames[level] || level}</small>
             </div>
         `).join('');
     }
