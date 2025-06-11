@@ -43,7 +43,7 @@ class AzureOpenAIService:
                 model=self.deployment_name,
                 messages=messages,
                 temperature=temperature,
-                max_tokens=max_tokens
+                max_completion_tokens=max_tokens
             )
             
             return response.choices[0].message.content
@@ -104,6 +104,10 @@ class AzureOpenAIService:
         try:
             response = self.generate_completion(messages, temperature=0.3)
             
+            # Ensure we have a valid response
+            if not response:
+                raise Exception("Empty response from Azure OpenAI")
+            
             # Try to parse as JSON
             try:
                 parsed_response = json.loads(response)
@@ -113,7 +117,10 @@ class AzureOpenAIService:
                 import re
                 json_match = re.search(r'\{.*\}', response, re.DOTALL)
                 if json_match:
-                    return json.loads(json_match.group())
+                    try:
+                        return json.loads(json_match.group())
+                    except json.JSONDecodeError:
+                        raise Exception("Could not parse extracted JSON from response")
                 else:
                     raise Exception("Could not extract valid JSON from response")
                     
