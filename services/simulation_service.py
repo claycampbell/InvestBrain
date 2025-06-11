@@ -48,10 +48,12 @@ class SimulationService:
         
         # Generate events if requested
         events = []
-        if include_events and isinstance(performance_data, list):
+        if include_events:
             try:
+                # Use combined performance data for event positioning
+                event_data = performance_data if isinstance(performance_data, list) else performance_data.get('combined_performance', [])
                 events = self._generate_event_scenarios(
-                    thesis, time_horizon, scenario, performance_data
+                    thesis, time_horizon, scenario, event_data
                 )
             except Exception as e:
                 print(f"Event generation failed: {e}")
@@ -93,16 +95,20 @@ class SimulationService:
                 
                 # Generate in smaller chunks to avoid length limits
                 if months <= 12:
-                    # Create specific prompt for numerical simulation data
-                    prompt = f"""Generate {months} monthly performance index values for an investment thesis simulation.
-Starting value: 100
+                    # Generate both market and thesis conviction data
+                    prompt = f"""Generate {months} monthly data for investment simulation with 3 series:
+1. Market Performance (broad market): starting at 100
+2. Thesis Conviction (specific thesis strength): starting at 100  
+3. Combined Performance (thesis vs market): starting at 100
+
 Scenario: {scenario} case
 Volatility: {volatility}
+Months: {months}
 
-Provide ONLY a JSON array of {months} numbers between 80-150, representing monthly performance index values.
-Example format: [100, 102.5, 98.2, 105.1, ...]
+Provide ONLY a JSON object with 3 arrays of {months} numbers each (range 70-160):
+{{"market": [100, 101.2, 99.8, ...], "conviction": [100, 102.5, 104.1, ...], "performance": [100, 103.7, 103.9, ...]}}
 
-JSON array:"""
+JSON:"""
                     messages = [{"role": "user", "content": prompt}]
                     
                     response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=300)
@@ -114,29 +120,50 @@ JSON array:"""
                     import re
                     import json
                     
-                    # Try to find JSON array first
+                    # Try to find JSON object with three series first
+                    try:
+                        # Look for JSON object with market, conviction, performance arrays
+                        json_match = re.search(r'\{[^}]*"market"[^}]*"conviction"[^}]*"performance"[^}]*\}', response, re.DOTALL)
+                        if json_match:
+                            json_str = json_match.group()
+                            data_obj = json.loads(json_str)
+                            
+                            market_data = data_obj.get('market', [])
+                            conviction_data = data_obj.get('conviction', [])
+                            performance_data = data_obj.get('performance', [])
+                            
+                            if (len(market_data) >= months and len(conviction_data) >= months and len(performance_data) >= months):
+                                result = {
+                                    'market_performance': [float(x) for x in market_data[:months]],
+                                    'thesis_conviction': [float(x) for x in conviction_data[:months]],
+                                    'combined_performance': [float(x) for x in performance_data[:months]]
+                                }
+                                print(f"Generated 3-series LLM simulation data: {months} points each")
+                                return result
+                    except Exception as e:
+                        print(f"Failed to parse 3-series JSON: {e}")
+                    
+                    # Fallback: try single array format
                     try:
                         json_match = re.search(r'\[[\d\s,.\-]+\]', response)
                         if json_match:
                             json_str = json_match.group()
                             performance_data = json.loads(json_str)
                             if len(performance_data) >= months:
-                                performance_data = [float(x) for x in performance_data[:months]]
-                                if all(20 <= x <= 500 for x in performance_data):
-                                    print(f"Successfully generated LLM simulation data: {len(performance_data)} points")
-                                    return performance_data
-                    except:
-                        pass
-                    
-                    # Fallback: extract all numbers
-                    numbers = re.findall(r'[\d.]+', response)
-                    if len(numbers) >= months:
-                        performance_data = [float(x) for x in numbers[:months]]
-                        # More lenient validation for LLM data
-                        valid_numbers = [x for x in performance_data if 10 <= x <= 1000]
-                        if len(valid_numbers) >= months:
-                            print(f"Generated LLM simulation data: {len(valid_numbers)} points")
-                            return valid_numbers[:months]
+                                single_series = [float(x) for x in performance_data[:months]]
+                                # Generate market and conviction from single series
+                                market_series = [100 + (x - 100) * 0.7 for x in single_series]  # Less volatile
+                                conviction_series = [100 + (x - 100) * 1.3 for x in single_series]  # More volatile
+                                
+                                result = {
+                                    'market_performance': market_series,
+                                    'thesis_conviction': conviction_series,
+                                    'combined_performance': single_series
+                                }
+                                print(f"Generated derived 3-series simulation data: {months} points each")
+                                return result
+                    except Exception as e:
+                        print(f"Failed to parse single array: {e}")
                 
             except Exception as e:
                 print(f"LLM generation failed: {e}")
