@@ -136,12 +136,12 @@
                                     <div class="card border-0 bg-light">
                                         <div class="card-body">
                                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                                <h6 class="card-title mb-0">{{ signal.signal_name }}</h6>
+                                                <h6 class="card-title mb-0 text-dark">{{ signal.signal_name }}</h6>
                                                 <span class="badge bg-{{ 'success' if signal.status == 'active' else 'warning' if signal.status == 'triggered' else 'secondary' }}">
                                                     {{ signal.status }}
                                                 </span>
                                             </div>
-                                            <p class="card-text small">
+                                            <p class="card-text small text-dark">
                                                 <strong>Type:</strong> {{ signal.signal_type }}<br>
                                                 {% if signal.threshold_value %}
                                                     <strong>Threshold:</strong> {{ signal.threshold_value }}
@@ -151,7 +151,7 @@
                                                     <strong>Current:</strong> {{ signal.current_value }}<br>
                                                 {% endif %}
                                             </p>
-                                            <small class="text-muted">
+                                            <small class="text-secondary">
                                                 <i class="fas fa-clock"></i>
                                                 Last checked: {{ signal.last_checked.strftime('%m/%d %H:%M') if signal.last_checked else 'Never' }}
                                             </small>
