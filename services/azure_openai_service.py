@@ -40,10 +40,14 @@ class AzureOpenAIService:
         
         # Enhanced retry configuration for network issues
         max_retries = 3
-        retry_delay = 3
+        retry_delay = 2
         
         for attempt in range(max_retries):
             try:
+                logging.info(f"Azure OpenAI attempt {attempt + 1}/{max_retries}")
+                
+                # Use shorter timeout for individual attempts to fail fast and retry
+                attempt_timeout = 45 if attempt < 2 else 90  # Shorter for first attempts
                 # Handle different model types with appropriate parameters
                 model_name = self.deployment_name.lower()
                 
@@ -52,7 +56,7 @@ class AzureOpenAIService:
                     response = self.client.chat.completions.create(
                         messages=messages,
                         model=self.deployment_name,
-                        timeout=150  # Further increased timeout for network stability
+                        timeout=attempt_timeout
                     )
                 elif 'gpt-4o' in model_name:
                     # GPT-4o models support limited parameters
@@ -60,7 +64,7 @@ class AzureOpenAIService:
                         messages=messages,
                         model=self.deployment_name,
                         max_completion_tokens=max_tokens,
-                        timeout=150
+                        timeout=attempt_timeout
                     )
                 else:
                     # Standard GPT models
@@ -69,7 +73,7 @@ class AzureOpenAIService:
                         temperature=temperature,
                         max_completion_tokens=max_tokens,
                         model=self.deployment_name,
-                        timeout=150
+                        timeout=attempt_timeout
                     )
                 
                 # Debug the full response structure
@@ -103,7 +107,7 @@ class AzureOpenAIService:
                 
             except Exception as e:
                 error_message = str(e)
-                is_timeout = any(keyword in error_message.lower() for keyword in ['timeout', 'read timeout', 'connection timeout', 'ssl'])
+                is_timeout = any(keyword in error_message.lower() for keyword in ['timeout', 'read timeout', 'connection timeout', 'ssl', 'recv'])
                 
                 if is_timeout and attempt < max_retries - 1:
                     logging.warning(f"Attempt {attempt + 1} failed with timeout, retrying in {retry_delay} seconds...")
@@ -113,10 +117,25 @@ class AzureOpenAIService:
                     continue
                 else:
                     logging.error(f"Error generating completion: {error_message}")
-                    raise
+                    # Return a structured error response instead of raising
+                    return self._get_connection_error_response()
         
-        # If all retries failed
-        raise Exception(f"Azure OpenAI request failed after {max_retries} attempts")
+        # If all retries failed, return error response
+        logging.error(f"Azure OpenAI request failed after {max_retries} attempts")
+        return self._get_connection_error_response()
+    
+    def _get_connection_error_response(self):
+        """Return a structured error response when Azure OpenAI is unavailable"""
+        return """{
+            "error": "connection_failed",
+            "message": "Unable to connect to Azure OpenAI service. Please check your network connection and try again.",
+            "core_claim": "Analysis temporarily unavailable due to connection issues",
+            "core_analysis": "The system encountered network connectivity issues while processing your thesis. Please verify your Azure OpenAI credentials and network connection, then try again.",
+            "assumptions": ["Network connectivity will be restored", "Azure OpenAI service is operational"],
+            "mental_model": "Technical Recovery",
+            "causal_chain": [{"chain_link": 1, "event": "Network timeout", "explanation": "Connection to Azure OpenAI was interrupted"}],
+            "counter_thesis_scenarios": [{"scenario": "Service unavailable", "description": "Analysis service temporarily offline", "trigger_conditions": ["Network issues"], "data_signals": ["Connection status"]}]
+        }"""
     
     def analyze_thesis(self, thesis_text):
         """Analyze an investment thesis using structured prompts with signal extraction focus"""
