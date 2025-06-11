@@ -33,7 +33,7 @@ class AzureOpenAIService:
             logging.error(f"Failed to initialize Azure OpenAI client: {str(e)}")
             self.client = None
     
-    def generate_completion(self, messages, temperature=1.0, max_tokens=2000):
+    def generate_completion(self, messages, temperature=1.0, max_tokens=4000):
         """Generate a completion using Azure OpenAI"""
         if not self.client:
             raise Exception("Azure OpenAI client not initialized")
@@ -79,63 +79,49 @@ class AzureOpenAIService:
     
     def analyze_thesis(self, thesis_text):
         """Analyze an investment thesis using structured prompts with signal extraction focus"""
-        system_prompt = """You are an expert investment analyst specializing in comprehensive thesis analysis and signal extraction. 
-        Your job is to analyze investment theses and provide detailed counter-thesis scenarios, sophisticated monitoring plans, and actionable Level 0-1 signals.
-        
-        Focus on signals that:
-        - Are closest to the source of economic activity
-        - Have minimal processing or manipulation  
-        - Provide early warning indicators
-        - Have low market attention
-        
-        Always respond with valid JSON in the following format:
-        {
-            "core_claim": "The central investment claim in one clear sentence",
-            "causal_chain": ["Step 1 of logical chain", "Step 2", "Step 3"],
-            "assumptions": ["Critical assumption 1", "Critical assumption 2"],
-            "mental_model": "Value|Growth|Cyclical|Disruption|Quality|Momentum",
-            "counter_thesis_scenarios": [
-                {
-                    "scenario": "Counter-thesis Scenario 1 - [Brief title]",
-                    "description": "Detailed scenario explanation with specific conditions and triggers",
-                    "trigger_conditions": ["Observable condition 1", "Observable condition 2"],
-                    "data_signals": ["Specific metric changes that would confirm this scenario"]
-                }
-            ],
-            "metrics_to_track": [
-                {
-                    "name": "Primary signal name",
-                    "type": "Level_0_Raw_Activity|Level_1_Simple_Aggregation|Level_2_Derived_Metrics",
-                    "description": "What this signal measures and predictive value",
-                    "frequency": "daily|weekly|monthly|quarterly",
-                    "threshold": 5.0,
-                    "threshold_type": "above|below|change_percent",
-                    "data_source": "Specific source (FactSet, Xpressfeed, government data, etc.)",
-                    "value_chain_position": "upstream|midstream|downstream",
-                    "what_it_tells_us": "Detailed explanation of the signal's predictive value"
-                }
-            ],
-            "monitoring_plan": {
-                "review_frequency": "weekly|monthly|quarterly",
-                "key_indicators": ["Level 0 signal 1", "Level 0 signal 2"],
-                "alert_conditions": ["Specific measurable condition with thresholds"],
-                "leading_indicators": ["Early warning signals"],
-                "lagging_indicators": ["Confirmatory signals"],
-                "revision_triggers": ["Conditions that would require thesis revision"],
-                "data_refresh_schedule": "How often to update each data source"
-            }
-        }
-        
-        Note: For value chain positioning:
-        - upstream: raw materials, commodities, mining, agriculture, extraction
-        - midstream: processing, manufacturing, transportation, logistics
-        - downstream: retail, consumer, end-user, final demand"""
-        
-        user_prompt = f"""Analyze the following investment thesis:
+        system_prompt = """You are an expert investment analyst. Analyze investment theses and provide structured analysis with counter-scenarios and Level 0-1 signals.
 
-        {thesis_text}
+Focus on signals closest to raw economic activity with minimal processing.
 
-        Please provide a structured analysis following the JSON format specified in the system prompt."""
+Respond with valid JSON only:
+{
+  "core_claim": "One sentence investment claim",
+  "causal_chain": ["Step 1", "Step 2", "Step 3"],
+  "assumptions": ["Assumption 1", "Assumption 2"],
+  "mental_model": "Growth|Value|Cyclical|Disruption",
+  "counter_thesis_scenarios": [
+    {
+      "scenario": "Risk scenario title",
+      "description": "Brief explanation",
+      "trigger_conditions": ["Condition 1", "Condition 2"],
+      "data_signals": ["Signal 1", "Signal 2"]
+    }
+  ],
+  "metrics_to_track": [
+    {
+      "name": "Signal name",
+      "type": "Level_0_Raw_Activity|Level_1_Simple_Aggregation",
+      "description": "Signal description",
+      "frequency": "daily|weekly|monthly",
+      "threshold": 5.0,
+      "threshold_type": "above|below|change_percent",
+      "data_source": "Source name",
+      "value_chain_position": "upstream|midstream|downstream"
+    }
+  ],
+  "monitoring_plan": {
+    "review_frequency": "weekly|monthly",
+    "key_indicators": ["Signal 1", "Signal 2"],
+    "alert_conditions": ["Alert 1"],
+    "leading_indicators": ["Leading 1"],
+    "lagging_indicators": ["Lagging 1"],
+    "revision_triggers": ["Trigger 1"]
+  }
+}"""
+        
+        user_prompt = f"""Analyze this thesis: {thesis_text}
+
+Provide JSON response only."""
         
         messages = [
             {"role": "system", "content": system_prompt},
