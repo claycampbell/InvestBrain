@@ -79,105 +79,38 @@ class AzureOpenAIService:
     
     def analyze_thesis(self, thesis_text):
         """Analyze an investment thesis using structured prompts with signal extraction focus"""
-        system_prompt = """You are an expert investment analyst. Analyze investment theses and provide structured analysis with detailed causal chains, counter-scenarios and Level 0-1 signals.
-
-Create detailed chainlinked events showing how each step connects to the next. Focus on signals closest to raw economic activity with minimal processing.
+        system_prompt = """You are an expert investment analyst. Analyze investment theses and provide structured analysis.
 
 Respond with valid JSON only:
 {
   "core_claim": "One sentence investment claim",
-  "core_analysis": "Detailed analysis of the stock's risk/reward dynamics and key uncertainties",
+  "core_analysis": "Analysis of risk/reward dynamics and key uncertainties", 
   "causal_chain": [
-    {
-      "chain_link": 1,
-      "event": "Specific market condition or business development",
-      "explanation": "Detailed explanation of how this affects the thesis"
-    },
-    {
-      "chain_link": 2, 
-      "event": "Next logical consequence or market reaction",
-      "explanation": "How this connects to the previous link and impacts outcomes"
-    }
+    {"chain_link": 1, "event": "Market condition", "explanation": "How this affects thesis"},
+    {"chain_link": 2, "event": "Next consequence", "explanation": "Connection to previous link"}
   ],
-  "assumptions": ["Assumption 1", "Assumption 2"],
+  "assumptions": ["Key assumption 1", "Key assumption 2"],
   "mental_model": "Growth|Value|Cyclical|Disruption",
   "counter_thesis_scenarios": [
-    {
-      "scenario": "Risk scenario title",
-      "description": "Brief explanation",
-      "trigger_conditions": ["Condition 1", "Condition 2"],
-      "data_signals": ["Signal 1", "Signal 2"]
-    }
+    {"scenario": "Risk scenario", "description": "Brief explanation", "trigger_conditions": ["Condition 1"], "data_signals": ["Signal 1"]}
   ],
   "metrics_to_track": [
-    {
-      "name": "Signal name",
-      "type": "Level_0_Raw_Activity|Level_1_Simple_Aggregation",
-      "description": "Signal description",
-      "frequency": "daily|weekly|monthly",
-      "threshold": 5.0,
-      "threshold_type": "above|below|change_percent",
-      "data_source": "Source name",
-      "value_chain_position": "upstream|midstream|downstream"
-    }
+    {"name": "Signal name", "type": "Level_0_Raw_Activity|Level_1_Simple_Aggregation", "description": "Signal description", "frequency": "monthly", "threshold": 5.0, "threshold_type": "above", "data_source": "FactSet", "value_chain_position": "upstream|midstream|downstream"}
   ],
   "monitoring_plan": {
-    "objective": "Specific monitoring objective with clear success/failure criteria",
-    "data_pulls": [
-      {
-        "category": "Financial Performance",
-        "metrics": ["Revenue growth YoY", "Gross margin %", "Operating leverage"],
-        "data_source": "FactSet",
-        "query_template": "SELECT revenue, gross_profit FROM financials WHERE ticker = ? AND period >= ?",
-        "frequency": "quarterly"
-      },
-      {
-        "category": "Market Dynamics", 
-        "metrics": ["Market share %", "Pricing power", "Competitive positioning"],
-        "data_source": "Xpressfeed",
-        "query_template": "SELECT market_data FROM industry_analysis WHERE sector = ? AND date >= ?",
-        "frequency": "monthly"
-      }
-    ],
-    "alert_logic": [
-      {
-        "frequency": "daily",
-        "condition": "Stock price declines >15% in 5 trading days",
-        "action": "Flag for immediate fundamental review and potential thesis reassessment"
-      },
-      {
-        "frequency": "quarterly",
-        "condition": "Revenue growth falls below 20% YoY for 2 consecutive quarters",
-        "action": "Review thesis assumptions and consider position sizing reduction"
-      }
-    ],
-    "decision_triggers": [
-      {
-        "condition": "Core competitive advantage shows signs of erosion (market share decline >5% for 2 quarters)",
-        "action": "sell - thesis invalidated"
-      },
-      {
-        "condition": "Financial metrics exceed bull case by >20% with strong forward guidance",
-        "action": "buy - increase position size"
-      }
-    ],
-    "review_schedule": "Monthly formal review with quarterly deep-dive analysis"
+    "objective": "Monitor thesis performance",
+    "data_pulls": [{"category": "Financial", "metrics": ["Revenue"], "data_source": "FactSet", "frequency": "quarterly"}],
+    "alert_logic": [{"frequency": "quarterly", "condition": "Revenue growth <10%", "action": "Review assumptions"}],
+    "decision_triggers": [{"condition": "Market share decline >5%", "action": "sell"}],
+    "review_schedule": "Monthly review"
   }
 }"""
         
-        user_prompt = f"""Analyze this thesis: {thesis_text}
+        user_prompt = f"""Analyze this investment thesis: {thesis_text}
 
-IMPORTANT: Create a comprehensive prescriptive monitoring strategy that includes:
+Create a comprehensive analysis with monitoring strategy. Focus on actionable insights.
 
-1. SPECIFIC OBJECTIVE: Clear monitoring goal with success/failure criteria
-2. DETAILED DATA PULLS: Multiple categories with specific metrics, data sources (FactSet/Xpressfeed), and SQL query templates
-3. ALERT LOGIC: Specific thresholds and patterns to observe with corresponding actions
-4. DECISION TRIGGERS: Clear conditions for buy/sell/hold decisions with specific thresholds
-5. REVIEW SCHEDULE: Formal review timing and escalation procedures
-
-The monitoring plan must be actionable and prescriptive - specify exactly what to monitor, when to monitor it, what thresholds to watch for, and what actions to take. Include at least 3-5 data pull categories, 4-6 alert conditions, and 3-4 decision triggers.
-
-Provide complete JSON response with all monitoring_plan fields fully populated."""
+Provide complete JSON response with all required fields."""
         
         messages = [
             {"role": "system", "content": system_prompt},
