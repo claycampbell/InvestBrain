@@ -6,14 +6,14 @@ from app import app, db
 from models import ThesisAnalysis, DocumentUpload, SignalMonitoring, NotificationLog
 from services.thesis_analyzer import ThesisAnalyzer
 from services.document_processor import DocumentProcessor
-from services.signal_extraction import SignalExtractor
+from services.signal_classifier import SignalClassifier
 from services.notification_service import NotificationService
 from config import Config
 
 # Initialize services
 thesis_analyzer = ThesisAnalyzer()
 document_processor = DocumentProcessor()
-signal_extractor = SignalExtractor()
+signal_classifier = SignalClassifier()
 notification_service = NotificationService()
 
 def allowed_file(filename):
@@ -61,9 +61,9 @@ def analyze():
         # Analyze thesis and extract signals
         analysis_result = thesis_analyzer.analyze_thesis(thesis_text)
         
-        # Extract signals from documents and thesis using the classification hierarchy
-        signals_result = signal_extractor.extract_signals_from_analysis(
-            thesis_text, 
+        # Extract signals from AI analysis and documents using the classification hierarchy
+        signals_result = signal_classifier.extract_signals_from_ai_analysis(
+            analysis_result, 
             processed_documents, 
             focus_primary=focus_primary_signals
         )
@@ -235,7 +235,7 @@ def monitoring_dashboard():
 def check_signals():
     """API endpoint to manually trigger signal checking"""
     try:
-        results = signal_extractor.check_all_signals()
+        results = signal_classifier.extract_signals_from_analysis("", [], focus_primary=True)
         return jsonify({'status': 'success', 'results': results})
     except Exception as e:
         logging.error(f"Error checking signals: {str(e)}")

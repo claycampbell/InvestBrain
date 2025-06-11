@@ -157,6 +157,95 @@ class SignalClassifier:
             ]
         }
     
+    def extract_signals_from_ai_analysis(self, ai_analysis: Dict[str, Any], processed_documents: List[Dict], focus_primary: bool = True) -> Dict[str, Any]:
+        """
+        Extract and classify signals from AI analysis results
+        """
+        try:
+            all_signals = []
+            
+            # Extract signals from AI analysis metrics_to_track
+            metrics_to_track = ai_analysis.get('metrics_to_track', [])
+            for metric in metrics_to_track:
+                signal = Signal(
+                    name=metric.get('name', 'Unknown Signal'),
+                    level=self._parse_signal_level(metric.get('type', 'Level_2_Derived_Metrics')),
+                    description=metric.get('description', ''),
+                    data_source=metric.get('data_source', 'Unknown'),
+                    value_chain_position=metric.get('value_chain_position', 'unknown'),
+                    predictive_power='high',  # Assume high since AI selected these
+                    market_attention='low',   # Primary signals typically have low attention
+                    lead_lag_indicator='leading',
+                    raw_data_points=[metric.get('name', '')],
+                    collection_frequency=metric.get('frequency', 'unknown'),
+                    reliability_score=0.8  # High reliability for AI-selected signals
+                )
+                all_signals.append(signal)
+            
+            # Extract additional signals from document content
+            document_signals = self._extract_signals_from_documents(processed_documents, focus_primary)
+            all_signals.extend(document_signals)
+            
+            # If focusing on primary signals, prioritize Level 0-1
+            if focus_primary:
+                primary_signals = [s for s in all_signals if s.level in [SignalLevel.LEVEL_0, SignalLevel.LEVEL_1]]
+                all_signals = primary_signals + [s for s in all_signals if s not in primary_signals]
+            
+            # Analyze relationships and value chain mapping
+            signal_relationships = self._analyze_signal_relationships(all_signals)
+            value_chain_mapping = self._create_value_chain_mapping(all_signals)
+            
+            # Generate signal quality assessment
+            quality_assessment = self._assess_signal_quality(all_signals)
+            
+            return {
+                'total_signals_identified': len(all_signals),
+                'primary_signals_count': len([s for s in all_signals if s.level in [SignalLevel.LEVEL_0, SignalLevel.LEVEL_1]]),
+                'signals_by_level': self._group_signals_by_level(all_signals),
+                'value_chain_mapping': value_chain_mapping,
+                'signal_relationships': signal_relationships,
+                'quality_assessment': quality_assessment,
+                'recommended_monitoring': self._recommend_monitoring_strategy(all_signals, focus_primary),
+                'raw_signals': [self._signal_to_dict(s) for s in all_signals]
+            }
+            
+        except Exception as e:
+            logging.error(f"Error in AI signal extraction: {str(e)}")
+            return {
+                'total_signals_identified': 0,
+                'primary_signals_count': 0,
+                'signals_by_level': {},
+                'value_chain_mapping': {'upstream': [], 'midstream': [], 'downstream': [], 'unknown': []},
+                'signal_relationships': {'correlation_clusters': [], 'lead_lag_chains': [], 'value_chain_flows': []},
+                'quality_assessment': {'overall_score': 0, 'assessment': 'No signals identified'},
+                'recommended_monitoring': {'monitoring_frequency': 'weekly', 'priority_signals': [], 'data_sources_needed': [], 'automation_opportunities': []},
+                'raw_signals': []
+            }
+    
+    def _parse_signal_level(self, level_str: str) -> SignalLevel:
+        """Parse signal level string from AI analysis"""
+        level_mapping = {
+            'Level_0_Raw_Activity': SignalLevel.LEVEL_0,
+            'Level_1_Simple_Aggregation': SignalLevel.LEVEL_1,
+            'Level_2_Derived_Metrics': SignalLevel.LEVEL_2,
+            'Level_3_Complex_Derivatives': SignalLevel.LEVEL_3,
+            'Level_4_Synthetic_Indicators': SignalLevel.LEVEL_4
+        }
+        return level_mapping.get(level_str, SignalLevel.LEVEL_2)
+    
+    def _extract_signals_from_documents(self, processed_documents: List[Dict], focus_primary: bool) -> List[Signal]:
+        """Extract signals from processed document content"""
+        signals = []
+        for doc in processed_documents:
+            doc_data = doc.get('data', {})
+            if 'text_content' in doc_data:
+                text_signals = self._extract_level_0_signals(doc_data['text_content'])
+                signals.extend(text_signals)
+                if not focus_primary:
+                    text_signals.extend(self._extract_level_1_signals(doc_data['text_content']))
+                    text_signals.extend(self._extract_level_2_signals(doc_data['text_content']))
+        return signals
+
     def extract_signals_from_analysis(self, thesis_text: str, processed_documents: List[Dict], focus_primary: bool = True) -> Dict[str, Any]:
         """
         Extract and classify signals from thesis and supporting documents
