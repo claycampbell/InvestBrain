@@ -33,22 +33,48 @@ class AzureOpenAIService:
             logging.error(f"Failed to initialize Azure OpenAI client: {str(e)}")
             self.client = None
     
-    def generate_completion(self, messages, temperature=0.7, max_tokens=2000):
+    def generate_completion(self, messages, temperature=1.0, max_tokens=2000):
         """Generate a completion using Azure OpenAI"""
         if not self.client:
             raise Exception("Azure OpenAI client not initialized")
         
+        response = None
         try:
+            # o4-mini model only supports default temperature (1.0)
             response = self.client.chat.completions.create(
                 messages=messages,
                 max_completion_tokens=max_tokens,
                 model=self.deployment_name
             )
             
-            return response.choices[0].message.content
+            # Debug the full response structure
+            logging.info(f"Azure OpenAI response received")
+            logging.info(f"Response choices count: {len(response.choices) if response.choices else 0}")
+            
+            if not response.choices:
+                logging.error("No choices in Azure OpenAI response")
+                raise Exception("No choices in Azure OpenAI response")
+            
+            choice = response.choices[0]
+            logging.info(f"Choice finish reason: {choice.finish_reason}")
+            
+            content = choice.message.content if hasattr(choice.message, 'content') else None
+            
+            if not content or content.strip() == "":
+                logging.error(f"Empty or null content from Azure OpenAI")
+                logging.error(f"Choice finish reason: {choice.finish_reason}")
+                logging.error(f"Choice message: {choice.message}")
+                raise Exception("Empty response from Azure OpenAI")
+            
+            logging.info(f"Received valid response: {len(content)} characters")
+            return content
             
         except Exception as e:
             logging.error(f"Error generating completion: {str(e)}")
+            if response:
+                logging.error(f"Response object exists, choices: {len(response.choices) if response.choices else 0}")
+            else:
+                logging.error("No response object received")
             raise
     
     def analyze_thesis(self, thesis_text):
