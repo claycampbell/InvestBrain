@@ -503,24 +503,44 @@ document.addEventListener('DOMContentLoaded', function() {
     function generateValueChainMapping(valueChain) {
         if (!valueChain) return '<p class="text-muted">No value chain mapping available</p>';
         
+        // Calculate signal counts from the actual signal data
+        const upstream = valueChain.upstream || [];
+        const midstream = valueChain.midstream || [];
+        const downstream = valueChain.downstream || [];
+        
         return `
             <div class="row text-center">
                 <div class="col-4">
-                    <div class="border rounded p-2 bg-light">
-                        <strong class="small">Upstream</strong>
-                        <div class="small text-muted">${valueChain.upstream?.length || 0} signals</div>
+                    <div class="border rounded p-2 bg-secondary">
+                        <strong class="small text-light">Upstream</strong>
+                        <div class="small text-light">${upstream.length} signals</div>
+                        ${upstream.length > 0 ? `
+                            <div class="mt-1">
+                                ${upstream.slice(0, 2).map(signal => `<div class="badge bg-success text-dark me-1 mb-1">${signal.name || signal}</div>`).join('')}
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
                 <div class="col-4">
-                    <div class="border rounded p-2 bg-light">
-                        <strong class="small">Midstream</strong>
-                        <div class="small text-muted">${valueChain.midstream?.length || 0} signals</div>
+                    <div class="border rounded p-2 bg-secondary">
+                        <strong class="small text-light">Midstream</strong>
+                        <div class="small text-light">${midstream.length} signals</div>
+                        ${midstream.length > 0 ? `
+                            <div class="mt-1">
+                                ${midstream.slice(0, 2).map(signal => `<div class="badge bg-info text-dark me-1 mb-1">${signal.name || signal}</div>`).join('')}
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
                 <div class="col-4">
-                    <div class="border rounded p-2 bg-light">
-                        <strong class="small">Downstream</strong>
-                        <div class="small text-muted">${valueChain.downstream?.length || 0} signals</div>
+                    <div class="border rounded p-2 bg-secondary">
+                        <strong class="small text-light">Downstream</strong>
+                        <div class="small text-light">${downstream.length} signals</div>
+                        ${downstream.length > 0 ? `
+                            <div class="mt-1">
+                                ${downstream.slice(0, 2).map(signal => `<div class="badge bg-warning text-dark me-1 mb-1">${signal.name || signal}</div>`).join('')}
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             </div>

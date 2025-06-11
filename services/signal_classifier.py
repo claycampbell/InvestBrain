@@ -129,15 +129,24 @@ class SignalClassifier:
         return {
             'upstream': [
                 'raw materials', 'commodities', 'mining', 'extraction',
-                'agriculture', 'forestry', 'fishing', 'primary production'
+                'agriculture', 'forestry', 'fishing', 'primary production',
+                'gpu', 'chip', 'semiconductor', 'wafer', 'foundry', 'silicon',
+                'ai accelerator', 'processor', 'hardware', 'components',
+                'nvidia', 'tsmc', 'capacity utilization', 'shipments'
             ],
             'midstream': [
                 'processing', 'refining', 'manufacturing', 'assembly',
-                'transportation', 'logistics', 'distribution', 'warehousing'
+                'transportation', 'logistics', 'distribution', 'warehousing',
+                'data center', 'capex', 'infrastructure', 'deployment',
+                'hyperscaler', 'azure', 'cloud', 'server', 'facility',
+                'installation', 'integration', 'system build'
             ],
             'downstream': [
                 'retail', 'consumer', 'end-user', 'final demand',
-                'services', 'consumption', 'customer-facing', 'point-of-sale'
+                'services', 'consumption', 'customer-facing', 'point-of-sale',
+                'registration', 'adoption', 'usage', 'subscription',
+                'enterprise', 'deals', 'revenue', 'market share',
+                'autonomous vehicle', 'api calls', 'copilot', 'application'
             ]
         }
     
