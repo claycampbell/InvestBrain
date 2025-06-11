@@ -111,6 +111,26 @@ def index():
     """Main analysis interface for investment thesis and signal extraction"""
     return render_template('analysis.html')
 
+@app.route('/test_connection', methods=['POST'])
+def test_connection():
+    """Test Azure OpenAI connection"""
+    try:
+        from services.azure_openai_service import AzureOpenAIService
+        
+        azure_service = AzureOpenAIService()
+        is_available = azure_service.is_available()
+        
+        return jsonify({
+            'available': is_available,
+            'message': 'Azure OpenAI service is available' if is_available else 'Azure OpenAI service connection failed'
+        })
+    except Exception as e:
+        return jsonify({
+            'available': False,
+            'error': str(e),
+            'message': 'Failed to test Azure OpenAI connection'
+        }), 500
+
 @app.route('/analyze', methods=['POST'])
 def analyze():
     """Main analysis endpoint for thesis and document processing"""

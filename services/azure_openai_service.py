@@ -24,7 +24,9 @@ class AzureOpenAIService:
             self.client = AzureOpenAI(
                 api_key=api_key,
                 api_version=api_version,
-                azure_endpoint=endpoint
+                azure_endpoint=endpoint,
+                timeout=120.0,  # Increased timeout for network stability
+                max_retries=3
             )
             
             logging.info("Azure OpenAI client initialized successfully")
@@ -46,8 +48,8 @@ class AzureOpenAIService:
             try:
                 logging.info(f"Azure OpenAI attempt {attempt + 1}/{max_retries}")
                 
-                # Use shorter timeout for individual attempts to fail fast and retry
-                attempt_timeout = 45 if attempt < 2 else 90  # Shorter for first attempts
+                # Progressive timeout increase for each retry attempt
+                attempt_timeout = 60 + (attempt * 30)  # 60s, 90s, 120s
                 # Handle different model types with appropriate parameters
                 model_name = self.deployment_name.lower()
                 
@@ -106,17 +108,32 @@ class AzureOpenAIService:
                 return content
                 
             except Exception as e:
+                import time
                 error_message = str(e)
-                is_timeout = any(keyword in error_message.lower() for keyword in ['timeout', 'read timeout', 'connection timeout', 'ssl', 'recv'])
+                error_type = type(e).__name__
                 
-                if is_timeout and attempt < max_retries - 1:
-                    logging.warning(f"Attempt {attempt + 1} failed with timeout, retrying in {retry_delay} seconds...")
-                    import time
+                # Check for specific network/connection errors
+                network_errors = [
+                    'timeout', 'read timeout', 'connection timeout', 'ssl', 'recv',
+                    'connectionerror', 'readtimeout', 'connecttimeout', 'sslerror',
+                    'httpstatuserror', 'requestexception', 'networkerror'
+                ]
+                
+                is_retryable = (
+                    any(keyword in error_message.lower() for keyword in network_errors) or
+                    any(keyword in error_type.lower() for keyword in network_errors) or
+                    'SystemExit' in error_type
+                )
+                
+                logging.error(f"Attempt {attempt + 1} failed: {error_type} - {error_message}")
+                
+                if is_retryable and attempt < max_retries - 1:
+                    logging.warning(f"Network error detected, retrying in {retry_delay} seconds...")
                     time.sleep(retry_delay)
                     retry_delay *= 2  # Exponential backoff
                     continue
                 else:
-                    logging.error(f"Error generating completion: {error_message}")
+                    logging.error(f"Error generating completion after {attempt + 1} attempts: {error_message}")
                     # Return a structured error response instead of raising
                     return self._get_connection_error_response()
         
@@ -128,13 +145,28 @@ class AzureOpenAIService:
         """Return a structured error response when Azure OpenAI is unavailable"""
         return """{
             "error": "connection_failed",
-            "message": "Unable to connect to Azure OpenAI service. Please check your network connection and try again.",
-            "core_claim": "Analysis temporarily unavailable due to connection issues",
-            "core_analysis": "The system encountered network connectivity issues while processing your thesis. Please verify your Azure OpenAI credentials and network connection, then try again.",
-            "assumptions": ["Network connectivity will be restored", "Azure OpenAI service is operational"],
+            "message": "Unable to connect to Azure OpenAI service. Please verify your Azure OpenAI credentials and network connection.",
+            "core_claim": "Analysis temporarily unavailable due to Azure OpenAI connectivity issues",
+            "core_analysis": "The system encountered network connectivity issues while processing your thesis. This may be due to network timeouts, SSL certificate issues, or Azure OpenAI service availability. Please verify your Azure OpenAI credentials are correctly configured and try again.",
+            "assumptions": ["Azure OpenAI service credentials are valid", "Network connectivity will be restored", "Service endpoints are accessible"],
             "mental_model": "Technical Recovery",
-            "causal_chain": [{"chain_link": 1, "event": "Network timeout", "explanation": "Connection to Azure OpenAI was interrupted"}],
-            "counter_thesis_scenarios": [{"scenario": "Service unavailable", "description": "Analysis service temporarily offline", "trigger_conditions": ["Network issues"], "data_signals": ["Connection status"]}]
+            "causal_chain": [
+                {"chain_link": 1, "event": "Azure OpenAI connection attempt", "explanation": "System attempted to connect to Azure OpenAI service"},
+                {"chain_link": 2, "event": "Network timeout or SSL error", "explanation": "Connection failed due to network issues or certificate problems"},
+                {"chain_link": 3, "event": "Fallback response triggered", "explanation": "System provides structured error response instead of raw failure"}
+            ],
+            "counter_thesis_scenarios": [
+                {"scenario": "Service Recovery", "description": "Azure OpenAI connectivity is restored", "trigger_conditions": ["Network stability", "Valid credentials"], "data_signals": ["Connection status", "Response latency"]}
+            ],
+            "signals": [
+                {"name": "Azure OpenAI Connection Status", "type": "Level_0_Raw_Activity", "description": "Monitor connection health to Azure OpenAI service", "frequency": "real-time", "threshold": 1.0, "threshold_type": "above", "data_source": "System", "value_chain_position": "upstream", "programmatic_feasibility": "high", "what_it_tells_us": "Service availability for analysis processing"}
+            ],
+            "monitoring_plan": {
+                "objective": "Monitor system connectivity and service availability",
+                "data_pulls": [{"category": "System Health", "metrics": ["Connection Status", "Response Time"], "data_source": "Internal", "frequency": "continuous"}],
+                "alert_logic": [{"frequency": "immediate", "condition": "Connection fails", "action": "Check credentials and network"}],
+                "decision_triggers": [{"trigger": "Service restored", "action": "Resume analysis processing"}]
+            }
         }"""
     
     def analyze_thesis(self, thesis_text):
@@ -241,4 +273,19 @@ Provide complete JSON response with all required fields."""
     
     def is_available(self):
         """Check if the Azure OpenAI service is available"""
-        return self.client is not None
+        if not self.client:
+            return False
+        
+        # Test with a simple completion request
+        try:
+            test_messages = [{"role": "user", "content": "Test connection"}]
+            response = self.client.chat.completions.create(
+                model=self.deployment_name,
+                messages=test_messages,
+                max_tokens=10,
+                timeout=30
+            )
+            return response and response.choices and len(response.choices) > 0
+        except Exception as e:
+            logging.error(f"Azure OpenAI connection test failed: {str(e)}")
+            return False
