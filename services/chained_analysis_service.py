@@ -81,7 +81,7 @@ Extract the core investment logic, key assumptions, and risk scenarios. Focus on
         response = self.azure_openai.generate_completion([
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
-        ], max_tokens=2500)
+        ], max_tokens=1500, temperature=0.7)
         
         return self._parse_json_response(response, "core_analysis")
 
@@ -119,7 +119,7 @@ Identify 5-6 specific trackable signals that are closest to raw economic activit
         response = self.azure_openai.generate_completion([
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
-        ], max_tokens=2000)
+        ], max_tokens=1200, temperature=0.7)
         
         signals = self._parse_json_response(response, "signals")
         return signals if isinstance(signals, list) else []
@@ -173,7 +173,7 @@ Create:
         response = self.azure_openai.generate_completion([
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
-        ], max_tokens=2500)
+        ], max_tokens=1500, temperature=0.7)
         
         return self._parse_json_response(response, "monitoring_plan")
 
@@ -219,3 +219,28 @@ Create:
                 "mental_model": "Growth",
                 "counter_thesis_scenarios": []
             }
+    
+    def _get_fallback_signals(self, thesis_text: str) -> List[Dict[str, Any]]:
+        """Provide fallback signals when extraction fails"""
+        return [
+            {
+                "name": "Market Share Growth",
+                "type": "Level_1_Simple_Aggregation",
+                "description": "Quarterly market share percentage",
+                "frequency": "quarterly",
+                "threshold": 5.0,
+                "threshold_type": "above",
+                "data_source": "FactSet",
+                "value_chain_position": "midstream"
+            },
+            {
+                "name": "Revenue Growth Rate",
+                "type": "Level_1_Simple_Aggregation", 
+                "description": "Year-over-year revenue growth percentage",
+                "frequency": "quarterly",
+                "threshold": 10.0,
+                "threshold_type": "above",
+                "data_source": "FactSet",
+                "value_chain_position": "downstream"
+            }
+        ]
