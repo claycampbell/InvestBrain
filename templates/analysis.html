@@ -730,7 +730,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="mt-3">
                 <strong class="small d-block mb-3">Detected Signals (${signals.length}):</strong>
                 ${signals.map((signal, index) => `
-                    <div class="signal-card border rounded p-3 mb-3" onclick="toggleSignalExpansion(${index})" style="cursor: pointer; transition: all 0.3s ease;">
+                    <div class="signal-card border rounded p-3 mb-3" data-signal-index="${index}" style="cursor: pointer; transition: all 0.3s ease;">
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="flex-grow-1">
                                 <div class="d-flex align-items-center mb-2">
@@ -1295,7 +1295,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.head.appendChild(styleElement);
     }
     
-    // Signal expansion functionality
+    // Signal expansion functionality with event delegation
     window.toggleSignalExpansion = function(index) {
         console.log('Toggling signal expansion for index:', index);
         const detailsElement = document.getElementById(`signal-details-${index}`);
@@ -1325,6 +1325,18 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Could not find elements for signal', index);
         }
     }
+    
+    // Set up event delegation for signal cards after DOM content is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        document.body.addEventListener('click', function(event) {
+            const signalCard = event.target.closest('.signal-card[data-signal-index]');
+            if (signalCard) {
+                const index = signalCard.getAttribute('data-signal-index');
+                console.log('Signal card clicked, index:', index);
+                toggleSignalExpansion(index);
+            }
+        });
+    });
     
     // Helper function to add publish/download functionality
     function publishAnalysis() {
