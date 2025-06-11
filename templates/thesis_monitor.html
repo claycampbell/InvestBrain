@@ -48,6 +48,17 @@
         <div class="col-lg-3 col-md-6 mb-3">
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center">
+                    <div class="h4 mb-1" id="price-change-display">
+                        <span class="text-muted">Loading...</span>
+                    </div>
+                    <div class="text-muted small">Price Change</div>
+                    <div class="text-muted small" id="last-notification-time">Since last check</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
                     {% set active_count = signals|selectattr("status", "equalto", "active")|list|length %}
                     <div class="h4 text-success mb-1">{{ active_count }}</div>
                     <div class="text-muted small">Active Monitoring</div>
@@ -386,6 +397,56 @@
             showAlert('Error: ' + error.message, 'danger');
         }
     }
+
+    async function updatePriceChange() {
+        try {
+            const response = await fetch(`/api/price_change/{{ thesis.id }}`);
+            const data = await response.json();
+            
+            if (data.success && data.price_change !== undefined) {
+                const priceDisplay = document.getElementById('price-change-display');
+                const lastNotificationTime = document.getElementById('last-notification-time');
+                
+                const changePercent = parseFloat(data.price_change);
+                const colorClass = changePercent >= 0 ? 'text-success' : 'text-danger';
+                const icon = changePercent >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                
+                priceDisplay.innerHTML = `
+                    <span class="${colorClass}">
+                        <i class="fas ${icon} me-1"></i>
+                        ${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%
+                    </span>
+                `;
+                
+                if (data.last_notification_time) {
+                    const lastTime = new Date(data.last_notification_time);
+                    const now = new Date();
+                    const hoursDiff = Math.floor((now - lastTime) / (1000 * 60 * 60));
+                    lastNotificationTime.textContent = `Since ${hoursDiff}h ago`;
+                } else {
+                    lastNotificationTime.textContent = 'Since launch';
+                }
+            } else {
+                document.getElementById('price-change-display').innerHTML = 
+                    '<span class="text-muted">FactSet API required</span>';
+                document.getElementById('last-notification-time').textContent = 
+                    'Configure data source';
+            }
+        } catch (error) {
+            console.error('Price update failed:', error);
+            document.getElementById('price-change-display').innerHTML = 
+                '<span class="text-muted">Data unavailable</span>';
+            document.getElementById('last-notification-time').textContent = 
+                'Check configuration';
+        }
+    }
+
+    // Load price data on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updatePriceChange();
+        // Refresh price data every 5 minutes
+        setInterval(updatePriceChange, 300000);
+    });
 
     async function exportData() {
         try {

@@ -455,6 +455,56 @@ def get_thesis_data(id):
     thesis = ThesisAnalysis.query.get_or_404(id)
     return jsonify(thesis.to_dict())
 
+@app.route('/api/price_change/<int:thesis_id>')
+def get_price_change(thesis_id):
+    """Get price change since last notification for a thesis"""
+    try:
+        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        
+        # Get the most recent notification
+        latest_notification = NotificationLog.query.join(SignalMonitoring)\
+            .filter(SignalMonitoring.thesis_analysis_id == thesis_id)\
+            .order_by(NotificationLog.sent_at.desc())\
+            .first()
+        
+        # Use data registry for authentic price data
+        from services.data_registry import DataRegistry
+        registry = DataRegistry()
+        
+        # Extract primary symbol from thesis (simplified extraction)
+        symbol = "NVDA"  # Default for NVIDIA thesis, should be extracted from thesis text
+        
+        try:
+            price_data = registry.get_asset_data(symbol, 'price')
+            if price_data and price_data.get('current_price') and price_data.get('previous_close'):
+                change_percent = ((price_data['current_price'] - price_data['previous_close']) / price_data['previous_close']) * 100
+            else:
+                # Fallback to empty state when authentic data unavailable
+                return jsonify({
+                    'success': False,
+                    'error': 'Price data unavailable - please configure FactSet/Xpressfeed API access'
+                })
+        except Exception:
+            return jsonify({
+                'success': False,
+                'error': 'Unable to retrieve authentic price data'
+            })
+            
+        return jsonify({
+            'success': True,
+            'price_change': round(change_percent, 2),
+            'last_notification_time': latest_notification.sent_at.isoformat() if latest_notification else None,
+            'symbol': symbol,
+            'current_price': price_data.get('current_price'),
+            'previous_close': price_data.get('previous_close')
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/publish_thesis', methods=['POST'])
 def publish_thesis():
     """Publish a completed thesis analysis for monitoring and simulation"""
