@@ -107,10 +107,10 @@
                         <div class="row">
                             {% for thesis in thesis_analyses %}
                                 <div class="col-md-6 mb-3">
-                                    <div class="card border-0 bg-light">
-                                        <div class="card-body">
-                                            <h6 class="card-title text-truncate">{{ thesis.title }}</h6>
-                                            <p class="card-text small text-muted">
+                                    <div class="card border border-secondary">
+                                        <div class="card-body bg-white">
+                                            <h6 class="card-title text-truncate text-dark">{{ thesis.title }}</h6>
+                                            <p class="card-text small text-secondary">
                                                 {{ thesis.core_claim[:120] }}{% if thesis.core_claim|length > 120 %}...{% endif %}
                                             </p>
                                             <div class="d-flex justify-content-between align-items-center">
@@ -160,10 +160,10 @@
                         <div class="row">
                             {% for signal, thesis_title in active_signals %}
                                 <div class="col-md-6 mb-3">
-                                    <div class="card border-0 bg-light">
-                                        <div class="card-body">
-                                            <h6 class="card-title">{{ signal.signal_name }}</h6>
-                                            <p class="card-text small">
+                                    <div class="card border border-secondary">
+                                        <div class="card-body bg-white">
+                                            <h6 class="card-title text-dark">{{ signal.signal_name }}</h6>
+                                            <p class="card-text small text-dark">
                                                 <strong>Thesis:</strong> {{ thesis_title }}<br>
                                                 <strong>Type:</strong> {{ signal.signal_type }}<br>
                                                 <strong>Status:</strong> 
@@ -462,6 +462,91 @@
         }, 5000);
     }
 </script>
+
+<style>
+/* Comprehensive text visibility fixes for monitoring dashboard */
+.card-body {
+    background-color: white !important;
+}
+
+.card-title {
+    color: #212529 !important;
+}
+
+.card-text {
+    color: #212529 !important;
+}
+
+.text-dark {
+    color: #212529 !important;
+}
+
+.text-secondary {
+    color: #6c757d !important;
+}
+
+.bg-light .card-title,
+.bg-light .card-text,
+.bg-light p,
+.bg-light h6,
+.bg-light small {
+    color: #212529 !important;
+}
+
+/* Ensure all monitoring cards have proper contrast */
+.card.border-0.bg-light {
+    background-color: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+.card.border-0.bg-light .card-body {
+    background-color: white !important;
+}
+
+.card.border-0.bg-light .card-title {
+    color: #212529 !important;
+}
+
+.card.border-0.bg-light .card-text {
+    color: #212529 !important;
+}
+
+/* Status metrics styling */
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+/* Badge text should always be white */
+.badge {
+    color: white !important;
+}
+
+/* Button text should be properly contrasted */
+.btn-outline-primary {
+    color: #0d6efd !important;
+}
+
+.btn-outline-secondary {
+    color: #6c757d !important;
+}
+
+/* Force all small text to be visible */
+small {
+    color: #6c757d !important;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* Card headers should be dark */
+.card-header h5,
+.card-header h6 {
+    color: #212529 !important;
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}
