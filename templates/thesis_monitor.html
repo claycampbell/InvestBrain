@@ -465,11 +465,20 @@
 
             if (response.ok) {
                 const data = await response.json();
+                
+                // Check if the response contains an error
+                if (data.error) {
+                    showAlert(`${data.message}: ${data.description}`, 'warning');
+                    showAlert(data.action_needed, 'info');
+                    return;
+                }
+                
                 displaySimulationResults(data);
                 bootstrap.Modal.getInstance(document.getElementById('simulationModal')).hide();
                 showAlert('Simulation completed successfully', 'success');
             } else {
-                throw new Error('Simulation failed');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Network connection failed');
             }
         } catch (error) {
             showAlert('Error running simulation: ' + error.message, 'danger');

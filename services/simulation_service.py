@@ -35,12 +35,12 @@ class SimulationService:
         if isinstance(performance_data, dict) and performance_data.get('error'):
             return {
                 'error': True,
-                'message': performance_data.get('message', 'Azure OpenAI service unavailable'),
-                'description': performance_data.get('description', 'Valid API credentials required'),
-                'action_needed': performance_data.get('action_needed', 'Configure Azure OpenAI credentials'),
+                'message': 'Azure OpenAI connection timeout',
+                'description': 'Network connection to Azure OpenAI failed. This may be due to temporary network issues.',
+                'action_needed': 'Please try running the simulation again. If the problem persists, check Azure OpenAI service status.',
                 'chart_data': None,
                 'events': [],
-                'scenario_summary': 'Simulation requires Azure OpenAI credentials'
+                'scenario_summary': 'Simulation failed due to network timeout'
             }
         
         # Generate timeline labels
@@ -118,6 +118,15 @@ JSON: {{"market": [100,98.5,102.3,...], "thesis": [100,103.2,97.1,...]}}"""
                     messages = [{"role": "user", "content": prompt}]
                     
                     response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=300)
+                    
+                    if not response:
+                        print("Azure OpenAI connection failed - returning error")
+                        return {
+                            'error': True,
+                            'message': 'Azure OpenAI connection timeout',
+                            'description': 'Unable to connect to Azure OpenAI service due to network timeout.',
+                            'action_needed': 'Please wait a moment and try the simulation again.'
+                        }
                     
                     # If we get this far, Azure OpenAI worked
                     print("Azure OpenAI successfully generated response")
