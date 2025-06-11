@@ -99,14 +99,36 @@ class SimulationService:
                     
                     response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=300)
                     
-                    # Extract numbers from response
+                    print(f"Azure OpenAI response received: {len(response)} characters")
+                    print(f"Response preview: {response[:200]}...")
+                    
+                    # Extract numbers from response with improved parsing
                     import re
+                    import json
+                    
+                    # Try to find JSON array first
+                    try:
+                        json_match = re.search(r'\[[\d\s,.\-]+\]', response)
+                        if json_match:
+                            json_str = json_match.group()
+                            performance_data = json.loads(json_str)
+                            if len(performance_data) >= months:
+                                performance_data = [float(x) for x in performance_data[:months]]
+                                if all(20 <= x <= 500 for x in performance_data):
+                                    print(f"Successfully generated LLM simulation data: {len(performance_data)} points")
+                                    return performance_data
+                    except:
+                        pass
+                    
+                    # Fallback: extract all numbers
                     numbers = re.findall(r'[\d.]+', response)
                     if len(numbers) >= months:
                         performance_data = [float(x) for x in numbers[:months]]
-                        if all(20 <= x <= 500 for x in performance_data):
-                            print(f"Generated LLM simulation data: {len(performance_data)} points")
-                            return performance_data
+                        # More lenient validation for LLM data
+                        valid_numbers = [x for x in performance_data if 10 <= x <= 1000]
+                        if len(valid_numbers) >= months:
+                            print(f"Generated LLM simulation data: {len(valid_numbers)} points")
+                            return valid_numbers[:months]
                 
             except Exception as e:
                 print(f"LLM generation failed: {e}")
