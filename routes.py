@@ -22,15 +22,64 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    """Main dashboard showing recent analyses and system status"""
-    recent_analyses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).limit(5).all()
-    active_signals = SignalMonitoring.query.filter_by(status='active').count()
-    recent_notifications = NotificationLog.query.order_by(NotificationLog.sent_at.desc()).limit(3).all()
-    
-    return render_template('index.html', 
-                         recent_analyses=recent_analyses,
-                         active_signals=active_signals,
-                         recent_notifications=recent_notifications)
+    """Main analysis interface for investment thesis and signal extraction"""
+    return render_template('analysis.html')
+
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    """Main analysis endpoint for thesis and document processing"""
+    try:
+        thesis_text = request.form.get('thesis_text')
+        focus_primary_signals = request.form.get('focus_primary_signals') == 'on'
+        
+        if not thesis_text:
+            return jsonify({'error': 'Thesis text is required'}), 400
+        
+        # Process uploaded research files
+        processed_documents = []
+        research_files = request.files.getlist('research_files')
+        
+        for file in research_files:
+            if file and file.filename and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                
+                # Create upload directory if it doesn't exist
+                upload_dir = Config.UPLOAD_FOLDER
+                if not os.path.exists(upload_dir):
+                    os.makedirs(upload_dir)
+                
+                file_path = os.path.join(upload_dir, filename)
+                file.save(file_path)
+                
+                # Process the document
+                processed_data = document_processor.process_document(file_path)
+                processed_documents.append({
+                    'filename': filename,
+                    'data': processed_data
+                })
+        
+        # Analyze thesis and extract signals
+        analysis_result = thesis_analyzer.analyze_thesis(thesis_text)
+        
+        # Extract signals from documents and thesis using the classification hierarchy
+        signals_result = signal_extractor.extract_signals_from_analysis(
+            thesis_text, 
+            processed_documents, 
+            focus_primary=focus_primary_signals
+        )
+        
+        # Combine results
+        combined_result = {
+            'thesis_analysis': analysis_result,
+            'signal_extraction': signals_result,
+            'processed_documents': len(processed_documents),
+            'focus_primary_signals': focus_primary_signals
+        }
+        
+        return jsonify(combined_result)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/thesis/new', methods=['GET', 'POST'])
 def new_thesis():

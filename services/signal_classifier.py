@@ -1,0 +1,514 @@
+"""
+Signal Classification Service
+Implements the hierarchical signal classification framework for investment analysis
+"""
+
+import re
+import json
+import logging
+from typing import Dict, List, Any, Optional, Tuple
+from dataclasses import dataclass
+from enum import Enum
+
+class SignalLevel(Enum):
+    """Signal classification levels based on processing complexity"""
+    LEVEL_0 = "Raw Economic Activity"          # Direct measurements
+    LEVEL_1 = "Simple Aggregation"            # Basic combinations
+    LEVEL_2 = "Derived Metrics"               # Calculated ratios
+    LEVEL_3 = "Complex Derivatives"           # Multi-input calculations
+    LEVEL_4 = "Synthetic Indicators"          # Highly processed composites
+
+@dataclass
+class Signal:
+    """Represents an identified signal with classification metadata"""
+    name: str
+    level: SignalLevel
+    description: str
+    data_source: str
+    value_chain_position: str
+    predictive_power: str  # "high", "medium", "low"
+    market_attention: str  # "low", "medium", "high"
+    lead_lag_indicator: str  # "leading", "coincident", "lagging"
+    raw_data_points: List[str]
+    derivation_method: Optional[str] = None
+    correlation_signals: List[str] = None
+    collection_frequency: str = "unknown"
+    reliability_score: float = 0.0
+
+class SignalClassifier:
+    """
+    Advanced signal classification engine implementing the hierarchical framework
+    """
+    
+    def __init__(self):
+        self.level_0_indicators = self._load_level_0_patterns()
+        self.level_1_indicators = self._load_level_1_patterns()
+        self.value_chain_keywords = self._load_value_chain_patterns()
+        self.predictive_keywords = self._load_predictive_patterns()
+        
+    def _load_level_0_patterns(self) -> Dict[str, List[str]]:
+        """Load patterns for identifying Level 0 (raw economic activity) signals"""
+        return {
+            'production_activity': [
+                'factory utilization', 'manufacturing output', 'production capacity',
+                'assembly line speed', 'shift patterns', 'overtime hours',
+                'raw material consumption', 'energy consumption per unit',
+                'machine uptime', 'production schedules', 'order backlogs'
+            ],
+            'construction_activity': [
+                'housing starts', 'building permits', 'construction permits',
+                'excavation permits', 'foundation pours', 'concrete deliveries',
+                'lumber deliveries', 'electrical installations', 'plumbing permits',
+                'occupancy certificates', 'site preparations'
+            ],
+            'employment_activity': [
+                'job postings', 'hiring rates', 'termination rates',
+                'overtime authorizations', 'temporary worker requests',
+                'contractor agreements', 'training enrollments',
+                'badge swipes', 'parking utilization', 'cafeteria usage'
+            ],
+            'supply_chain_activity': [
+                'shipping container volume', 'truck movements', 'rail car loadings',
+                'warehouse receipts', 'dock utilization', 'port traffic',
+                'inventory receipts', 'supplier deliveries', 'return shipments',
+                'cargo manifests', 'customs clearances'
+            ],
+            'retail_activity': [
+                'foot traffic', 'transaction counts', 'basket sizes',
+                'checkout times', 'inventory turns', 'stockouts',
+                'return rates', 'store hours', 'staff scheduling',
+                'promotional activity', 'price changes'
+            ],
+            'financial_activity': [
+                'loan applications', 'credit inquiries', 'account openings',
+                'transaction volumes', 'ATM usage', 'branch visits',
+                'wire transfers', 'check clearings', 'deposit flows',
+                'withdrawal patterns', 'payment processing volumes'
+            ],
+            'innovation_activity': [
+                'patent applications', 'R&D spending', 'prototype builds',
+                'clinical trials', 'regulatory filings', 'testing schedules',
+                'researcher hiring', 'lab equipment purchases', 'facility expansions',
+                'intellectual property registrations', 'licensing agreements'
+            ],
+            'resource_extraction': [
+                'drilling permits', 'extraction rates', 'ore grades',
+                'well completions', 'mining equipment hours', 'blast schedules',
+                'transportation loads', 'processing volumes', 'stockpile levels',
+                'equipment maintenance', 'worker safety incidents'
+            ]
+        }
+    
+    def _load_level_1_patterns(self) -> Dict[str, List[str]]:
+        """Load patterns for identifying Level 1 (simple aggregation) signals"""
+        return {
+            'daily_totals': [
+                'daily production', 'daily sales', 'daily shipments',
+                'daily transactions', 'daily visits', 'daily registrations'
+            ],
+            'weekly_aggregates': [
+                'weekly averages', 'weekly totals', 'weekly counts',
+                'weekly volumes', 'weekly rates', 'weekly utilization'
+            ],
+            'monthly_summaries': [
+                'monthly totals', 'monthly averages', 'monthly peaks',
+                'monthly minimums', 'monthly ranges', 'monthly distributions'
+            ],
+            'regional_aggregates': [
+                'regional totals', 'state-level data', 'county data',
+                'city-level metrics', 'district summaries', 'zone aggregates'
+            ],
+            'simple_ratios': [
+                'utilization rates', 'completion rates', 'success rates',
+                'conversion rates', 'efficiency ratios', 'productivity metrics'
+            ]
+        }
+    
+    def _load_value_chain_patterns(self) -> Dict[str, List[str]]:
+        """Load value chain position identifiers"""
+        return {
+            'upstream': [
+                'raw materials', 'commodities', 'mining', 'extraction',
+                'agriculture', 'forestry', 'fishing', 'primary production'
+            ],
+            'midstream': [
+                'processing', 'refining', 'manufacturing', 'assembly',
+                'transportation', 'logistics', 'distribution', 'warehousing'
+            ],
+            'downstream': [
+                'retail', 'consumer', 'end-user', 'final demand',
+                'services', 'consumption', 'customer-facing', 'point-of-sale'
+            ]
+        }
+    
+    def _load_predictive_patterns(self) -> Dict[str, List[str]]:
+        """Load patterns for assessing predictive power"""
+        return {
+            'high_predictive': [
+                'leading indicator', 'early warning', 'advance signal',
+                'forward-looking', 'predictive', 'forecasting'
+            ],
+            'medium_predictive': [
+                'coincident', 'concurrent', 'real-time', 'current'
+            ],
+            'low_predictive': [
+                'lagging', 'trailing', 'historical', 'backward-looking',
+                'confirmatory', 'retrospective'
+            ]
+        }
+    
+    def extract_signals_from_analysis(self, thesis_text: str, processed_documents: List[Dict], focus_primary: bool = True) -> Dict[str, Any]:
+        """
+        Extract and classify signals from thesis and supporting documents
+        """
+        try:
+            all_signals = []
+            document_texts = []
+            
+            # Extract text from processed documents
+            for doc in processed_documents:
+                doc_data = doc.get('data', {})
+                if 'text_content' in doc_data:
+                    document_texts.append(doc_data['text_content'])
+                if 'summary' in doc_data:
+                    document_texts.append(doc_data['summary'])
+            
+            # Combine all text sources
+            combined_text = thesis_text + ' ' + ' '.join(document_texts)
+            
+            # Extract signals by level
+            level_0_signals = self._extract_level_0_signals(combined_text)
+            level_1_signals = self._extract_level_1_signals(combined_text)
+            level_2_signals = self._extract_level_2_signals(combined_text)
+            
+            # Combine all signals
+            all_signals.extend(level_0_signals)
+            all_signals.extend(level_1_signals)
+            all_signals.extend(level_2_signals)
+            
+            # If focusing on primary signals, prioritize Level 0-1
+            if focus_primary:
+                primary_signals = [s for s in all_signals if s.level in [SignalLevel.LEVEL_0, SignalLevel.LEVEL_1]]
+                all_signals = primary_signals + [s for s in all_signals if s not in primary_signals]
+            
+            # Analyze relationships and value chain mapping
+            signal_relationships = self._analyze_signal_relationships(all_signals)
+            value_chain_mapping = self._create_value_chain_mapping(all_signals)
+            
+            # Generate signal quality assessment
+            quality_assessment = self._assess_signal_quality(all_signals)
+            
+            return {
+                'total_signals_identified': len(all_signals),
+                'primary_signals_count': len([s for s in all_signals if s.level in [SignalLevel.LEVEL_0, SignalLevel.LEVEL_1]]),
+                'signals_by_level': self._group_signals_by_level(all_signals),
+                'value_chain_mapping': value_chain_mapping,
+                'signal_relationships': signal_relationships,
+                'quality_assessment': quality_assessment,
+                'recommended_monitoring': self._recommend_monitoring_strategy(all_signals, focus_primary),
+                'raw_signals': [self._signal_to_dict(s) for s in all_signals]
+            }
+            
+        except Exception as e:
+            logging.error(f"Error in signal extraction: {str(e)}")
+            return {'error': str(e)}
+    
+    def _extract_level_0_signals(self, text: str) -> List[Signal]:
+        """Extract Level 0 (raw economic activity) signals"""
+        signals = []
+        text_lower = text.lower()
+        
+        for category, patterns in self.level_0_indicators.items():
+            for pattern in patterns:
+                if pattern.lower() in text_lower:
+                    # Extract context around the signal
+                    context = self._extract_signal_context(text, pattern)
+                    
+                    signal = Signal(
+                        name=pattern.title(),
+                        level=SignalLevel.LEVEL_0,
+                        description=f"Raw economic activity: {pattern}",
+                        data_source="Document analysis",
+                        value_chain_position=self._determine_value_chain_position(pattern),
+                        predictive_power=self._assess_predictive_power(pattern, context),
+                        market_attention="low",  # Level 0 signals typically have low market attention
+                        lead_lag_indicator="leading",  # Level 0 signals are typically leading
+                        raw_data_points=[pattern],
+                        collection_frequency=self._estimate_collection_frequency(pattern),
+                        reliability_score=self._calculate_reliability_score(pattern, context)
+                    )
+                    signals.append(signal)
+        
+        return signals
+    
+    def _extract_level_1_signals(self, text: str) -> List[Signal]:
+        """Extract Level 1 (simple aggregation) signals"""
+        signals = []
+        text_lower = text.lower()
+        
+        for category, patterns in self.level_1_indicators.items():
+            for pattern in patterns:
+                if pattern.lower() in text_lower:
+                    context = self._extract_signal_context(text, pattern)
+                    
+                    signal = Signal(
+                        name=pattern.title(),
+                        level=SignalLevel.LEVEL_1,
+                        description=f"Simple aggregation: {pattern}",
+                        data_source="Document analysis",
+                        value_chain_position=self._determine_value_chain_position(pattern),
+                        predictive_power=self._assess_predictive_power(pattern, context),
+                        market_attention="low",
+                        lead_lag_indicator="leading",
+                        raw_data_points=[pattern],
+                        derivation_method="Simple aggregation or basic mathematical operation",
+                        collection_frequency=self._estimate_collection_frequency(pattern),
+                        reliability_score=self._calculate_reliability_score(pattern, context)
+                    )
+                    signals.append(signal)
+        
+        return signals
+    
+    def _extract_level_2_signals(self, text: str) -> List[Signal]:
+        """Extract Level 2 (derived metrics) signals"""
+        signals = []
+        
+        # Look for ratio indicators, growth rates, percentages
+        ratio_patterns = [
+            r'(\w+)\s+ratio', r'(\w+)\s+rate', r'(\w+)\s+percentage',
+            r'(\w+)\s+growth', r'(\w+)\s+margin', r'(\w+)\s+yield',
+            r'(\w+)\s+efficiency', r'(\w+)\s+productivity'
+        ]
+        
+        for pattern in ratio_patterns:
+            matches = re.finditer(pattern, text.lower())
+            for match in matches:
+                metric_name = match.group(1).title() + " " + match.group(0).split()[-1].title()
+                context = self._extract_signal_context(text, match.group(0))
+                
+                signal = Signal(
+                    name=metric_name,
+                    level=SignalLevel.LEVEL_2,
+                    description=f"Derived metric: {metric_name}",
+                    data_source="Document analysis",
+                    value_chain_position=self._determine_value_chain_position(metric_name),
+                    predictive_power=self._assess_predictive_power(metric_name, context),
+                    market_attention="medium",
+                    lead_lag_indicator="coincident",
+                    raw_data_points=[match.group(0)],
+                    derivation_method="Mathematical calculation from Level 0/1 signals",
+                    collection_frequency=self._estimate_collection_frequency(metric_name),
+                    reliability_score=self._calculate_reliability_score(metric_name, context)
+                )
+                signals.append(signal)
+        
+        return signals
+    
+    def _extract_signal_context(self, text: str, signal: str) -> str:
+        """Extract surrounding context for a signal"""
+        signal_index = text.lower().find(signal.lower())
+        if signal_index == -1:
+            return ""
+        
+        start = max(0, signal_index - 100)
+        end = min(len(text), signal_index + len(signal) + 100)
+        return text[start:end]
+    
+    def _determine_value_chain_position(self, signal: str) -> str:
+        """Determine the value chain position of a signal"""
+        signal_lower = signal.lower()
+        
+        for position, keywords in self.value_chain_keywords.items():
+            if any(keyword in signal_lower for keyword in keywords):
+                return position
+        
+        return "unknown"
+    
+    def _assess_predictive_power(self, signal: str, context: str) -> str:
+        """Assess the predictive power of a signal"""
+        combined_text = (signal + " " + context).lower()
+        
+        for power_level, keywords in self.predictive_keywords.items():
+            if any(keyword in combined_text for keyword in keywords):
+                return power_level.replace('_predictive', '')
+        
+        # Default assessment based on signal characteristics
+        if any(word in signal.lower() for word in ['permit', 'application', 'order', 'booking']):
+            return "high"
+        elif any(word in signal.lower() for word in ['production', 'manufacturing', 'activity']):
+            return "medium"
+        else:
+            return "low"
+    
+    def _estimate_collection_frequency(self, signal: str) -> str:
+        """Estimate how frequently a signal can be collected"""
+        signal_lower = signal.lower()
+        
+        if any(word in signal_lower for word in ['daily', 'real-time', 'hourly']):
+            return "daily"
+        elif any(word in signal_lower for word in ['weekly', 'week']):
+            return "weekly"
+        elif any(word in signal_lower for word in ['monthly', 'month']):
+            return "monthly"
+        elif any(word in signal_lower for word in ['quarterly', 'quarter']):
+            return "quarterly"
+        elif any(word in signal_lower for word in ['annual', 'yearly']):
+            return "annual"
+        else:
+            return "unknown"
+    
+    def _calculate_reliability_score(self, signal: str, context: str) -> float:
+        """Calculate a reliability score for the signal (0.0 to 1.0)"""
+        score = 0.5  # Base score
+        
+        # Boost score for objective measurements
+        if any(word in signal.lower() for word in ['count', 'volume', 'quantity', 'number']):
+            score += 0.2
+        
+        # Boost for regulatory or official sources
+        if any(word in context.lower() for word in ['government', 'regulatory', 'official', 'census']):
+            score += 0.2
+        
+        # Reduce for subjective measures
+        if any(word in signal.lower() for word in ['sentiment', 'opinion', 'perception', 'feeling']):
+            score -= 0.2
+        
+        return min(1.0, max(0.0, score))
+    
+    def _analyze_signal_relationships(self, signals: List[Signal]) -> Dict[str, Any]:
+        """Analyze relationships between identified signals"""
+        relationships = {
+            'lead_lag_chains': [],
+            'value_chain_flows': [],
+            'correlation_clusters': []
+        }
+        
+        # Group signals by value chain position
+        by_position = {}
+        for signal in signals:
+            position = signal.value_chain_position
+            if position not in by_position:
+                by_position[position] = []
+            by_position[position].append(signal)
+        
+        # Create value chain flows
+        if 'upstream' in by_position and 'downstream' in by_position:
+            relationships['value_chain_flows'].append({
+                'from': 'upstream',
+                'to': 'downstream',
+                'upstream_signals': [s.name for s in by_position['upstream']],
+                'downstream_signals': [s.name for s in by_position['downstream']],
+                'relationship_type': 'supply_chain_flow'
+            })
+        
+        return relationships
+    
+    def _create_value_chain_mapping(self, signals: List[Signal]) -> Dict[str, List[str]]:
+        """Create a mapping of signals by value chain position"""
+        mapping = {
+            'upstream': [],
+            'midstream': [],
+            'downstream': [],
+            'unknown': []
+        }
+        
+        for signal in signals:
+            position = signal.value_chain_position
+            if position in mapping:
+                mapping[position].append(signal.name)
+            else:
+                mapping['unknown'].append(signal.name)
+        
+        return mapping
+    
+    def _assess_signal_quality(self, signals: List[Signal]) -> Dict[str, Any]:
+        """Assess overall quality of identified signals"""
+        if not signals:
+            return {'overall_score': 0, 'assessment': 'No signals identified'}
+        
+        primary_count = len([s for s in signals if s.level in [SignalLevel.LEVEL_0, SignalLevel.LEVEL_1]])
+        total_count = len(signals)
+        primary_ratio = primary_count / total_count if total_count > 0 else 0
+        
+        avg_reliability = sum(s.reliability_score for s in signals) / len(signals)
+        
+        overall_score = (primary_ratio * 0.6) + (avg_reliability * 0.4)
+        
+        assessment = "Excellent" if overall_score > 0.8 else \
+                    "Good" if overall_score > 0.6 else \
+                    "Fair" if overall_score > 0.4 else "Poor"
+        
+        return {
+            'overall_score': round(overall_score, 2),
+            'assessment': assessment,
+            'primary_signal_ratio': round(primary_ratio, 2),
+            'average_reliability': round(avg_reliability, 2),
+            'recommendations': self._generate_quality_recommendations(signals, overall_score)
+        }
+    
+    def _generate_quality_recommendations(self, signals: List[Signal], score: float) -> List[str]:
+        """Generate recommendations for improving signal quality"""
+        recommendations = []
+        
+        primary_count = len([s for s in signals if s.level in [SignalLevel.LEVEL_0, SignalLevel.LEVEL_1]])
+        total_count = len(signals)
+        
+        if primary_count / total_count < 0.5:
+            recommendations.append("Focus on identifying more Level 0-1 (primary) signals for better predictive power")
+        
+        if score < 0.6:
+            recommendations.append("Consider seeking additional data sources for higher reliability signals")
+        
+        low_reliability_signals = [s for s in signals if s.reliability_score < 0.4]
+        if low_reliability_signals:
+            recommendations.append(f"Validate {len(low_reliability_signals)} signals with low reliability scores")
+        
+        return recommendations
+    
+    def _recommend_monitoring_strategy(self, signals: List[Signal], focus_primary: bool) -> Dict[str, Any]:
+        """Recommend a monitoring strategy based on identified signals"""
+        primary_signals = [s for s in signals if s.level in [SignalLevel.LEVEL_0, SignalLevel.LEVEL_1]]
+        high_predictive = [s for s in signals if s.predictive_power == "high"]
+        
+        strategy = {
+            'priority_signals': [s.name for s in primary_signals[:5]],  # Top 5 primary signals
+            'monitoring_frequency': 'weekly',
+            'data_sources_needed': list(set(s.data_source for s in signals)),
+            'automation_opportunities': []
+        }
+        
+        # Identify automation opportunities
+        frequent_signals = [s for s in signals if s.collection_frequency in ['daily', 'weekly']]
+        if frequent_signals:
+            strategy['automation_opportunities'] = [s.name for s in frequent_signals[:3]]
+        
+        return strategy
+    
+    def _group_signals_by_level(self, signals: List[Signal]) -> Dict[str, List[str]]:
+        """Group signals by their classification level"""
+        grouped = {}
+        for signal in signals:
+            level_name = signal.level.value
+            if level_name not in grouped:
+                grouped[level_name] = []
+            grouped[level_name].append(signal.name)
+        
+        return grouped
+    
+    def _signal_to_dict(self, signal: Signal) -> Dict[str, Any]:
+        """Convert Signal object to dictionary"""
+        return {
+            'name': signal.name,
+            'level': signal.level.value,
+            'description': signal.description,
+            'data_source': signal.data_source,
+            'value_chain_position': signal.value_chain_position,
+            'predictive_power': signal.predictive_power,
+            'market_attention': signal.market_attention,
+            'lead_lag_indicator': signal.lead_lag_indicator,
+            'raw_data_points': signal.raw_data_points,
+            'derivation_method': signal.derivation_method,
+            'correlation_signals': signal.correlation_signals or [],
+            'collection_frequency': signal.collection_frequency,
+            'reliability_score': signal.reliability_score
+        }

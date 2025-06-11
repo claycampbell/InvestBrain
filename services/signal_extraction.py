@@ -5,6 +5,7 @@ from app import db
 from models import SignalMonitoring, NotificationLog
 from services.data_registry import DataRegistry
 from services.notification_service import NotificationService
+from services.signal_classifier import SignalClassifier
 from config import Config
 
 class SignalExtractor:
@@ -15,6 +16,7 @@ class SignalExtractor:
     def __init__(self):
         self.data_registry = DataRegistry()
         self.notification_service = NotificationService()
+        self.signal_classifier = SignalClassifier()
         self.price_change_threshold = Config.PRICE_CHANGE_THRESHOLD
     
     def check_all_signals(self) -> List[Dict[str, Any]]:
@@ -346,3 +348,9 @@ class SignalExtractor:
         
         logging.info(f"Deactivated signal {signal_id}: {signal.signal_name}")
         return True
+    
+    def extract_signals_from_analysis(self, thesis_text: str, processed_documents: List[Dict], focus_primary: bool = True) -> Dict[str, Any]:
+        """
+        Extract and classify signals from investment thesis and documents using hierarchical framework
+        """
+        return self.signal_classifier.extract_signals_from_analysis(thesis_text, processed_documents, focus_primary)
