@@ -349,17 +349,33 @@ def monitor_thesis(id):
     try:
         thesis = ThesisAnalysis.query.get_or_404(id)
         signals = SignalMonitoring.query.filter_by(thesis_analysis_id=id).all()
-        notifications = db.session.query(NotificationLog)\
-            .join(SignalMonitoring)\
-            .filter(SignalMonitoring.thesis_analysis_id == id)\
-            .order_by(NotificationLog.sent_at.desc())\
-            .all()
+        
+        # Debug logging
+        print(f"Loading monitoring for thesis {id}")
+        print(f"Found {len(signals)} signals")
+        for signal in signals:
+            print(f"Signal: {signal.signal_name}, Status: {signal.status}, Type: {signal.signal_type}")
+        
+        # Get notifications with better error handling
+        notifications = []
+        try:
+            notifications = db.session.query(NotificationLog)\
+                .join(SignalMonitoring)\
+                .filter(SignalMonitoring.thesis_analysis_id == id)\
+                .order_by(NotificationLog.sent_at.desc())\
+                .all()
+        except Exception as notif_error:
+            print(f"Error loading notifications: {notif_error}")
+            notifications = []
+        
+        print(f"Found {len(notifications)} notifications")
         
         return render_template('thesis_monitor.html',
                              thesis=thesis,
                              signals=signals,
                              notifications=notifications)
     except Exception as e:
+        print(f"Error in monitor_thesis: {str(e)}")
         return f"Error loading thesis monitoring: {str(e)}", 500
 
 @app.route('/api/thesis/<int:id>/status')
