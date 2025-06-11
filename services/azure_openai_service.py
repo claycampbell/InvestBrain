@@ -40,12 +40,21 @@ class AzureOpenAIService:
         
         response = None
         try:
-            # o4-mini model only supports default temperature (1.0)
-            response = self.client.chat.completions.create(
-                messages=messages,
-                max_completion_tokens=max_tokens,
-                model=self.deployment_name
-            )
+            # For o1-mini model, use appropriate parameters
+            if 'o1' in self.deployment_name.lower():
+                # o1 models don't support temperature or max_tokens parameters
+                response = self.client.chat.completions.create(
+                    messages=messages,
+                    model=self.deployment_name
+                )
+            else:
+                # Standard GPT models
+                response = self.client.chat.completions.create(
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    model=self.deployment_name
+                )
             
             # Debug the full response structure
             logging.info(f"Azure OpenAI response received")
