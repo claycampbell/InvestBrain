@@ -77,24 +77,24 @@
     <div class="row">
         <!-- Left Column: Thesis Details -->
         <div class="col-lg-4 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0">
-                    <h5 class="mb-0 text-dark">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
                         <i class="fas fa-file-alt text-primary"></i> Thesis Overview
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <h6 class="text-dark">Core Claim</h6>
-                        <p class="text-dark small">{{ thesis.core_claim or 'No core claim available' }}</p>
+                        <h6>Core Claim</h6>
+                        <p class="small">{{ thesis.core_claim or 'No core claim available' }}</p>
                     </div>
                     
                     {% if thesis.assumptions %}
                         <div class="mb-3">
-                            <h6 class="text-dark">Key Assumptions</h6>
+                            <h6>Key Assumptions</h6>
                             <ul class="list-unstyled">
                                 {% for assumption in thesis.assumptions[:4] %}
-                                    <li class="text-dark small mb-1">
+                                    <li class="small mb-1">
                                         <i class="fas fa-dot-circle text-primary me-2"></i>{{ assumption }}
                                     </li>
                                 {% endfor %}
@@ -104,7 +104,7 @@
                     
                     {% if thesis.mental_model %}
                         <div class="mb-0">
-                            <h6 class="text-dark">Mental Model</h6>
+                            <h6>Mental Model</h6>
                             <span class="badge bg-primary">{{ thesis.mental_model }}</span>
                         </div>
                     {% endif %}
@@ -115,9 +115,9 @@
         <!-- Right Column: Monitoring Data -->
         <div class="col-lg-8">
             <!-- Monitoring Signals -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-dark">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
                         <i class="fas fa-signal text-primary"></i> Monitoring Signals
                     </h5>
                     <span class="badge bg-primary">{{ signals|length }}</span>
@@ -127,15 +127,15 @@
                         <div class="row">
                             {% for signal in signals %}
                                 <div class="col-md-6 mb-3">
-                                    <div class="card border border-secondary">
-                                        <div class="card-body bg-white">
+                                    <div class="card">
+                                        <div class="card-body">
                                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                                <h6 class="card-title text-dark mb-0">{{ signal.signal_name }}</h6>
+                                                <h6 class="card-title mb-0">{{ signal.signal_name }}</h6>
                                                 <span class="badge bg-{{ 'success' if signal.status == 'active' else 'warning' if signal.status == 'triggered' else 'secondary' }}">
                                                     {{ signal.status|title }}
                                                 </span>
                                             </div>
-                                            <div class="text-dark small">
+                                            <div class="small">
                                                 <strong>Type:</strong> {{ signal.signal_type }}<br>
                                                 {% if signal.threshold_value %}
                                                     <strong>Threshold:</strong> {{ "%.2f"|format(signal.threshold_value) }}
@@ -166,9 +166,9 @@
 
             <!-- Counter-Thesis Scenarios -->
             {% if thesis.counter_thesis %}
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-white border-0">
-                        <h5 class="mb-0 text-dark">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
                             <i class="fas fa-exclamation-triangle text-warning"></i> Risk Scenarios
                         </h5>
                     </div>
@@ -177,15 +177,15 @@
                             {% for scenario in thesis.counter_thesis[:4] %}
                                 <div class="col-md-6 mb-3">
                                     <div class="card border-warning">
-                                        <div class="card-body bg-white">
+                                        <div class="card-body">
                                             <h6 class="card-title text-warning">
                                                 {{ scenario.scenario or 'Risk Scenario ' + loop.index|string }}
                                             </h6>
-                                            <p class="card-text text-dark small">
+                                            <p class="card-text small">
                                                 {{ scenario.description or 'No description available' }}
                                             </p>
                                             {% if scenario.trigger_conditions %}
-                                                <div class="text-dark small">
+                                                <div class="small">
                                                     <strong>Triggers:</strong>
                                                     <ul class="mb-0 mt-1">
                                                         {% for condition in scenario.trigger_conditions[:2] %}
@@ -204,9 +204,9 @@
             {% endif %}
 
             <!-- Recent Notifications -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-dark">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
                         <i class="fas fa-bell text-primary"></i> Recent Notifications
                     </h5>
                     {% if notifications %}

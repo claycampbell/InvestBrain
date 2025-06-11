@@ -61,6 +61,11 @@
                 </ul>
                 
                 <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <button class="btn btn-outline-light btn-sm me-2" onclick="toggleTheme()" id="themeToggle">
+                            <i class="fas fa-sun" id="themeIcon"></i>
+                        </button>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="systemDropdown" role="button" 
                            data-bs-toggle="dropdown">
@@ -252,8 +257,41 @@
             }, 5000);
         }
         
-        // Initialize tooltips
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+        
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeIcon');
+            const button = document.getElementById('themeToggle');
+            
+            if (theme === 'dark') {
+                icon.className = 'fas fa-sun';
+                button.title = 'Switch to Light Mode';
+            } else {
+                icon.className = 'fas fa-moon';
+                button.title = 'Switch to Dark Mode';
+            }
+        }
+        
+        // Initialize theme from localStorage
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+        
+        // Initialize tooltips and theme
         document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
