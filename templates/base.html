@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Investment Thesis Intelligence System{% endblock %}</title>
     
-    <!-- Bootstrap CSS with Dark Theme -->
-    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,14 +14,87 @@
     <!-- Chart.js for visualizations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- Custom CSS for Theme Support -->
+    <style>
+        /* Light Mode (Default) */
+        [data-bs-theme="light"] {
+            --bs-body-bg: #ffffff;
+            --bs-body-color: #212529;
+        }
+        
+        /* Dark Mode */
+        [data-bs-theme="dark"] {
+            --bs-body-bg: #212529;
+            --bs-body-color: #ffffff;
+        }
+        
+        [data-bs-theme="dark"] body {
+            background-color: #212529;
+            color: #ffffff;
+        }
+        
+        [data-bs-theme="dark"] .navbar-dark {
+            background-color: #343a40 !important;
+        }
+        
+        [data-bs-theme="dark"] .card {
+            background-color: #343a40;
+            border-color: #495057;
+            color: #ffffff;
+        }
+        
+        [data-bs-theme="dark"] .card-header {
+            background-color: #495057;
+            border-color: #6c757d;
+        }
+        
+        [data-bs-theme="dark"] .bg-dark {
+            background-color: #343a40 !important;
+        }
+        
+        /* Light Mode Cards */
+        [data-bs-theme="light"] .card {
+            background-color: #ffffff;
+            border-color: #dee2e6;
+            color: #212529;
+        }
+        
+        [data-bs-theme="light"] .card-header {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+        }
+        
+        /* Theme Toggle Button */
+        #themeToggle {
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        [data-bs-theme="light"] #themeToggle {
+            color: #212529;
+            border-color: #6c757d;
+        }
+        
+        [data-bs-theme="light"] #themeToggle:hover {
+            background-color: #f8f9fa;
+            border-color: #495057;
+        }
+        
+        /* Footer styling */
+        [data-bs-theme="dark"] footer {
+            background-color: #343a40 !important;
+        }
+        
+        [data-bs-theme="light"] footer {
+            background-color: #f8f9fa !important;
+            color: #6c757d !important;
+        }
+    </style>
     
     {% block extra_head %}{% endblock %}
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" data-bs-theme="dark">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
                 <i class="fas fa-brain me-2"></i>
@@ -63,7 +136,7 @@
                 <ul class="navbar-nav">
                     <li class="nav-item">
                         <button class="btn btn-outline-light btn-sm me-2" onclick="toggleTheme()" id="themeToggle">
-                            <i class="fas fa-sun" id="themeIcon"></i>
+                            <i class="fas fa-moon" id="themeIcon"></i>
                         </button>
                     </li>
                     <li class="nav-item dropdown">
@@ -275,15 +348,17 @@
             if (theme === 'dark') {
                 icon.className = 'fas fa-sun';
                 button.title = 'Switch to Light Mode';
+                button.className = 'btn btn-outline-light btn-sm me-2';
             } else {
                 icon.className = 'fas fa-moon';
                 button.title = 'Switch to Dark Mode';
+                button.className = 'btn btn-outline-dark btn-sm me-2';
             }
         }
         
         // Initialize theme from localStorage
         function initializeTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'dark';
+            const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-bs-theme', savedTheme);
             updateThemeIcon(savedTheme);
         }
