@@ -97,14 +97,20 @@ class SimulationService:
                 
                 # Generate in smaller chunks to avoid length limits
                 if months <= 12:
-                    # Enhanced prompt for realistic market volatility
-                    prompt = f"""Generate {months} realistic monthly investment values with volatility for {scenario} scenario:
-- Market: broad market with ups/downs, starting 100
-- Conviction: thesis strength with fluctuations, starting 100  
-- Performance: combined result with realistic swings, starting 100
+                    # Extract expected performance from thesis text
+                    thesis_text = str(thesis) if hasattr(thesis, '__str__') else str(thesis.original_thesis if hasattr(thesis, 'original_thesis') else 'general investment')
+                    
+                    # Enhanced prompt for thesis-specific simulation
+                    prompt = f"""Generate {months} realistic monthly values for investment thesis simulation:
+Thesis: {thesis_text[:200]}...
+Scenario: {scenario}
 
-Include market volatility, corrections, rallies. No linear growth.
-JSON: {{"market": [100,98.5,102.3,...], "conviction": [100,103.2,97.1,...], "performance": [100,101.8,99.4,...]}}"""
+Two series needed:
+- Market: broad market performance with volatility, starting 100
+- Thesis: specific thesis performance reflecting the investment case, starting 100
+
+Include realistic market corrections, rallies, thesis-specific events. No linear growth.
+JSON: {{"market": [100,98.5,102.3,...], "thesis": [100,103.2,97.1,...]}}"""
                     messages = [{"role": "user", "content": prompt}]
                     
                     response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=300)
@@ -119,47 +125,43 @@ JSON: {{"market": [100,98.5,102.3,...], "conviction": [100,103.2,97.1,...], "per
                     import re
                     import json
                     
-                    # Try to find JSON object with three series first
+                    # Try to find JSON object with two series first
                     try:
-                        # Look for JSON object with market, conviction, performance arrays
-                        json_match = re.search(r'\{[^}]*"market"[^}]*"conviction"[^}]*"performance"[^}]*\}', response, re.DOTALL)
+                        # Look for JSON object with market and thesis arrays
+                        json_match = re.search(r'\{[^}]*"market"[^}]*"thesis"[^}]*\}', response, re.DOTALL)
                         if json_match:
                             json_str = json_match.group()
                             data_obj = json.loads(json_str)
                             
                             market_data = data_obj.get('market', [])
-                            conviction_data = data_obj.get('conviction', [])
-                            performance_data = data_obj.get('performance', [])
+                            thesis_data = data_obj.get('thesis', [])
                             
-                            if (len(market_data) >= months and len(conviction_data) >= months and len(performance_data) >= months):
+                            if (len(market_data) >= months and len(thesis_data) >= months):
                                 result = {
                                     'market_performance': [float(x) for x in market_data[:months]],
-                                    'thesis_conviction': [float(x) for x in conviction_data[:months]],
-                                    'combined_performance': [float(x) for x in performance_data[:months]]
+                                    'thesis_performance': [float(x) for x in thesis_data[:months]]
                                 }
-                                print(f"Generated 3-series LLM simulation data: {months} points each")
+                                print(f"Generated 2-series LLM simulation data: {months} points each")
                                 return result
                     except Exception as e:
-                        print(f"Failed to parse 3-series JSON: {e}")
+                        print(f"Failed to parse 2-series JSON: {e}")
                     
-                    # Fallback: try single array format
+                    # Fallback: try single array format and derive two series
                     try:
                         json_match = re.search(r'\[[\d\s,.\-]+\]', response)
                         if json_match:
                             json_str = json_match.group()
                             performance_data = json.loads(json_str)
                             if len(performance_data) >= months:
-                                single_series = [float(x) for x in performance_data[:months]]
-                                # Generate market and conviction from single series
-                                market_series = [100 + (x - 100) * 0.7 for x in single_series]  # Less volatile
-                                conviction_series = [100 + (x - 100) * 1.3 for x in single_series]  # More volatile
+                                thesis_series = [float(x) for x in performance_data[:months]]
+                                # Generate market as broader baseline
+                                market_series = [100 + (x - 100) * 0.6 for x in thesis_series]  # Market less volatile than thesis
                                 
                                 result = {
                                     'market_performance': market_series,
-                                    'thesis_conviction': conviction_series,
-                                    'combined_performance': single_series
+                                    'thesis_performance': thesis_series
                                 }
-                                print(f"Generated derived 3-series simulation data: {months} points each")
+                                print(f"Generated derived 2-series simulation data: {months} points each")
                                 return result
                     except Exception as e:
                         print(f"Failed to parse single array: {e}")
@@ -168,43 +170,51 @@ JSON: {{"market": [100,98.5,102.3,...], "conviction": [100,103.2,97.1,...], "per
                 print(f"LLM generation failed: {e}")
                 # Fall through to error handling below
         
-        # Generate realistic volatile simulation when Azure OpenAI times out
-        print("Generating realistic volatile simulation due to Azure OpenAI timeout")
+        # Extract thesis expectations for realistic simulation when Azure OpenAI times out
+        print("Azure OpenAI timeout - generating thesis-specific simulation")
         import random
-        import math
+        import re
         
-        # Create realistic market volatility patterns
+        # Extract expected growth/performance from thesis text
+        thesis_text = str(thesis) if hasattr(thesis, '__str__') else str(thesis.original_thesis if hasattr(thesis, 'original_thesis') else '')
+        
+        # Look for percentage growth expectations in thesis
+        growth_matches = re.findall(r'(\d+)%.*(?:growth|increase|up|gain)', thesis_text.lower())
+        expected_annual_growth = 0.15  # Default 15% if not found
+        if growth_matches:
+            expected_annual_growth = float(growth_matches[0]) / 100
+        
+        # Adjust for scenario
+        if scenario == 'bull':
+            expected_annual_growth *= 1.3
+        elif scenario == 'bear':
+            expected_annual_growth *= 0.4
+        
+        # Generate realistic two-series data
         market_data = [100.0]
-        conviction_data = [100.0]
-        performance_data = [100.0]
+        thesis_data = [100.0]
+        
+        monthly_thesis_growth = expected_annual_growth / 12
         
         for i in range(1, months):
-            # Market volatility with corrections and rallies
-            market_change = random.gauss(0.008, 0.035)  # Monthly return with volatility
-            if random.random() < 0.15:  # 15% chance of larger move
-                market_change *= random.choice([2.5, -1.8])
+            # Market baseline with volatility
+            market_change = random.gauss(0.008, 0.035)  # ~10% annual with volatility
+            if random.random() < 0.15:
+                market_change *= random.choice([2.2, -1.5])  # Corrections/rallies
             market_val = market_data[-1] * (1 + market_change)
             market_data.append(max(70.0, min(150.0, market_val)))
             
-            # Thesis conviction with different pattern
-            conviction_change = random.gauss(0.015, 0.045)  # Higher volatility
-            if scenario == 'bull':
-                conviction_change += 0.008
-            elif scenario == 'bear':
-                conviction_change -= 0.012
-            conviction_val = conviction_data[-1] * (1 + conviction_change)
-            conviction_data.append(max(75.0, min(160.0, conviction_val)))
-            
-            # Combined performance (weighted average with noise)
-            combined_change = 0.6 * market_change + 0.4 * conviction_change + random.gauss(0, 0.02)
-            combined_val = performance_data[-1] * (1 + combined_change)
-            performance_data.append(max(72.0, min(155.0, combined_val)))
+            # Thesis-specific performance based on extracted expectations
+            thesis_change = random.gauss(monthly_thesis_growth, 0.05)  # Target growth with volatility
+            if random.random() < 0.12:  # Thesis-specific events
+                thesis_change *= random.choice([1.8, 0.3])
+            thesis_val = thesis_data[-1] * (1 + thesis_change)
+            thesis_data.append(max(75.0, min(180.0, thesis_val)))
         
         return {
             'market_performance': [round(x, 1) for x in market_data],
-            'thesis_conviction': [round(x, 1) for x in conviction_data], 
-            'combined_performance': [round(x, 1) for x in performance_data],
-            '_note': 'Realistic simulation generated due to Azure OpenAI timeout'
+            'thesis_performance': [round(x, 1) for x in thesis_data],
+            '_note': f'Thesis-specific simulation: {expected_annual_growth*100:.0f}% annual target'
         }
     
     def _generate_algorithmic_performance(self, time_horizon: int, scenario: str, volatility: str) -> List[float]:

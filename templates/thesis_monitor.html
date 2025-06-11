@@ -506,8 +506,8 @@
         // Check if we have multi-series data (market, conviction, performance)
         const datasets = [];
         
-        if (performanceData.market_performance && performanceData.thesis_conviction && performanceData.combined_performance) {
-            // Three-series visualization
+        if (performanceData.market_performance && performanceData.thesis_performance) {
+            // Two-series visualization: Market vs Thesis
             datasets.push({
                 label: 'Market Performance',
                 data: performanceData.market_performance,
@@ -521,22 +521,10 @@
             });
             
             datasets.push({
-                label: 'Thesis Conviction',
-                data: performanceData.thesis_conviction,
+                label: 'Thesis Performance',
+                data: performanceData.thesis_performance,
                 borderColor: 'rgb(34, 197, 94)',
-                backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                fill: false,
-                tension: 0.1,
-                pointRadius: 3,
-                pointHoverRadius: 5,
-                borderWidth: 2
-            });
-            
-            datasets.push({
-                label: 'Combined Performance',
-                data: performanceData.combined_performance,
-                borderColor: 'rgb(59, 130, 246)',
-                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                backgroundColor: 'rgba(34, 197, 94, 0.2)',
                 fill: true,
                 tension: 0.1,
                 pointRadius: 4,
