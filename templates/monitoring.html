@@ -107,14 +107,14 @@
                         <div class="row">
                             {% for thesis in thesis_analyses %}
                                 <div class="col-md-6 mb-3">
-                                    <div class="card border border-secondary">
-                                        <div class="card-body bg-white">
-                                            <h6 class="card-title text-truncate text-dark">{{ thesis.title }}</h6>
-                                            <p class="card-text small text-secondary">
+                                    <div class="card bg-dark border-secondary">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-truncate text-light">{{ thesis.title }}</h6>
+                                            <p class="card-text small text-light opacity-75">
                                                 {{ thesis.core_claim[:120] }}{% if thesis.core_claim|length > 120 %}...{% endif %}
                                             </p>
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <small class="text-muted">
+                                                <small class="text-light opacity-50">
                                                     <i class="fas fa-calendar"></i> 
                                                     {{ thesis.created_at.strftime('%m/%d/%Y') }}
                                                 </small>
@@ -122,7 +122,7 @@
                                                     {% set signal_count = thesis.signals|length %}
                                                     <span class="badge bg-success me-1">{{ signal_count }} signals</span>
                                                     <a href="{{ url_for('monitor_thesis', id=thesis.id) }}" 
-                                                       class="btn btn-sm btn-outline-primary">
+                                                       class="btn btn-sm btn-outline-light">
                                                         <i class="fas fa-chart-line"></i> Monitor
                                                     </a>
                                                 </div>
@@ -160,10 +160,10 @@
                         <div class="row">
                             {% for signal, thesis_title in active_signals %}
                                 <div class="col-md-6 mb-3">
-                                    <div class="card border border-secondary">
-                                        <div class="card-body bg-white">
-                                            <h6 class="card-title text-dark">{{ signal.signal_name }}</h6>
-                                            <p class="card-text small text-dark">
+                                    <div class="card bg-dark border-secondary">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-light">{{ signal.signal_name }}</h6>
+                                            <p class="card-text small text-light opacity-75">
                                                 <strong>Thesis:</strong> {{ thesis_title }}<br>
                                                 <strong>Type:</strong> {{ signal.signal_type }}<br>
                                                 <strong>Status:</strong> 
@@ -171,7 +171,7 @@
                                                     {{ signal.status }}
                                                 </span>
                                             </p>
-                                            <small class="text-muted">
+                                            <small class="text-light opacity-50">
                                                 <i class="fas fa-clock"></i>
                                                 Last checked: {{ signal.last_checked.strftime('%m/%d %H:%M') if signal.last_checked else 'Never' }}
                                             </small>
@@ -464,51 +464,26 @@
 </script>
 
 <style>
-/* Comprehensive text visibility fixes for monitoring dashboard */
-.card-body {
-    background-color: white !important;
+/* Balanced dark theme for monitoring dashboard */
+.card.bg-dark {
+    background-color: #2d3748 !important;
+    border-color: #4a5568 !important;
 }
 
-.card-title {
-    color: #212529 !important;
+.card.bg-dark .card-body {
+    background-color: #2d3748 !important;
 }
 
-.card-text {
-    color: #212529 !important;
+.card.bg-dark .text-light {
+    color: #f7fafc !important;
 }
 
-.text-dark {
-    color: #212529 !important;
+.card.bg-dark .opacity-75 {
+    opacity: 0.75 !important;
 }
 
-.text-secondary {
-    color: #6c757d !important;
-}
-
-.bg-light .card-title,
-.bg-light .card-text,
-.bg-light p,
-.bg-light h6,
-.bg-light small {
-    color: #212529 !important;
-}
-
-/* Ensure all monitoring cards have proper contrast */
-.card.border-0.bg-light {
-    background-color: #f8f9fa !important;
-    border: 1px solid #dee2e6 !important;
-}
-
-.card.border-0.bg-light .card-body {
-    background-color: white !important;
-}
-
-.card.border-0.bg-light .card-title {
-    color: #212529 !important;
-}
-
-.card.border-0.bg-light .card-text {
-    color: #212529 !important;
+.card.bg-dark .opacity-50 {
+    opacity: 0.5 !important;
 }
 
 /* Status metrics styling */
@@ -523,28 +498,43 @@
     color: white !important;
 }
 
-/* Button text should be properly contrasted */
-.btn-outline-primary {
-    color: #0d6efd !important;
+/* Button styling for dark cards */
+.btn-outline-light {
+    color: #f7fafc !important;
+    border-color: #f7fafc !important;
 }
 
-.btn-outline-secondary {
-    color: #6c757d !important;
+.btn-outline-light:hover {
+    background-color: #f7fafc !important;
+    color: #2d3748 !important;
 }
 
-/* Force all small text to be visible */
-small {
-    color: #6c757d !important;
+/* Main container cards should remain light */
+.card:not(.bg-dark) .card-body {
+    background-color: white !important;
 }
 
+.card:not(.bg-dark) .card-title {
+    color: #212529 !important;
+}
+
+.card:not(.bg-dark) .card-text {
+    color: #212529 !important;
+}
+
+/* Header text */
+.card-header h5,
+.card-header h6 {
+    color: #212529 !important;
+}
+
+/* Ensure readability */
 .text-muted {
     color: #6c757d !important;
 }
 
-/* Card headers should be dark */
-.card-header h5,
-.card-header h6 {
-    color: #212529 !important;
+.text-light {
+    color: #f7fafc !important;
 }
 </style>
 {% endblock %}
