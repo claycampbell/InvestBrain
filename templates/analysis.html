@@ -822,17 +822,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         const signals = signalsByLevel[level] || [];
                         const hasSignals = signals.length > 0;
                         
-                        return `
-                            ${index > 0 ? '<i class="fas fa-arrow-right signal-journey-arrow"></i>' : ''}
+                        let stepHtml = '';
+                        if (index > 0) {
+                            stepHtml += '<i class="fas fa-arrow-right signal-journey-arrow"></i>';
+                        }
+                        stepHtml += `
                             <div class="signal-journey-step">
                                 <div class="signal-step-icon bg-${info.color} text-white">
-                                    <i class="${info.icon}"></i>
-                                    ${hasSignals ? `<span class="signal-step-count">${signals.length}</span>` : ''}
+                                    <i class="${info.icon}"></i>`;
+                        if (hasSignals) {
+                            stepHtml += `<span class="signal-step-count">${signals.length}</span>`;
+                        }
+                        stepHtml += `
                                 </div>
                                 <div class="signal-step-name">${info.name}</div>
                                 <div class="signal-step-desc">${info.description}</div>
                             </div>
                         `;
+                        return stepHtml;
                     }).join('')}
                 </div>
                 
