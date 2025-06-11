@@ -550,10 +550,14 @@
         if (data.events && data.events.length > 0) {
             chartConfig.data.datasets.push({
                 label: 'Key Events',
-                data: data.events.map(event => ({
-                    x: event.date,
-                    y: event.impact_value
-                })),
+                data: data.events.map((event, index) => {
+                    // Use month index to align with timeline
+                    const monthIndex = event.month ? event.month - 1 : Math.floor(index * timeline.length / data.events.length);
+                    return {
+                        x: timeline[monthIndex] || timeline[0],
+                        y: event.impact_value || performanceData[monthIndex] || 100
+                    };
+                }),
                 type: 'scatter',
                 backgroundColor: 'rgba(255, 99, 132, 0.8)',
                 borderColor: 'rgb(255, 99, 132)',
