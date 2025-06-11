@@ -405,6 +405,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 <!-- Right Column: Signals & Monitoring -->
                 <div class="col-lg-6">
+                    <!-- Signal Discovery Journey Map -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-route text-info"></i> Signal Discovery Journey</h6>
+                        </div>
+                        <div class="card-body">
+                            ${generateSignalJourneyMap(signalData.signals_by_level)}
+                        </div>
+                    </div>
+
                     <!-- Signal Classification -->
                     <div class="card mb-4">
                         <div class="card-header">
@@ -629,6 +639,211 @@ document.addEventListener('DOMContentLoaded', function() {
                         ` : ''}
                     </div>
                 `).join('')}
+            </div>
+        `;
+    }
+    
+    function generateSignalJourneyMap(signalsByLevel) {
+        if (!signalsByLevel) return '<p class="text-muted">No signal discovery journey available</p>';
+        
+        const levelOrder = [
+            'Level_0_Raw_Economic',
+            'Level_1_Simple_Aggregation', 
+            'Level_2_Derived_Metrics',
+            'Level_3_Complex_Ratios',
+            'Level_4_Market_Sentiment'
+        ];
+        
+        const levelInfo = {
+            'Level_0_Raw_Economic': { 
+                icon: 'fas fa-industry', 
+                name: 'Raw Economic', 
+                description: 'Direct economic activity',
+                color: 'success'
+            },
+            'Level_1_Simple_Aggregation': { 
+                icon: 'fas fa-calculator', 
+                name: 'Simple Aggregation', 
+                description: 'Basic data compilation',
+                color: 'info'
+            },
+            'Level_2_Derived_Metrics': { 
+                icon: 'fas fa-chart-line', 
+                name: 'Derived Metrics', 
+                description: 'Calculated indicators',
+                color: 'warning'
+            },
+            'Level_3_Complex_Ratios': { 
+                icon: 'fas fa-cogs', 
+                name: 'Complex Ratios', 
+                description: 'Advanced relationships',
+                color: 'secondary'
+            },
+            'Level_4_Market_Sentiment': { 
+                icon: 'fas fa-brain', 
+                name: 'Market Sentiment', 
+                description: 'Behavioral indicators',
+                color: 'danger'
+            }
+        };
+        
+        return `
+            <div class="signal-journey-container">
+                <style>
+                    .signal-journey-path {
+                        position: relative;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        margin: 20px 0;
+                        overflow-x: auto;
+                        padding: 10px 0;
+                    }
+                    
+                    .signal-journey-step {
+                        position: relative;
+                        text-align: center;
+                        min-width: 120px;
+                        opacity: 0;
+                        transform: translateY(20px);
+                        animation: signalDiscovery 0.8s ease-out forwards;
+                    }
+                    
+                    .signal-journey-step:nth-child(1) { animation-delay: 0.2s; }
+                    .signal-journey-step:nth-child(2) { animation-delay: 0.4s; }
+                    .signal-journey-step:nth-child(3) { animation-delay: 0.6s; }
+                    .signal-journey-step:nth-child(4) { animation-delay: 0.8s; }
+                    .signal-journey-step:nth-child(5) { animation-delay: 1.0s; }
+                    
+                    .signal-step-icon {
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin: 0 auto 8px;
+                        position: relative;
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .signal-step-icon:hover {
+                        transform: scale(1.1);
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    }
+                    
+                    .signal-step-count {
+                        position: absolute;
+                        top: -5px;
+                        right: -5px;
+                        background: #fff;
+                        border: 2px solid currentColor;
+                        border-radius: 50%;
+                        width: 20px;
+                        height: 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 10px;
+                        font-weight: bold;
+                        animation: countPulse 2s ease-in-out infinite;
+                    }
+                    
+                    .signal-step-name {
+                        font-size: 11px;
+                        font-weight: 600;
+                        margin-bottom: 2px;
+                    }
+                    
+                    .signal-step-desc {
+                        font-size: 9px;
+                        color: #666;
+                        line-height: 1.2;
+                    }
+                    
+                    .signal-journey-arrow {
+                        color: #007bff;
+                        font-size: 16px;
+                        margin: 0 10px;
+                        opacity: 0;
+                        animation: arrowAppear 0.5s ease-out forwards;
+                    }
+                    
+                    .signal-journey-arrow:nth-of-type(2) { animation-delay: 0.5s; }
+                    .signal-journey-arrow:nth-of-type(4) { animation-delay: 0.7s; }
+                    .signal-journey-arrow:nth-of-type(6) { animation-delay: 0.9s; }
+                    .signal-journey-arrow:nth-of-type(8) { animation-delay: 1.1s; }
+                    
+                    @keyframes signalDiscovery {
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+                    
+                    @keyframes arrowAppear {
+                        to {
+                            opacity: 1;
+                        }
+                    }
+                    
+                    @keyframes countPulse {
+                        0%, 100% { transform: scale(1); }
+                        50% { transform: scale(1.1); }
+                    }
+                    
+                    .discovery-summary {
+                        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin-top: 20px;
+                        text-align: center;
+                        opacity: 0;
+                        animation: summaryAppear 0.8s ease-out 1.5s forwards;
+                    }
+                    
+                    @keyframes summaryAppear {
+                        to {
+                            opacity: 1;
+                        }
+                    }
+                    
+                    .total-signals {
+                        font-size: 24px;
+                        font-weight: bold;
+                        color: #007bff;
+                        margin-bottom: 5px;
+                    }
+                </style>
+                
+                <div class="signal-journey-path">
+                    ${levelOrder.map((level, index) => {
+                        const info = levelInfo[level];
+                        const signals = signalsByLevel[level] || [];
+                        const hasSignals = signals.length > 0;
+                        
+                        return `
+                            ${index > 0 ? '<i class="fas fa-arrow-right signal-journey-arrow"></i>' : ''}
+                            <div class="signal-journey-step">
+                                <div class="signal-step-icon bg-${info.color} text-white">
+                                    <i class="${info.icon}"></i>
+                                    ${hasSignals ? `<span class="signal-step-count">${signals.length}</span>` : ''}
+                                </div>
+                                <div class="signal-step-name">${info.name}</div>
+                                <div class="signal-step-desc">${info.description}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                
+                <div class="discovery-summary">
+                    <div class="total-signals">${Object.values(signalsByLevel).flat().length}</div>
+                    <div class="small text-muted">Total Signals Discovered</div>
+                    <div class="small mt-2">
+                        <i class="fas fa-route text-info"></i> 
+                        AI analyzed thesis through 5-level signal classification framework
+                    </div>
+                </div>
             </div>
         `;
     }
