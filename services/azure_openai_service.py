@@ -40,10 +40,9 @@ class AzureOpenAIService:
         
         try:
             response = self.client.chat.completions.create(
-                model=self.deployment_name,
                 messages=messages,
-                temperature=temperature,
-                max_completion_tokens=max_tokens
+                max_completion_tokens=max_tokens,
+                model=self.deployment_name
             )
             
             return response.choices[0].message.content
@@ -102,7 +101,7 @@ class AzureOpenAIService:
         ]
         
         try:
-            response = self.generate_completion(messages, temperature=0.3)
+            response = self.generate_completion(messages)
             
             # Ensure we have a valid response
             if not response:
