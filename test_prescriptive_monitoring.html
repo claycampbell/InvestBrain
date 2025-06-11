@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescriptive Monitoring Test</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h3>Prescriptive Monitoring Strategy Example</h3>
+        <div id="monitoring-display"></div>
+    </div>
+
+    <script>
+        // Test data with the new prescriptive monitoring format
+        const testMonitoringPlan = {
+            "objective": "Continuously assess whether Palantir's government expansion and enterprise AI adoption justify $10B revenue target by monitoring contract wins, renewal rates, and competitive positioning",
+            "data_pulls": [
+                {
+                    "category": "Government Contract Activity",
+                    "metrics": ["New contract awards", "Contract value", "Renewal rates"],
+                    "data_source": "Xpressfeed",
+                    "query_template": "SELECT Ticker, FILING_DATE, REVENUE, CONTRACT_BACKLOG FROM Xpressfeed WHERE Ticker = 'PLTR' ORDER BY FILING_DATE DESC LIMIT 8;",
+                    "frequency": "quarterly"
+                },
+                {
+                    "category": "Enterprise Adoption Metrics",
+                    "metrics": ["New customer acquisitions", "Average contract value", "Churn rate"],
+                    "data_source": "FactSet",
+                    "query_template": "SELECT Ticker, PRICE, MARKET_VALUE FROM FactSet WHERE Ticker = 'PLTR';",
+                    "frequency": "monthly"
+                }
+            ],
+            "alert_logic": [
+                {
+                    "frequency": "quarterly",
+                    "condition": "Government revenue growth <15% QoQ while commercial revenue flat",
+                    "action": "Flag potential contract award delays or competitive losses"
+                },
+                {
+                    "frequency": "monthly",
+                    "condition": "Customer acquisition cost rises >20% while ACV stagnates",
+                    "action": "Review enterprise sales efficiency and market saturation"
+                }
+            ],
+            "decision_triggers": [
+                {
+                    "condition": "Two consecutive quarters with government revenue decline >10% AND commercial growth <20%",
+                    "action": "sell"
+                },
+                {
+                    "condition": "Government backlog grows >30% AND enterprise ACV increases >25%",
+                    "action": "buy"
+                }
+            ],
+            "review_schedule": "Formal review within one week of each quarterly earnings release"
+        };
+
+        function generateMonitoringStrategy(strategy) {
+            if (!strategy) return '<p class="text-muted">No monitoring recommendations</p>';
+            
+            const objective = strategy.objective || 'Monitor thesis performance and key assumptions';
+            const dataPulls = strategy.data_pulls || [];
+            const alertLogic = strategy.alert_logic || [];
+            const decisionTriggers = strategy.decision_triggers || [];
+            const reviewSchedule = strategy.review_schedule || 'Monthly';
+            
+            return `
+                <div class="mb-4">
+                    <h6 class="text-primary">Monitoring Objective</h6>
+                    <p class="small">${objective}</p>
+                </div>
+                
+                ${dataPulls.length > 0 ? `
+                    <div class="mb-4">
+                        <h6 class="text-primary">Key Metrics & Data Pulls</h6>
+                        ${dataPulls.map((pull, index) => `
+                            <div class="border rounded p-2 mb-2 bg-secondary">
+                                <div class="small"><strong>${String.fromCharCode(65 + index)}. ${pull.category}</strong></div>
+                                <div class="small text-light mt-1">
+                                    • Metrics: ${(pull.metrics || []).join(', ')}<br>
+                                    • Source: <span class="badge bg-info text-dark">${pull.data_source}</span><br>
+                                    • Frequency: ${pull.frequency}
+                                </div>
+                                ${pull.query_template ? `
+                                    <div class="mt-2">
+                                        <code class="small bg-dark text-light p-1 rounded d-block">${pull.query_template}</code>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                
+                ${alertLogic.length > 0 ? `
+                    <div class="mb-4">
+                        <h6 class="text-primary">Alert Logic</h6>
+                        ${alertLogic.map(alert => `
+                            <div class="small mb-2">
+                                • <span class="badge bg-warning text-dark">${alert.frequency}</span>: ${alert.condition}
+                                <div class="text-muted ms-3">→ ${alert.action}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                
+                ${decisionTriggers.length > 0 ? `
+                    <div class="mb-4">
+                        <h6 class="text-primary">Decision Triggers</h6>
+                        ${decisionTriggers.map(trigger => `
+                            <div class="small mb-2">
+                                • ${trigger.condition}
+                                <div class="text-muted ms-3">→ <span class="badge bg-${trigger.action === 'sell' ? 'danger' : trigger.action === 'buy' ? 'success' : 'secondary'}">${trigger.action.toUpperCase()}</span></div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                
+                <div class="mb-3">
+                    <h6 class="text-primary">Review Schedule</h6>
+                    <span class="badge bg-info">${reviewSchedule}</span>
+                </div>
+            `;
+        }
+
+        // Display the test monitoring plan
+        document.getElementById('monitoring-display').innerHTML = generateMonitoringStrategy(testMonitoringPlan);
+    </script>
+</body>
+</html>

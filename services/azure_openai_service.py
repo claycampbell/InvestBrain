@@ -139,7 +139,9 @@ Respond with valid JSON only:
         
         user_prompt = f"""Analyze this thesis: {thesis_text}
 
-Provide JSON response only."""
+Create a comprehensive monitoring plan with specific data sources (Xpressfeed/FactSet), SQL query templates, alert conditions, and decision triggers like the Nutrien example.
+
+Provide complete JSON response with all monitoring_plan fields populated."""
         
         messages = [
             {"role": "system", "content": system_prompt},
