@@ -528,6 +528,16 @@ def simulate_thesis(thesis_id):
             simulation_type=simulation_type
         )
         
+        # Check if simulation returned an error due to missing Azure OpenAI credentials
+        if result.get('error'):
+            return jsonify({
+                'error': True,
+                'message': result.get('message', 'Azure OpenAI service unavailable'),
+                'description': result.get('description', 'Valid API credentials required for LLM-generated simulation data'),
+                'action_needed': result.get('action_needed', 'Configure Azure OpenAI credentials'),
+                'credential_setup_required': True
+            }), 400
+        
         return jsonify(result)
         
     except Exception as e:

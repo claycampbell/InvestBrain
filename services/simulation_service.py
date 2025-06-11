@@ -31,22 +31,40 @@ class SimulationService:
             thesis, time_horizon, scenario, volatility
         )
         
+        # Check if performance generation returned an error
+        if isinstance(performance_data, dict) and performance_data.get('error'):
+            return {
+                'error': True,
+                'message': performance_data.get('message', 'Azure OpenAI service unavailable'),
+                'description': performance_data.get('description', 'Valid API credentials required'),
+                'action_needed': performance_data.get('action_needed', 'Configure Azure OpenAI credentials'),
+                'chart_data': None,
+                'events': [],
+                'scenario_summary': 'Simulation requires Azure OpenAI credentials'
+            }
+        
         # Generate timeline labels
         timeline = self._generate_timeline(time_horizon)
         
         # Generate events if requested
         events = []
-        if include_events:
-            events = self._generate_event_scenarios(
-                thesis, time_horizon, scenario, performance_data
-            )
+        if include_events and isinstance(performance_data, list):
+            try:
+                events = self._generate_event_scenarios(
+                    thesis, time_horizon, scenario, performance_data
+                )
+            except Exception as e:
+                print(f"Event generation failed: {e}")
+                events = []
         
         # Create chart configuration
         chart_config = self._create_chart_config(thesis, scenario, simulation_type)
         
         return {
-            'performance_data': performance_data,
-            'timeline': timeline,
+            'chart_data': {
+                'performance_data': performance_data,
+                'timeline': timeline
+            },
             'events': events,
             'chart_config': chart_config,
             'scenario_summary': self._create_scenario_summary(thesis, scenario, time_horizon),
@@ -63,7 +81,7 @@ class SimulationService:
         }
     
     def _generate_performance_simulation(self, thesis, time_horizon: int, 
-                                       scenario: str, volatility: str) -> List[float]:
+                                       scenario: str, volatility: str):
         """
         Generate realistic performance data using Azure OpenAI simulation
         """
@@ -94,7 +112,12 @@ class SimulationService:
                 print(f"LLM generation failed: {e}")
         
         # Return error state when Azure OpenAI is not available
-        raise Exception("Azure OpenAI service unavailable - please configure valid API credentials for LLM-generated simulation data")
+        return {
+            'error': True,
+            'message': 'Azure OpenAI service unavailable',
+            'description': 'Valid API credentials required for LLM-generated simulation data',
+            'action_needed': 'Configure Azure OpenAI credentials'
+        }
     
     def _generate_algorithmic_performance(self, time_horizon: int, scenario: str, volatility: str) -> List[float]:
         """
