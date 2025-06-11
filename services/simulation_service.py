@@ -132,6 +132,7 @@ JSON: {{"market": [100,98.5,102.3,...], "thesis": [100,103.2,97.1,...]}}"""
                     print("Azure OpenAI successfully generated response")
                     
                     print(f"Azure OpenAI response received: {len(response)} characters")
+                    print(f"Full response: {response}")
                     print(f"Response preview: {response[:200]}...")
                     
                     # Extract numbers from response with improved parsing
@@ -140,24 +141,52 @@ JSON: {{"market": [100,98.5,102.3,...], "thesis": [100,103.2,97.1,...]}}"""
                     
                     # Try to find JSON object with two series first
                     try:
-                        # Look for JSON object with market and thesis arrays
-                        json_match = re.search(r'\{[^}]*"market"[^}]*"thesis"[^}]*\}', response, re.DOTALL)
-                        if json_match:
-                            json_str = json_match.group()
-                            data_obj = json.loads(json_str)
+                        # Clean the response and try direct JSON parsing first
+                        cleaned_response = response.strip()
+                        if cleaned_response.startswith('```json'):
+                            cleaned_response = cleaned_response[7:]
+                        if cleaned_response.endswith('```'):
+                            cleaned_response = cleaned_response[:-3]
+                        cleaned_response = cleaned_response.strip()
+                        
+                        # Try direct parsing
+                        data_obj = json.loads(cleaned_response)
+                        
+                        market_data = data_obj.get('market', [])
+                        thesis_data = data_obj.get('thesis', [])
+                        
+                        if (len(market_data) >= months and len(thesis_data) >= months):
+                            result = {
+                                'market_performance': [float(x) for x in market_data[:months]],
+                                'thesis_performance': [float(x) for x in thesis_data[:months]]
+                            }
+                            print(f"Generated 2-series LLM simulation data: {months} points each")
+                            return result
                             
-                            market_data = data_obj.get('market', [])
-                            thesis_data = data_obj.get('thesis', [])
-                            
-                            if (len(market_data) >= months and len(thesis_data) >= months):
-                                result = {
-                                    'market_performance': [float(x) for x in market_data[:months]],
-                                    'thesis_performance': [float(x) for x in thesis_data[:months]]
-                                }
-                                print(f"Generated 2-series LLM simulation data: {months} points each")
-                                return result
+                        print(f"Data arrays too short: market={len(market_data)}, thesis={len(thesis_data)}, needed={months}")
+                        
                     except Exception as e:
-                        print(f"Failed to parse 2-series JSON: {e}")
+                        print(f"Direct JSON parsing failed: {e}")
+                        
+                        # Fallback: Look for JSON object with market and thesis arrays using regex
+                        try:
+                            json_match = re.search(r'\{[^}]*"market"[^}]*"thesis"[^}]*\}', response, re.DOTALL)
+                            if json_match:
+                                json_str = json_match.group()
+                                data_obj = json.loads(json_str)
+                                
+                                market_data = data_obj.get('market', [])
+                                thesis_data = data_obj.get('thesis', [])
+                                
+                                if (len(market_data) >= months and len(thesis_data) >= months):
+                                    result = {
+                                        'market_performance': [float(x) for x in market_data[:months]],
+                                        'thesis_performance': [float(x) for x in thesis_data[:months]]
+                                    }
+                                    print(f"Generated 2-series LLM simulation data: {months} points each")
+                                    return result
+                        except Exception as regex_e:
+                            print(f"Regex JSON parsing also failed: {regex_e}")
                     
                     # Fallback: try single array format and derive two series
                     try:
