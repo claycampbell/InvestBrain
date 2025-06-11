@@ -105,16 +105,16 @@ class SimulationService:
                     thesis_text = str(thesis) if hasattr(thesis, '__str__') else str(thesis.original_thesis if hasattr(thesis, 'original_thesis') else 'general investment')
                     
                     # Enhanced prompt for thesis-specific simulation
-                    prompt = f"""Generate {months} realistic monthly values for investment thesis simulation:
+                    prompt = f"""Generate {months} monthly values for investment thesis simulation:
 Thesis: {thesis_text[:200]}...
 Scenario: {scenario}
 
 Two series needed:
-- Market: broad market performance with volatility, starting 100
-- Thesis: specific thesis performance reflecting the investment case, starting 100
+- Market: broad market performance with realistic volatility, corrections, rallies, starting 100
+- Thesis: smooth linear forecast reflecting analyst conviction and thesis expectations, starting 100
 
-Include realistic market corrections, rallies, thesis-specific events. No linear growth.
-JSON: {{"market": [100,98.5,102.3,...], "thesis": [100,103.2,97.1,...]}}"""
+Market should show volatility. Thesis should be a smooth, predictable trajectory reflecting analyst forecast.
+JSON: {{"market": [100,98.5,102.3,...], "thesis": [100,102.1,104.3,...]}}"""
                     messages = [{"role": "user", "content": prompt}]
                     
                     response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=300)
@@ -246,12 +246,9 @@ JSON: {{"market": [100,98.5,102.3,...], "thesis": [100,103.2,97.1,...]}}"""
             market_val = market_data[-1] * (1 + market_change)
             market_data.append(max(70.0, min(150.0, market_val)))
             
-            # Thesis-specific performance based on extracted expectations
-            thesis_change = random.gauss(monthly_thesis_growth, 0.05)  # Target growth with volatility
-            if random.random() < 0.12:  # Thesis-specific events
-                thesis_change *= random.choice([1.8, 0.3])
-            thesis_val = thesis_data[-1] * (1 + thesis_change)
-            thesis_data.append(max(75.0, min(180.0, thesis_val)))
+            # Thesis: smooth linear progression (analyst forecast)
+            thesis_val = thesis_data[-1] * (1 + monthly_thesis_growth)
+            thesis_data.append(round(thesis_val, 1))
         
         return {
             'market_performance': [round(x, 1) for x in market_data],
