@@ -70,7 +70,7 @@ class DocumentProcessor:
                     'text_content': text_content.strip(),
                     'tables': tables,
                     'key_metrics': key_metrics,
-                    'metadata': metadata,
+                    'document_metadata': metadata,
                     'summary': self._create_document_summary(text_content, tables, metadata)
                 }
                 
@@ -128,7 +128,7 @@ class DocumentProcessor:
                 'sheets_data': sheets_data,
                 'tables': all_tables,
                 'key_metrics': key_metrics,
-                'metadata': metadata,
+                'document_metadata': metadata,
                 'summary': self._create_excel_summary(sheets_data, metadata)
             }
             
@@ -168,7 +168,7 @@ class DocumentProcessor:
                 'data': data,
                 'tables': [table],
                 'key_metrics': key_metrics,
-                'metadata': metadata,
+                'document_metadata': metadata,
                 'summary': self._create_csv_summary(df, metadata)
             }
             

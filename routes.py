@@ -137,7 +137,7 @@ def upload_document():
                     file_size=os.path.getsize(file_path),
                     upload_path=file_path,
                     processed_data=processed_data,
-                    metadata={'original_filename': file.filename},
+                    document_metadata={'original_filename': file.filename},
                     thesis_analysis_id=int(thesis_id) if thesis_id else None
                 )
                 

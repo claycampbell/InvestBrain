@@ -40,7 +40,7 @@ class DocumentUpload(db.Model):
     file_size = db.Column(db.Integer)
     upload_path = db.Column(db.String(500))
     processed_data = db.Column(JSON)
-    metadata = db.Column(JSON)
+    document_metadata = db.Column(JSON)
     thesis_analysis_id = db.Column(db.Integer, db.ForeignKey('thesis_analysis.id'))
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
@@ -53,7 +53,7 @@ class DocumentUpload(db.Model):
             'file_type': self.file_type,
             'file_size': self.file_size,
             'processed_data': self.processed_data,
-            'metadata': self.metadata,
+            'document_metadata': self.document_metadata,
             'thesis_analysis_id': self.thesis_analysis_id,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
