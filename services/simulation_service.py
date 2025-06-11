@@ -67,56 +67,39 @@ class SimulationService:
         """
         Generate realistic performance data using Azure OpenAI simulation
         """
-        try:
-            # Create intelligent simulation prompt
-            prompt = f"""
-            Generate a realistic {time_horizon}-year monthly performance simulation for this investment thesis:
-            
-            Thesis: {thesis.title}
-            Core Claim: {thesis.core_claim or 'Investment opportunity analysis'}
-            Scenario: {scenario}
-            Volatility: {volatility}
-            
-            Create {time_horizon * 12} monthly data points showing cumulative performance starting at 100.
-            Include realistic market behavior:
-            - {scenario} scenario characteristics
-            - {volatility} volatility patterns
-            - Market cycles and corrections
-            - Seasonal effects where applicable
-            
-            Scenario guidelines:
-            - bull: 8-15% annual growth with moderate volatility
-            - base: 3-8% annual growth with normal volatility  
-            - bear: -5% to +2% annual with higher volatility
-            - stress: -20% to -5% annual with extreme volatility
-            
-            Return ONLY a JSON array of {time_horizon * 12} numbers:
-            [100, 102.1, 99.8, 104.5, ...]
-            """
-            
-            messages = [
-                {"role": "system", "content": "You are a quantitative financial analyst. Generate realistic market performance data as a JSON array."},
-                {"role": "user", "content": prompt}
-            ]
-            
-            response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=2000)
-            
-            # Clean and parse the response
-            response_cleaned = response.strip()
-            if response_cleaned.startswith('```json'):
-                response_cleaned = response_cleaned[7:]
-            if response_cleaned.endswith('```'):
-                response_cleaned = response_cleaned[:-3]
-            
-            performance_data = json.loads(response_cleaned.strip())
-            
-            if isinstance(performance_data, list) and len(performance_data) == time_horizon * 12:
-                # Validate data is reasonable
-                if all(isinstance(x, (int, float)) and 50 <= x <= 300 for x in performance_data):
-                    return performance_data
+        # Check if AI service is available and responsive
+        if self.ai_service and self.ai_service.is_available():
+            try:
+                # Quick test with minimal prompt
+                test_messages = [{"role": "user", "content": "Generate 3 numbers: [100, 101, 102]"}]
+                test_response = self.ai_service.generate_completion(test_messages, temperature=1.0, max_tokens=50)
+                
+                if test_response and '[' in test_response:
+                    # AI is responsive, try full generation
+                    prompt = f"""Generate {time_horizon * 12} monthly values for {scenario} scenario starting at 100: [100, 102.1, ...]"""
                     
-        except Exception as e:
-            print(f"Azure OpenAI simulation generation failed: {e}")
+                    messages = [{"role": "user", "content": prompt}]
+                    response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=1000)
+                    
+                    # Parse response
+                    response_cleaned = response.strip()
+                    if '```' in response_cleaned:
+                        start = response_cleaned.find('[')
+                        end = response_cleaned.rfind(']') + 1
+                        if start != -1 and end > start:
+                            response_cleaned = response_cleaned[start:end]
+                    
+                    performance_data = json.loads(response_cleaned.strip())
+                    
+                    if isinstance(performance_data, list) and len(performance_data) == time_horizon * 12:
+                        if all(isinstance(x, (int, float)) and 20 <= x <= 500 for x in performance_data):
+                            print(f"Successfully generated LLM-based simulation data with {len(performance_data)} points")
+                            return performance_data
+                            
+            except Exception as e:
+                print(f"LLM generation failed, using enhanced algorithmic simulation: {e}")
+        else:
+            print("Azure OpenAI service not available, using enhanced algorithmic simulation")
         
         # Fallback to algorithmic generation only if AI fails
         return self._generate_algorithmic_performance(time_horizon, scenario, volatility)
@@ -179,74 +162,62 @@ class SimulationService:
             if not signals_list:
                 signals_list = ["Quarterly Revenue Growth", "Operating Margin", "Free Cash Flow"]
             
-            prompt = f"""
-            Generate 3-5 realistic market events over {time_horizon} years for this investment thesis:
+            # Simplified prompt for faster generation
+            prompt = f"""Generate 4 market events for {thesis.title} over {time_horizon} years.
             
-            Thesis: {thesis.title}
-            Core Claim: {thesis.core_claim or 'Investment opportunity analysis'}
-            Scenario: {scenario}
-            Available Signals: {', '.join(signals_list)}
+Scenario: {scenario}
+Signals: {', '.join(signals_list[:3])}
+
+JSON format: [{{"month": 6, "title": "Event Title", "description": "Brief description", "impact_type": "positive", "notification_triggered": true, "signals_affected": ["Signal Name"]}}]"""
             
-            Create events that would realistically impact this thesis, including:
-            - Earnings announcements, regulatory changes, market corrections
-            - Industry developments, competitive threats, macroeconomic events
-            - Technology disruptions, geopolitical events
+            messages = [{"role": "user", "content": prompt}]
             
-            For each event:
-            - Timing: month 1-{time_horizon * 12}
-            - Realistic title and description
-            - Impact type: positive/negative/neutral
-            - Whether it triggers notifications
-            - Which signals are affected
+            # Try with shorter timeout
+            import signal
+            def timeout_handler(signum, frame):
+                raise TimeoutError("Event generation timeout")
             
-            Return ONLY valid JSON:
-            [{{
-                "month": 8,
-                "title": "Q2 Earnings Beat Expectations",
-                "description": "Company reports stronger than expected quarterly results",
-                "impact_type": "positive",
-                "notification_triggered": true,
-                "signals_affected": ["Quarterly Revenue Growth", "Operating Margin"]
-            }}]
-            """
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(15)  # 15 second timeout
             
-            messages = [
-                {"role": "system", "content": "You are a financial analyst. Generate realistic market events as JSON array."},
-                {"role": "user", "content": prompt}
-            ]
-            
-            response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=1500)
-            
-            # Clean and parse the response
-            response_cleaned = response.strip()
-            if response_cleaned.startswith('```json'):
-                response_cleaned = response_cleaned[7:]
-            if response_cleaned.endswith('```'):
-                response_cleaned = response_cleaned[:-3]
-            
-            events_data = json.loads(response_cleaned.strip())
-            
-            if isinstance(events_data, list):
-                # Process and format events
-                formatted_events = []
-                for event in events_data:
-                    month = event.get('month', 1)
-                    if 1 <= month <= len(performance_data):
-                        formatted_event = {
-                            'date': self._month_to_date(month, time_horizon),
-                            'title': event.get('title', 'Market Event'),
-                            'description': event.get('description', 'Market development'),
-                            'impact_type': event.get('impact_type', 'neutral'),
-                            'impact_value': performance_data[month - 1] if month <= len(performance_data) else 100,
-                            'notification_triggered': event.get('notification_triggered', False),
-                            'signals_affected': event.get('signals_affected', [])
-                        }
-                        formatted_events.append(formatted_event)
+            try:
+                response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=800)
+                signal.alarm(0)
                 
-                return formatted_events[:6]  # Limit to 6 events
+                # Parse response
+                response_cleaned = response.strip()
+                if '```' in response_cleaned:
+                    start = response_cleaned.find('[')
+                    end = response_cleaned.rfind(']') + 1
+                    if start != -1 and end > start:
+                        response_cleaned = response_cleaned[start:end]
+                
+                events_data = json.loads(response_cleaned.strip())
+                
+                if isinstance(events_data, list):
+                    formatted_events = []
+                    for event in events_data:
+                        month = event.get('month', 1)
+                        if 1 <= month <= len(performance_data):
+                            formatted_event = {
+                                'date': self._month_to_date(month, time_horizon),
+                                'title': event.get('title', 'Market Event'),
+                                'description': event.get('description', 'Market development'),
+                                'impact_type': event.get('impact_type', 'neutral'),
+                                'impact_value': performance_data[month - 1] if month <= len(performance_data) else 100,
+                                'notification_triggered': event.get('notification_triggered', False),
+                                'signals_affected': event.get('signals_affected', [])
+                            }
+                            formatted_events.append(formatted_event)
+                    
+                    return formatted_events[:6]
+                    
+            except (TimeoutError, json.JSONDecodeError, Exception) as e:
+                signal.alarm(0)
+                print(f"AI event generation failed, using intelligent fallback: {e}")
                 
         except Exception as e:
-            print(f"Azure OpenAI event generation failed: {e}")
+            print(f"Event generation setup failed: {e}")
         
         # Fallback to intelligent algorithmic events
         return self._generate_intelligent_events(thesis, time_horizon, scenario, performance_data)

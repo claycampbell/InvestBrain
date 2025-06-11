@@ -34,7 +34,7 @@ class AzureOpenAIService:
             self.client = None
     
     def generate_completion(self, messages, temperature=1.0, max_tokens=4000):
-        """Generate a completion using Azure OpenAI"""
+        """Generate a completion using Azure OpenAI with timeout handling"""
         if not self.client:
             raise Exception("Azure OpenAI client not initialized")
         
@@ -46,7 +46,8 @@ class AzureOpenAIService:
                 # These models only support default temperature (1.0) and specific parameter names
                 response = self.client.chat.completions.create(
                     messages=messages,
-                    model=self.deployment_name
+                    model=self.deployment_name,
+                    timeout=30  # 30 second timeout
                 )
             else:
                 # Standard GPT models with custom parameters
@@ -54,7 +55,8 @@ class AzureOpenAIService:
                     messages=messages,
                     temperature=temperature,
                     max_completion_tokens=max_tokens,
-                    model=self.deployment_name
+                    model=self.deployment_name,
+                    timeout=30  # 30 second timeout
                 )
             
             # Debug the full response structure
