@@ -372,6 +372,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <p class="mb-0 mt-2">${thesisData.core_analysis}</p>
                                 </div>
                             ` : ''}
+                            
+                            ${generateMentalModelsSection(thesisData.mental_models, thesisData.primary_mental_model)}
+                            ${generateConvictionDrivers(thesisData.conviction_drivers)}
                             ${generateAssumptionsList(thesisData.assumptions)}
                         </div>
                     </div>
@@ -518,81 +521,79 @@ document.addEventListener('DOMContentLoaded', function() {
         `).join('');
     }
     
-    function generateValueChainMapping(metrics) {
-        if (!metrics || !Array.isArray(metrics)) return '<p class="text-muted">No value chain mapping available</p>';
-        
-        // Categorize signals by value chain position
-        const upstream = [];
-        const midstream = [];
-        const downstream = [];
-        const uncategorized = [];
-        
-        metrics.forEach(metric => {
-            if (typeof metric === 'object' && metric.name) {
-                const position = metric.value_chain_position || 'unknown';
-                const signalObj = { name: metric.name, type: metric.type };
-                
-                switch(position) {
-                    case 'upstream':
-                        upstream.push(signalObj);
-                        break;
-                    case 'midstream':
-                        midstream.push(signalObj);
-                        break;
-                    case 'downstream':
-                        downstream.push(signalObj);
-                        break;
-                    default:
-                        uncategorized.push(signalObj);
-                        break;
-                }
-            }
-        });
+    function generateMentalModelsSection(mentalModels, primaryModel) {
+        if (!mentalModels || !Array.isArray(mentalModels)) {
+            return primaryModel ? `
+                <div class="mb-3">
+                    <strong class="small">Mental Model:</strong>
+                    <span class="badge bg-primary ms-2">${primaryModel}</span>
+                </div>
+            ` : '';
+        }
         
         return `
+            <div class="mb-3">
+                <strong class="small d-block mb-2">Investment Mental Models:</strong>
+                ${mentalModels.map(model => `
+                    <div class="border rounded p-2 mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-primary">${model.model}</span>
+                            <span class="small text-muted">${Math.round(model.weight * 100)}%</span>
+                        </div>
+                        <div class="small text-muted mt-1">${model.rationale}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    function generateConvictionDrivers(drivers) {
+        if (!drivers || !Array.isArray(drivers)) return '';
+        
+        return `
+            <div class="mb-3">
+                <strong class="small d-block mb-2">Conviction Drivers:</strong>
+                ${drivers.map((driver, index) => `
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="badge bg-success rounded-circle me-2" style="width: 20px; height: 20px; font-size: 10px;">${index + 1}</div>
+                        <small>${driver}</small>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function generateValueChainMapping(metrics) {
+        if (!metrics || !Array.isArray(metrics)) return '<p class="text-muted">No metrics identified</p>';
+        
+        // Enhanced display with FactSet/Xpressfeed data sources
+        return `
             <div class="mt-4">
-                <strong class="small d-block mb-3">Value Chain Positioning:</strong>
-                <div class="row">
-                    <div class="col-4">
-                        <div class="text-center p-2 border rounded">
-                            <div class="h6 text-primary mb-1">${upstream.length}</div>
-                            <small class="text-muted">Upstream</small>
-                            ${upstream.length > 0 ? `
-                                <div class="mt-2">
-                                    ${upstream.slice(0, 2).map(s => `
-                                        <div class="badge bg-light text-dark small mb-1 d-block">${s.name}</div>
-                                    `).join('')}
-                                </div>
-                            ` : ''}
+                <strong class="small d-block mb-3">Trackable Metrics (FactSet/Xpressfeed):</strong>
+                ${metrics.slice(0, 6).map(metric => `
+                    <div class="border rounded p-2 mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="small"><strong>${metric.name}</strong></div>
+                                <div class="small text-muted">${metric.description || ''}</div>
+                                ${metric.factset_identifier ? `
+                                    <div class="small text-info mt-1">
+                                        <i class="fas fa-database"></i> ${metric.factset_identifier}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-secondary small">${metric.data_source || 'FactSet'}</span>
+                                ${metric.frequency ? `<div class="small text-muted">${metric.frequency}</div>` : ''}
+                            </div>
                         </div>
+                        ${metric.conviction_linkage ? `
+                            <div class="small text-success mt-1">
+                                <i class="fas fa-link"></i> ${metric.conviction_linkage}
+                            </div>
+                        ` : ''}
                     </div>
-                    <div class="col-4">
-                        <div class="text-center p-2 border rounded">
-                            <div class="h6 text-info mb-1">${midstream.length}</div>
-                            <small class="text-muted">Midstream</small>
-                            ${midstream.length > 0 ? `
-                                <div class="mt-2">
-                                    ${midstream.slice(0, 2).map(s => `
-                                        <div class="badge bg-light text-dark small mb-1 d-block">${s.name}</div>
-                                    `).join('')}
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="text-center p-2 border rounded">
-                            <div class="h6 text-success mb-1">${downstream.length}</div>
-                            <small class="text-muted">Downstream</small>
-                            ${downstream.length > 0 ? `
-                                <div class="mt-2">
-                                    ${downstream.slice(0, 2).map(s => `
-                                        <div class="badge bg-light text-dark small mb-1 d-block">${s.name}</div>
-                                    `).join('')}
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                </div>
+                `).join('')}
             </div>
         `;
     }

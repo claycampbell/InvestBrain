@@ -57,15 +57,20 @@ class ChainedAnalysisService:
     def _analyze_core_thesis(self, thesis_text: str) -> Dict[str, Any]:
         """Step 1: Analyze core thesis components with timeout handling"""
         try:
-            # Short, focused prompt for reliability
-            system_prompt = """Analyze investment thesis core components. Respond with valid JSON:
+            # Enhanced prompt for richer analysis
+            system_prompt = """Analyze investment thesis deeply to understand analyst conviction. Respond with valid JSON:
 {
-  "core_claim": "One sentence claim",
-  "core_analysis": "Risk/reward analysis", 
-  "causal_chain": [{"chain_link": 1, "event": "Event", "explanation": "Impact"}],
-  "assumptions": ["Assumption 1", "Assumption 2"],
-  "mental_model": "Growth|Value|Cyclical|Disruption",
-  "counter_thesis_scenarios": [{"scenario": "Risk", "description": "Details", "trigger_conditions": ["Condition"], "data_signals": ["Signal"]}]
+  "core_claim": "Single sentence primary investment thesis",
+  "core_analysis": "Detailed 3-4 sentence risk/reward analysis including key catalysts and potential failure modes",
+  "mental_models": [
+    {"model": "Growth|Value|Disruption|Turnaround|Quality|Cyclical|GARP|Momentum", "weight": 0.5, "rationale": "Why this framework applies"},
+    {"model": "Secondary model", "weight": 0.3, "rationale": "Supporting reasoning framework"}
+  ],
+  "primary_mental_model": "Dominant investment framework",
+  "conviction_drivers": ["Key factor driving conviction", "Second conviction driver", "Third element"],
+  "causal_chain": [{"chain_link": 1, "event": "Initial catalyst", "explanation": "Why this catalyst enables returns"}],
+  "assumptions": ["Critical assumption that must hold", "Key dependency", "Important precondition"],
+  "counter_thesis_scenarios": [{"scenario": "Primary risk", "description": "Detailed risk explanation", "trigger_conditions": ["What triggers this"], "data_signals": ["FactSet metric to watch"]}]
 }"""
             
             user_prompt = f"Analyze: {thesis_text[:200]}... Extract core logic, assumptions, risks."
@@ -96,19 +101,36 @@ class ChainedAnalysisService:
 
     def _extract_signals(self, thesis_text: str, core_analysis: Dict) -> List[Dict[str, Any]]:
         """Step 2: Extract trackable signals with value chain positioning"""
-        system_prompt = """You are an expert at identifying trackable investment signals. Focus on Level 0-1 signals closest to raw economic activity.
+        system_prompt = """You are an expert at identifying trackable investment signals from FactSet and Xpressfeed datasets. Extract 6-8 specific metrics that directly track thesis assumptions.
+
+Available FactSet datasets: Fundamentals, Estimates, Ownership, Economics, Pricing, Credit
+Available Xpressfeed datasets: Real-time market data, News flow, Sentiment, Supply chain
 
 Respond with valid JSON array:
 [
   {
-    "name": "Specific signal name",
-    "type": "Level_0_Raw_Activity|Level_1_Simple_Aggregation", 
-    "description": "Detailed signal description",
-    "frequency": "daily|weekly|monthly|quarterly",
-    "threshold": 5.0,
-    "threshold_type": "above|below|change_percent",
-    "data_source": "FactSet|Xpressfeed",
-    "value_chain_position": "upstream|midstream|downstream"
+    "name": "Revenue Growth Rate (QoQ)",
+    "type": "Level_1_Simple_Aggregation", 
+    "description": "Quarterly revenue growth acceleration/deceleration",
+    "frequency": "quarterly",
+    "threshold": 8.0,
+    "threshold_type": "above",
+    "data_source": "FactSet Fundamentals",
+    "factset_identifier": "FF_SALES(0)/FF_SALES(-1)-1",
+    "value_chain_position": "downstream",
+    "conviction_linkage": "Direct measure of core growth thesis"
+  },
+  {
+    "name": "Gross Margin Expansion",
+    "type": "Level_1_Simple_Aggregation",
+    "description": "Operating leverage and efficiency gains",
+    "frequency": "quarterly", 
+    "threshold": 50,
+    "threshold_type": "above",
+    "data_source": "FactSet Fundamentals",
+    "factset_identifier": "FF_GROSS_MARGIN",
+    "value_chain_position": "midstream",
+    "conviction_linkage": "Key profitability driver"
   }
 ]"""
         
@@ -256,46 +278,96 @@ Create:
     
     def _create_intelligent_fallback(self, thesis_text: str) -> Dict[str, Any]:
         """Create intelligent fallback analysis based on thesis content"""
-        # Extract key terms and concepts
         text_lower = thesis_text.lower()
         
-        # Determine mental model based on thesis content
-        mental_model = "Growth"
+        # Determine primary mental model based on thesis content
+        primary_model = "Growth"
         if any(word in text_lower for word in ["value", "undervalued", "cheap", "discount"]):
-            mental_model = "Value"
+            primary_model = "Value"
         elif any(word in text_lower for word in ["cycle", "seasonal", "commodity", "cyclical"]):
-            mental_model = "Cyclical"
+            primary_model = "Cyclical"
         elif any(word in text_lower for word in ["disrupt", "innovation", "technology", "ai"]):
-            mental_model = "Disruption"
+            primary_model = "Disruption"
+        elif any(word in text_lower for word in ["quality", "margin", "efficiency", "profitable"]):
+            primary_model = "Quality"
         
-        # Create structured analysis
+        # Create multiple mental models based on thesis characteristics
+        mental_models = []
+        model_weights = {}
+        
+        if any(word in text_lower for word in ["growth", "revenue", "expand", "scale"]):
+            model_weights["Growth"] = 0.4
+        if any(word in text_lower for word in ["value", "undervalued", "discount"]):
+            model_weights["Value"] = 0.3
+        if any(word in text_lower for word in ["quality", "margin", "efficiency"]):
+            model_weights["Quality"] = 0.3
+        if any(word in text_lower for word in ["disrupt", "innovation", "ai", "technology"]):
+            model_weights["Disruption"] = 0.4
+        
+        # Ensure primary model gets highest weight
+        if primary_model not in model_weights:
+            model_weights[primary_model] = 0.5
+        
+        # Normalize weights and create mental models array
+        total_weight = sum(model_weights.values())
+        for model, weight in model_weights.items():
+            normalized_weight = weight / total_weight if total_weight > 0 else 1.0
+            mental_models.append({
+                "model": model,
+                "weight": round(normalized_weight, 2),
+                "rationale": f"{model} characteristics identified in thesis analysis"
+            })
+        
+        # Sort by weight descending
+        mental_models.sort(key=lambda x: x["weight"], reverse=True)
+        
+        # Generate conviction drivers based on content
+        conviction_drivers = [
+            "Strong fundamental business characteristics support thesis",
+            "Multiple catalysts identified for value creation",
+            "Favorable risk-reward profile over investment horizon"
+        ]
+        
         return {
-            "core_claim": f"Investment thesis: {thesis_text[:100]}{'...' if len(thesis_text) > 100 else ''}",
-            "core_analysis": f"The thesis presents a {mental_model.lower()} investment opportunity with key drivers requiring monitoring for validation and risk management.",
+            "core_claim": f"Investment thesis: {thesis_text[:120]}{'...' if len(thesis_text) > 120 else ''}",
+            "core_analysis": f"Analysis reveals a {primary_model.lower()} investment opportunity with multiple supporting frameworks. Key catalysts must materialize while monitoring for execution risks and market headwinds that could challenge core assumptions.",
+            "mental_models": mental_models,
+            "primary_mental_model": primary_model,
+            "conviction_drivers": conviction_drivers,
             "causal_chain": [
                 {
                     "chain_link": 1,
-                    "event": "Market conditions support thesis drivers",
-                    "explanation": "Primary thesis assumptions must hold for investment case to materialize"
+                    "event": "Thesis catalysts begin materializing",
+                    "explanation": "Core investment drivers show early validation through measurable metrics"
                 },
                 {
                     "chain_link": 2,
-                    "event": "Company execution on strategy",
-                    "explanation": "Management must successfully execute on the identified opportunities"
+                    "event": "Operational execution delivers results",
+                    "explanation": "Management successfully converts strategic opportunities into financial performance"
+                },
+                {
+                    "chain_link": 3,
+                    "event": "Market recognition of value creation",
+                    "explanation": "Investment returns materialize as thesis proves successful over time horizon"
                 }
             ],
             "assumptions": [
-                "Market conditions remain favorable for thesis drivers",
-                "Company maintains competitive position",
-                "External factors do not significantly disrupt the investment case"
+                "Market conditions remain supportive of thesis drivers",
+                "Company maintains competitive positioning and execution capability",
+                "External disruptions do not materially impact investment case"
             ],
-            "mental_model": mental_model,
             "counter_thesis_scenarios": [
                 {
+                    "scenario": "Execution Risk",
+                    "description": "Management fails to deliver on strategic initiatives critical to thesis",
+                    "trigger_conditions": ["Missed guidance targets", "Strategic delays announced"],
+                    "data_signals": ["FactSet estimate revisions", "Management commentary changes"]
+                },
+                {
                     "scenario": "Market Headwinds",
-                    "description": "Adverse market conditions challenge core assumptions",
-                    "trigger_conditions": ["Market volatility increases", "Sector rotation occurs"],
-                    "data_signals": ["Price volatility", "Volume patterns"]
+                    "description": "Adverse market conditions undermine fundamental thesis assumptions",
+                    "trigger_conditions": ["Sector rotation", "Economic downturn"],
+                    "data_signals": ["Xpressfeed sentiment shifts", "FactSet peer performance"]
                 }
             ]
         }
