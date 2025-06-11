@@ -50,11 +50,15 @@ class SimulationService:
         events = []
         if include_events:
             try:
-                # Use combined performance data for event positioning
-                event_data = performance_data if isinstance(performance_data, list) else performance_data.get('combined_performance', [])
+                # Use thesis performance data for event positioning
+                if isinstance(performance_data, dict):
+                    event_data = performance_data.get('thesis_performance', performance_data.get('market_performance', []))
+                else:
+                    event_data = performance_data if isinstance(performance_data, list) else []
                 events = self._generate_event_scenarios(
                     thesis, time_horizon, scenario, event_data
                 )
+                print(f"Generated {len(events)} events: {[e.get('title', 'No title') for e in events]}")
             except Exception as e:
                 print(f"Event generation failed: {e}")
                 events = []

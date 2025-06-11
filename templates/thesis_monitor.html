@@ -581,6 +581,7 @@
         };
 
         // Add event markers for event scenarios
+        console.log('Event data received:', data.events);
         if (data.events && data.events.length > 0) {
             // Determine which performance data to use for event positioning
             const eventPositionData = performanceData.thesis_performance || 
