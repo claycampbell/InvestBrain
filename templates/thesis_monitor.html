@@ -580,34 +580,8 @@
             }
         };
 
-        // Add event markers for event scenarios
+        // Event data will be displayed as timeline below chart, not as data points
         console.log('Event data received:', data.events);
-        if (data.events && data.events.length > 0) {
-            // Determine which performance data to use for event positioning
-            const eventPositionData = performanceData.thesis_performance || 
-                                     performanceData.market_performance || 
-                                     (Array.isArray(performanceData) ? performanceData : [100]);
-            
-            chartConfig.data.datasets.push({
-                label: 'Key Events',
-                data: data.events.map((event, index) => {
-                    // Use month from event or calculate position
-                    const monthIndex = event.month ? Math.min(event.month - 1, timeline.length - 1) : 
-                                      Math.floor(index * timeline.length / data.events.length);
-                    const validIndex = Math.max(0, Math.min(monthIndex, timeline.length - 1));
-                    return {
-                        x: timeline[validIndex],
-                        y: event.impact_value || eventPositionData[validIndex] || 100
-                    };
-                }),
-                type: 'scatter',
-                backgroundColor: 'rgba(255, 99, 132, 0.8)',
-                borderColor: 'rgb(255, 99, 132)',
-                pointRadius: 8,
-                pointHoverRadius: 10,
-                showLine: false
-            });
-        }
 
         simulationChart = new Chart(ctx, chartConfig);
 
@@ -658,11 +632,70 @@
                             </div>
                         </div>` : ''
                     }
+                    <div class="mt-3 border-top pt-2">
+                        <small class="text-muted"><strong>Recommended Actions:</strong></small>
+                        <div class="mt-1">
+                            ${generateRecommendedActions(event).map(action => 
+                                `<div class="small mb-1"><i class="fas fa-arrow-right text-primary me-1"></i> ${action}</div>`
+                            ).join('')}
+                        </div>
+                    </div>
                 </div>
             `;
             
             eventList.appendChild(eventCard);
         });
+    }
+
+    function generateRecommendedActions(event) {
+        const actions = [];
+        
+        // Base actions based on impact type
+        if (event.impact_type === 'positive') {
+            actions.push('Review position sizing for potential upside capture');
+            actions.push('Monitor for continuation signals in related metrics');
+        } else if (event.impact_type === 'negative') {
+            actions.push('Assess thesis validity against new information');
+            actions.push('Consider risk management adjustments');
+        }
+        
+        // Actions based on affected signals
+        if (event.signals_affected) {
+            event.signals_affected.forEach(signal => {
+                switch(signal.toLowerCase()) {
+                    case 'quarterly revenue growth':
+                        actions.push('Deep dive into revenue composition and sustainability');
+                        break;
+                    case 'operating margin':
+                        actions.push('Analyze margin drivers and competitive positioning');
+                        break;
+                    case 'free cash flow':
+                        actions.push('Examine working capital and capex trends');
+                        break;
+                    default:
+                        actions.push(`Track ${signal} trends for next 2-3 quarters`);
+                }
+            });
+        }
+        
+        // Event-specific actions based on title keywords
+        const title = event.title.toLowerCase();
+        if (title.includes('earnings') || title.includes('revenue')) {
+            actions.push('Compare guidance vs street expectations');
+        } else if (title.includes('margin') || title.includes('cost')) {
+            actions.push('Update cost structure analysis and peer comparisons');
+        } else if (title.includes('competition') || title.includes('market')) {
+            actions.push('Reassess competitive landscape and market share dynamics');
+        }
+        
+        // Ensure at least 2-3 actions
+        if (actions.length < 2) {
+            actions.push('Update financial models with latest data points');
+            actions.push('Schedule follow-up review in 30 days');
+        }
+        
+        // Return unique actions (remove duplicates) and limit to 4
+        return [...new Set(actions)].slice(0, 4);
     }
 
     // Load page data on ready
