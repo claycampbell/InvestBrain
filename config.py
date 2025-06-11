@@ -4,7 +4,7 @@ class Config:
     # Azure OpenAI Configuration
     AZURE_OPENAI_API_KEY = os.environ.get('AZURE_OPENAI_API_KEY')
     AZURE_OPENAI_ENDPOINT = os.environ.get('AZURE_OPENAI_ENDPOINT')
-    AZURE_OPENAI_API_VERSION = os.environ.get('AZURE_OPENAI_API_VERSION', '2023-12-01-preview')
+    AZURE_OPENAI_API_VERSION = os.environ.get('AZURE_OPENAI_API_VERSION', '2024-12-01-preview')
     AZURE_OPENAI_DEPLOYMENT_NAME = os.environ.get('AZURE_OPENAI_DEPLOYMENT_NAME', 'gpt-35-turbo')
     
     # File Upload Configuration
