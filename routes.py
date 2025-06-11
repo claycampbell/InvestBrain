@@ -54,7 +54,48 @@ def save_thesis_analysis(thesis_text, analysis_result, signals_result):
     except Exception as e:
         db.session.rollback()
         logging.error(f"Error saving thesis analysis: {str(e)}")
-        raise
+        
+        # Try to reconnect and retry once
+        try:
+            db.session.close()
+            db.session.remove()
+            
+            # Retry the save operation
+            thesis_analysis = ThesisAnalysis(
+                title=analysis_result.get('core_claim', 'Untitled Thesis')[:255],
+                original_thesis=thesis_text,
+                core_claim=analysis_result.get('core_claim', ''),
+                causal_chain=analysis_result.get('causal_chain', []),
+                assumptions=analysis_result.get('assumptions', []),
+                mental_model=analysis_result.get('mental_model', 'unknown'),
+                counter_thesis=analysis_result.get('counter_thesis_scenarios', []),
+                metrics_to_track=analysis_result.get('metrics_to_track', []),
+                monitoring_plan=analysis_result.get('monitoring_plan', {})
+            )
+            
+            db.session.add(thesis_analysis)
+            db.session.flush()
+            
+            # Create signal monitoring records
+            for signal in signals_result.get('raw_signals', []):
+                signal_monitor = SignalMonitoring(
+                    thesis_analysis_id=thesis_analysis.id,
+                    signal_name=signal.get('name', 'Unknown Signal'),
+                    signal_type=signal.get('level', 'unknown'),
+                    threshold_value=signal.get('threshold', 0),
+                    threshold_type=signal.get('threshold_type', 'change_percent'),
+                    status='active'
+                )
+                db.session.add(signal_monitor)
+            
+            db.session.commit()
+            logging.info(f"Successfully saved thesis analysis on retry: {thesis_analysis.title}")
+            return thesis_analysis
+            
+        except Exception as retry_error:
+            db.session.rollback()
+            logging.error(f"Retry failed: {str(retry_error)}")
+            raise
 
 def allowed_file(filename):
     return '.' in filename and \
