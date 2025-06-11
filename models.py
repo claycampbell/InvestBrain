@@ -24,6 +24,7 @@ class ThesisAnalysis(db.Model):
             'title': self.title,
             'original_thesis': self.original_thesis,
             'core_claim': self.core_claim,
+            'core_analysis': self.core_analysis,
             'causal_chain': self.causal_chain,
             'assumptions': self.assumptions,
             'mental_model': self.mental_model,
