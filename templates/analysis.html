@@ -608,11 +608,14 @@ document.addEventListener('DOMContentLoaded', function() {
         return `
             <div class="mt-4">
                 <strong class="small d-block mb-3">Trackable Metrics (FactSet/Xpressfeed):</strong>
-                ${allSignals.slice(0, 6).map(signal => `
-                    <div class="border rounded p-2 mb-2">
+                ${allSignals.slice(0, 6).map((signal, index) => `
+                    <div class="signal-card border rounded p-2 mb-2" onclick="toggleSignalExpansion(${index})" style="cursor: pointer; transition: all 0.3s ease;">
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="flex-grow-1">
-                                <div class="small"><strong>${signal.name}</strong></div>
+                                <div class="small d-flex align-items-center">
+                                    <strong>${signal.name}</strong>
+                                    <i class="fas fa-chevron-down signal-expand-icon ms-2" id="expand-icon-${index}" style="font-size: 10px; transition: transform 0.3s ease;"></i>
+                                </div>
                                 <div class="small text-muted">${signal.description || ''}</div>
                                 ${signal.factset_identifier ? `
                                     <div class="small text-info mt-1">
@@ -637,6 +640,64 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </span>
                             </div>
                         ` : ''}
+                        
+                        <!-- Expandable Context Section -->
+                        <div class="signal-context mt-3" id="signal-context-${index}" style="display: none; border-top: 1px solid #eee; padding-top: 15px;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="small text-primary mb-2"><i class="fas fa-info-circle"></i> Signal Details</h6>
+                                    <div class="small mb-2">
+                                        <strong>Classification:</strong> ${signal.level || 'Not specified'}
+                                    </div>
+                                    <div class="small mb-2">
+                                        <strong>Value Chain:</strong> ${signal.value_chain_position || 'Not specified'}
+                                    </div>
+                                    <div class="small mb-2">
+                                        <strong>Update Frequency:</strong> ${signal.frequency || 'Not specified'}
+                                    </div>
+                                    ${signal.threshold ? `
+                                        <div class="small mb-2">
+                                            <strong>Threshold:</strong> ${signal.threshold} (${signal.threshold_type || 'above'})
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="small text-primary mb-2"><i class="fas fa-cogs"></i> Acquisition Method</h6>
+                                    <div class="small mb-2">
+                                        <strong>Source:</strong> ${signal.data_source || 'FactSet'}
+                                    </div>
+                                    ${signal.factset_identifier ? `
+                                        <div class="small mb-2">
+                                            <strong>API Identifier:</strong> 
+                                            <code class="small bg-light p-1 rounded">${signal.factset_identifier}</code>
+                                        </div>
+                                    ` : ''}
+                                    <div class="small mb-2">
+                                        <strong>Acquisition:</strong> ${signal.acquisition_method || 'API programmatic'}
+                                    </div>
+                                    <div class="small">
+                                        <strong>Implementation:</strong> 
+                                        <span class="badge ${signal.programmatic_feasibility === 'high' ? 'bg-success' : signal.programmatic_feasibility === 'medium' ? 'bg-warning text-dark' : 'bg-danger'} text-white">
+                                            ${signal.programmatic_feasibility || 'medium'} complexity
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            ${signal.what_it_tells_us ? `
+                                <div class="mt-3">
+                                    <h6 class="small text-primary mb-2"><i class="fas fa-lightbulb"></i> What This Signal Tells Us</h6>
+                                    <div class="small text-muted">${signal.what_it_tells_us}</div>
+                                </div>
+                            ` : ''}
+                            
+                            ${signal.conviction_linkage ? `
+                                <div class="mt-3">
+                                    <h6 class="small text-primary mb-2"><i class="fas fa-link"></i> Thesis Connection</h6>
+                                    <div class="small text-success">${signal.conviction_linkage}</div>
+                                </div>
+                            ` : ''}
+                        </div>
                     </div>
                 `).join('')}
             </div>
@@ -1344,6 +1405,74 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('No thesis ID available for simulation');
         }
     }
+    
+    // Signal Context Expansion Function
+    window.toggleSignalExpansion = function(index) {
+        const contextDiv = document.getElementById(`signal-context-${index}`);
+        const expandIcon = document.getElementById(`expand-icon-${index}`);
+        
+        if (contextDiv && expandIcon) {
+            if (contextDiv.style.display === 'none' || contextDiv.style.display === '') {
+                // Expand
+                contextDiv.style.display = 'block';
+                expandIcon.style.transform = 'rotate(180deg)';
+                expandIcon.classList.remove('fa-chevron-down');
+                expandIcon.classList.add('fa-chevron-up');
+                
+                // Add smooth fade-in animation
+                contextDiv.style.opacity = '0';
+                contextDiv.style.transition = 'opacity 0.3s ease-in-out';
+                setTimeout(() => {
+                    contextDiv.style.opacity = '1';
+                }, 10);
+                
+                // Add subtle highlight to the card
+                const signalCard = contextDiv.closest('.signal-card');
+                if (signalCard) {
+                    signalCard.style.backgroundColor = '#f8f9fa';
+                    signalCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                }
+            } else {
+                // Collapse
+                contextDiv.style.opacity = '0';
+                setTimeout(() => {
+                    contextDiv.style.display = 'none';
+                    expandIcon.style.transform = 'rotate(0deg)';
+                    expandIcon.classList.remove('fa-chevron-up');
+                    expandIcon.classList.add('fa-chevron-down');
+                    
+                    // Remove highlight from the card
+                    const signalCard = contextDiv.closest('.signal-card');
+                    if (signalCard) {
+                        signalCard.style.backgroundColor = '';
+                        signalCard.style.boxShadow = '';
+                    }
+                }, 300);
+            }
+        }
+    };
+});
+
+// Add hover effects to signal cards after DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        const signalCards = document.querySelectorAll('.signal-card');
+        signalCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                if (!this.querySelector('.signal-context[style*="block"]')) {
+                    this.style.backgroundColor = '#f8f9fa';
+                    this.style.transform = 'translateY(-1px)';
+                }
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                if (!this.querySelector('.signal-context[style*="block"]')) {
+                    this.style.backgroundColor = '';
+                    this.style.transform = '';
+                }
+            });
+        });
+    }, 1000); // Wait for dynamic content to load
 });
 </script>
 {% endblock %}
