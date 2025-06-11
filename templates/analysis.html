@@ -412,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="card-body">
                             ${generateSignalsByLevel(signalData.signals_by_level)}
-                            ${generateValueChainMapping(thesisData.metrics_to_track)}
+                            ${generateActualSignalsDisplay(signalData.signals_by_level)}
                         </div>
                     </div>
 
@@ -587,6 +587,52 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
+    function generateActualSignalsDisplay(signalsByLevel) {
+        if (!signalsByLevel) return '<p class="text-muted">No signals detected</p>';
+        
+        // Flatten all signals from all levels
+        const allSignals = Object.values(signalsByLevel).flat();
+        
+        if (allSignals.length === 0) return '<p class="text-muted">No signals detected</p>';
+        
+        return `
+            <div class="mt-4">
+                <strong class="small d-block mb-3">Trackable Metrics (FactSet/Xpressfeed):</strong>
+                ${allSignals.slice(0, 6).map(signal => `
+                    <div class="border rounded p-2 mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="small"><strong>${signal.name}</strong></div>
+                                <div class="small text-muted">${signal.description || ''}</div>
+                                ${signal.factset_identifier ? `
+                                    <div class="small text-info mt-1">
+                                        <i class="fas fa-database"></i> ${signal.factset_identifier}
+                                    </div>
+                                ` : ''}
+                                ${signal.acquisition_method ? `
+                                    <div class="small text-warning mt-1">
+                                        <i class="fas fa-tools"></i> ${signal.acquisition_method}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-secondary small">${signal.data_source || 'FactSet'}</span>
+                                ${signal.frequency ? `<div class="small text-muted">${signal.frequency}</div>` : ''}
+                            </div>
+                        </div>
+                        ${signal.programmatic_feasibility ? `
+                            <div class="small mt-1">
+                                <span class="badge ${signal.programmatic_feasibility === 'high' ? 'bg-success' : signal.programmatic_feasibility === 'medium' ? 'bg-warning' : 'bg-danger'} text-white">
+                                    ${signal.programmatic_feasibility} feasibility
+                                </span>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
     function generateValueChainMapping(metrics) {
         if (!metrics || !Array.isArray(metrics)) return '<p class="text-muted">No metrics identified</p>';
         
