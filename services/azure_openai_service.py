@@ -122,38 +122,62 @@ Respond with valid JSON only:
     }
   ],
   "monitoring_plan": {
-    "objective": "Clear monitoring objective statement",
+    "objective": "Specific monitoring objective with clear success/failure criteria",
     "data_pulls": [
       {
-        "category": "Category name",
-        "metrics": ["Metric 1", "Metric 2"],
-        "data_source": "Xpressfeed|FactSet",
-        "query_template": "SELECT statement with WHERE clause",
-        "frequency": "daily|weekly|quarterly"
+        "category": "Financial Performance",
+        "metrics": ["Revenue growth YoY", "Gross margin %", "Operating leverage"],
+        "data_source": "FactSet",
+        "query_template": "SELECT revenue, gross_profit FROM financials WHERE ticker = ? AND period >= ?",
+        "frequency": "quarterly"
+      },
+      {
+        "category": "Market Dynamics", 
+        "metrics": ["Market share %", "Pricing power", "Competitive positioning"],
+        "data_source": "Xpressfeed",
+        "query_template": "SELECT market_data FROM industry_analysis WHERE sector = ? AND date >= ?",
+        "frequency": "monthly"
       }
     ],
     "alert_logic": [
       {
-        "frequency": "daily|weekly|quarterly",
-        "condition": "Specific threshold condition",
-        "action": "Flag/review action to take"
+        "frequency": "daily",
+        "condition": "Stock price declines >15% in 5 trading days",
+        "action": "Flag for immediate fundamental review and potential thesis reassessment"
+      },
+      {
+        "frequency": "quarterly",
+        "condition": "Revenue growth falls below 20% YoY for 2 consecutive quarters",
+        "action": "Review thesis assumptions and consider position sizing reduction"
       }
     ],
     "decision_triggers": [
       {
-        "condition": "Specific exit/entry condition",
-        "action": "buy|sell|hold decision"
+        "condition": "Core competitive advantage shows signs of erosion (market share decline >5% for 2 quarters)",
+        "action": "sell - thesis invalidated"
+      },
+      {
+        "condition": "Financial metrics exceed bull case by >20% with strong forward guidance",
+        "action": "buy - increase position size"
       }
     ],
-    "review_schedule": "Formal review timing"
+    "review_schedule": "Monthly formal review with quarterly deep-dive analysis"
   }
 }"""
         
         user_prompt = f"""Analyze this thesis: {thesis_text}
 
-Create a comprehensive monitoring plan with specific data sources (Xpressfeed/FactSet), SQL query templates, alert conditions, and decision triggers like the Nutrien example.
+IMPORTANT: Create a comprehensive prescriptive monitoring strategy that includes:
 
-Provide complete JSON response with all monitoring_plan fields populated."""
+1. SPECIFIC OBJECTIVE: Clear monitoring goal with success/failure criteria
+2. DETAILED DATA PULLS: Multiple categories with specific metrics, data sources (FactSet/Xpressfeed), and SQL query templates
+3. ALERT LOGIC: Specific thresholds and patterns to observe with corresponding actions
+4. DECISION TRIGGERS: Clear conditions for buy/sell/hold decisions with specific thresholds
+5. REVIEW SCHEDULE: Formal review timing and escalation procedures
+
+The monitoring plan must be actionable and prescriptive - specify exactly what to monitor, when to monitor it, what thresholds to watch for, and what actions to take. Include at least 3-5 data pull categories, 4-6 alert conditions, and 3-4 decision triggers.
+
+Provide complete JSON response with all monitoring_plan fields fully populated."""
         
         messages = [
             {"role": "system", "content": system_prompt},
