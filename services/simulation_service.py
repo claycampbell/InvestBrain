@@ -99,7 +99,7 @@ class SimulationService:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.ai_service.generate_completion(messages, temperature=0.7, max_tokens=2000)
+            response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=2000)
             
             # Clean and parse the response
             response_cleaned = response.strip()
@@ -215,7 +215,7 @@ class SimulationService:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.ai_service.generate_completion(messages, temperature=0.8, max_tokens=1500)
+            response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=1500)
             
             # Clean and parse the response
             response_cleaned = response.strip()

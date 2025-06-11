@@ -14,6 +14,7 @@ def test_simulation():
     # Create a mock thesis object
     class MockThesis:
         def __init__(self):
+            self.id = 1
             self.title = "NVIDIA AI Growth Thesis"
             self.core_claim = "NVIDIA is positioned to benefit from AI chip demand growth over the next 3-5 years"
             self.signals = []
