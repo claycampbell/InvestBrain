@@ -65,8 +65,8 @@ Focus on signals closest to raw economic activity that can be programmatically t
                 {"role": "user", "content": user_prompt}
             ]
             
-            # Single request with moderate timeout
-            response = self.azure_service.generate_completion(messages, max_tokens=3000)
+            # Single request with shorter timeout for faster response
+            response = self.azure_service.generate_completion(messages, max_tokens=2000)
             
             # Parse the JSON response
             try:
