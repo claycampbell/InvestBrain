@@ -817,48 +817,60 @@ document.addEventListener('DOMContentLoaded', function() {
         styleElement.innerHTML = timelineCSS;
         document.head.appendChild(styleElement);
     }
-        });
+    
+    // Helper function to add publish/download functionality
+    function publishAnalysis() {
+        if (!window.currentAnalysis) {
+            alert('No analysis data available to publish');
+            return;
+        }
         
-        return `
-            <div class="row text-center">
-                <div class="col-4">
-                    <div class="border rounded p-2 bg-secondary">
-                        <strong class="small text-light">Upstream</strong>
-                        <div class="small text-light">${upstream.length} signals</div>
-                        ${upstream.length > 0 ? `
-                            <div class="mt-1">
-                                ${upstream.slice(0, 2).map(signal => `<div class="badge bg-success text-dark me-1 mb-1" title="${signal.type || 'Unknown'}">${signal.name}</div>`).join('')}
-                                ${upstream.length > 2 ? `<div class="small text-muted">+${upstream.length - 2} more</div>` : ''}
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-                <div class="col-4">
-                    <div class="border rounded p-2 bg-secondary">
-                        <strong class="small text-light">Midstream</strong>
-                        <div class="small text-light">${midstream.length} signals</div>
-                        ${midstream.length > 0 ? `
-                            <div class="mt-1">
-                                ${midstream.slice(0, 2).map(signal => `<div class="badge bg-info text-dark me-1 mb-1" title="${signal.type || 'Unknown'}">${signal.name}</div>`).join('')}
-                                ${midstream.length > 2 ? `<div class="small text-muted">+${midstream.length - 2} more</div>` : ''}
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-                <div class="col-4">
-                    <div class="border rounded p-2 bg-secondary">
-                        <strong class="small text-light">Downstream</strong>
-                        <div class="small text-light">${downstream.length} signals</div>
-                        ${downstream.length > 0 ? `
-                            <div class="mt-1">
-                                ${downstream.slice(0, 2).map(signal => `<div class="badge bg-warning text-dark me-1 mb-1" title="${signal.type || 'Unknown'}">${signal.name}</div>`).join('')}
-                                ${downstream.length > 2 ? `<div class="small text-muted">+${downstream.length - 2} more</div>` : ''}
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            </div>
-        `;
+        // Send analysis data to publish endpoint
+        fetch('/publish_thesis', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(window.currentAnalysis)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Analysis published successfully! You can now monitor this thesis.');
+                window.location.href = `/monitoring/thesis/${data.thesis_id}`;
+            } else {
+                alert('Failed to publish analysis: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error publishing analysis:', error);
+            alert('Failed to publish analysis. Please try again.');
+        });
+    }
+    
+    function downloadAnalysis() {
+        if (!window.currentAnalysis) {
+            alert('No analysis data available to download');
+            return;
+        }
+        
+        // Create downloadable report
+        const reportData = JSON.stringify(window.currentAnalysis, null, 2);
+        const blob = new Blob([reportData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `thesis-analysis-${new Date().getTime()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    // Store analysis data globally for publish/download functions
+    function storeAnalysisData(data) {
+        window.currentAnalysis = data;
     }
     
     function generateMonitoringStrategy(strategy) {
