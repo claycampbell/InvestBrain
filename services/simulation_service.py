@@ -393,20 +393,20 @@ JSON format: [{{"month": 6, "title": "Event Title", "description": "Brief descri
         # Define event templates based on common investment scenarios
         event_templates = self._get_event_templates_by_scenario(scenario, thesis_keywords)
         
-        # Generate events with realistic timing and impacts
+        # Generate events with logical spacing throughout time horizon
         events = []
-        num_events = min(random.randint(3, 6), time_horizon + 2)
+        total_months = time_horizon * 12
+        num_events = min(4, max(2, time_horizon))  # 2-4 events based on time horizon
         
-        used_months = set()
-        for i in range(num_events):
+        # Calculate evenly spaced event months
+        if num_events > 1:
+            spacing = total_months // (num_events + 1)
+            event_months = [spacing * (i + 1) for i in range(num_events)]
+        else:
+            event_months = [total_months // 2]  # Single event at midpoint
+        
+        for i, month in enumerate(event_months):
             template = random.choice(event_templates)
-            
-            # Pick a month that hasn't been used and has realistic spacing
-            month = self._select_event_month(used_months, time_horizon, len(performance_data))
-            if month is None:
-                continue
-                
-            used_months.add(month)
             
             event = {
                 'date': self._month_to_date(month, time_horizon),
