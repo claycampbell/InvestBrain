@@ -323,6 +323,15 @@ class SignalClassifier:
         for signal in all_signals:
             signal['acquisition_guidance'] = self._assess_acquisition_feasibility(signal)
         
+        # Debug logging
+        print(f"Comprehensive signal extraction results:")
+        print(f"Level 0: {len([s for s in all_signals if s.get('level') == 'Level_0_Raw_Economic'])}")
+        print(f"Level 1: {len([s for s in all_signals if s.get('level') == 'Level_1_Simple_Aggregation'])}")
+        print(f"Level 2: {len([s for s in all_signals if s.get('level') == 'Level_2_Derived_Metrics'])}")
+        print(f"Level 3: {len([s for s in all_signals if s.get('level') == 'Level_3_Complex_Ratios'])}")
+        print(f"Level 4: {len([s for s in all_signals if s.get('level') == 'Level_4_Market_Sentiment'])}")
+        print(f"Thesis keywords detected: {[kw for kw in ['renewable', 'peer', 'outperform', 'cost', 'capital'] if kw in thesis_text.lower()]}")
+        
         return {
             'comprehensive_analysis': True,
             'total_signals_identified': len(all_signals),
@@ -350,6 +359,9 @@ class SignalClassifier:
         
         primary_signals.extend(level_0_signals)
         primary_signals.extend(level_1_signals)
+        
+        # Add context logging
+        print(f"Primary signal extraction: Level 0: {len(level_0_signals)}, Level 1: {len(level_1_signals)}")
         
         return {
             'focused_analysis': True,
@@ -723,15 +735,27 @@ class SignalClassifier:
         signals = []
         text_lower = thesis_text.lower()
         
-        # Energy/Utility specific Level 0 signals
+        # Always include core Level 0 signals for energy/utility analysis
+        signals.append({
+            'name': 'Quarterly Renewables Capacity Additions (MW)',
+            'level': 'Level_0_Raw_Economic',
+            'description': 'New renewable capacity (MW) added each quarter',
+            'data_source': 'Company Filings/EIA Data',
+            'programmatic_feasibility': 'medium',
+            'acquisition_method': 'Parse quarterly earnings reports, 10-K filings, EIA Electric Power Monthly',
+            'frequency': 'quarterly'
+        })
+        
+        # Additional renewable signals if keywords present
         if any(keyword in text_lower for keyword in ['renewable', 'capacity', 'mw', 'gw', 'wind', 'solar']):
             signals.append({
-                'name': 'Quarterly Renewables Capacity Additions (MW)',
+                'name': 'Renewable Development Pipeline (GW)',
                 'level': 'Level_0_Raw_Economic',
-                'description': 'New renewable capacity (MW) added each quarter',
-                'data_source': 'Company Filings/EIA Data',
-                'programmatic_feasibility': 'medium',
-                'acquisition_method': 'Parse quarterly earnings reports, 10-K filings, EIA Electric Power Monthly',
+                'description': 'Committed renewable projects under development',
+                'data_source': 'Company Investor Relations',
+                'programmatic_feasibility': 'low',
+                'acquisition_method': 'Manual extraction from investor presentations, development updates, and regulatory filings',
+                'alternative_sources': ['Wood Mackenzie Power & Renewables', 'BNEF project database'],
                 'frequency': 'quarterly'
             })
         
@@ -779,27 +803,36 @@ class SignalClassifier:
         signals = []
         text_lower = thesis_text.lower()
         
-        # Revenue signals
-        if any(keyword in text_lower for keyword in ['revenue', 'sales', 'growth']):
+        # Always include core financial signals for utility analysis
+        signals.append({
+            'name': 'Quarterly Revenue Growth',
+            'level': 'Level_1_Simple_Aggregation',
+            'description': 'Revenue growth rate calculation',
+            'data_source': 'FactSet Fundamentals',
+            'programmatic_feasibility': 'high',
+            'factset_identifier': 'FF_SALES(0)/FF_SALES(-1)-1',
+            'frequency': 'quarterly'
+        })
+        
+        signals.append({
+            'name': 'Operating Margin',
+            'level': 'Level_1_Simple_Aggregation', 
+            'description': 'Operating income as percentage of revenue',
+            'data_source': 'FactSet Fundamentals',
+            'programmatic_feasibility': 'high',
+            'factset_identifier': 'FF_OPER_INC/FF_SALES',
+            'frequency': 'quarterly'
+        })
+        
+        # Utility-specific revenue breakdown
+        if any(keyword in text_lower for keyword in ['renewable', 'clean', 'energy', 'utility']):
             signals.append({
-                'name': 'Quarterly Revenue Growth',
+                'name': 'Renewable Revenue as % of Total Revenue',
                 'level': 'Level_1_Simple_Aggregation',
-                'description': 'Revenue growth rate calculation',
-                'data_source': 'FactSet Fundamentals',
-                'programmatic_feasibility': 'high',
-                'factset_identifier': 'FF_SALES(0)/FF_SALES(-1)-1',
-                'frequency': 'quarterly'
-            })
-            
-        # Margin signals
-        if any(keyword in text_lower for keyword in ['margin', 'profitability', 'efficiency']):
-            signals.append({
-                'name': 'Operating Margin',
-                'level': 'Level_1_Simple_Aggregation', 
-                'description': 'Operating income as percentage of revenue',
-                'data_source': 'FactSet Fundamentals',
-                'programmatic_feasibility': 'high',
-                'factset_identifier': 'FF_OPER_INC/FF_SALES',
+                'description': 'Renewable energy revenue share',
+                'data_source': 'Company Segment Reporting',
+                'programmatic_feasibility': 'medium',
+                'acquisition_method': 'Parse segment data from 10-K and earnings reports',
                 'frequency': 'quarterly'
             })
             
