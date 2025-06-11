@@ -273,6 +273,95 @@ class SignalClassifier:
                     text_signals.extend(self._extract_level_2_signals(doc_data['text_content']))
         return signals
 
+    def extract_signals_from_ai_analysis(self, analysis_result: Dict, processed_documents: List[Dict], focus_primary: bool = True) -> Dict[str, Any]:
+        """
+        Extract signals from AI analysis result and classify them across all 5 levels when focus_primary=False
+        """
+        try:
+            # Get thesis text from analysis result
+            thesis_text = analysis_result.get('original_thesis', '') or analysis_result.get('thesis_text', '')
+            signals_data = analysis_result.get('signals', [])
+            
+            if not focus_primary:
+                # Extract comprehensive signals across all 5 levels
+                return self._extract_comprehensive_signals(thesis_text, processed_documents, signals_data)
+            else:
+                # Focus on primary signals (Level 0-1)
+                return self._extract_primary_signals(thesis_text, processed_documents, signals_data)
+                
+        except Exception as e:
+            logging.error(f"Error in AI signal extraction: {str(e)}")
+            return {'error': str(e)}
+    
+    def _extract_comprehensive_signals(self, thesis_text: str, processed_documents: List[Dict], ai_signals: List[Dict]) -> Dict[str, Any]:
+        """Extract signals across all 5 derivation levels with acquisition guidance"""
+        all_signals = []
+        
+        # Level 0: Raw Economic Activity
+        level_0_signals = self._extract_level_0_comprehensive(thesis_text, processed_documents)
+        
+        # Level 1: Simple Aggregation
+        level_1_signals = self._extract_level_1_comprehensive(thesis_text, processed_documents)
+        
+        # Level 2: Derived Metrics
+        level_2_signals = self._extract_level_2_comprehensive(thesis_text, processed_documents)
+        
+        # Level 3: Complex Ratios
+        level_3_signals = self._extract_level_3_comprehensive(thesis_text, processed_documents)
+        
+        # Level 4: Market Sentiment
+        level_4_signals = self._extract_level_4_comprehensive(thesis_text, processed_documents)
+        
+        # Combine all signals
+        all_signals.extend(level_0_signals)
+        all_signals.extend(level_1_signals)
+        all_signals.extend(level_2_signals)
+        all_signals.extend(level_3_signals)
+        all_signals.extend(level_4_signals)
+        
+        # Add programmatic feasibility assessment
+        for signal in all_signals:
+            signal['acquisition_guidance'] = self._assess_acquisition_feasibility(signal)
+        
+        return {
+            'comprehensive_analysis': True,
+            'total_signals_identified': len(all_signals),
+            'signals_by_level': {
+                'Level_0_Raw_Economic': [s for s in all_signals if s.get('level') == 'Level_0_Raw_Economic'],
+                'Level_1_Simple_Aggregation': [s for s in all_signals if s.get('level') == 'Level_1_Simple_Aggregation'],
+                'Level_2_Derived_Metrics': [s for s in all_signals if s.get('level') == 'Level_2_Derived_Metrics'],
+                'Level_3_Complex_Ratios': [s for s in all_signals if s.get('level') == 'Level_3_Complex_Ratios'],
+                'Level_4_Market_Sentiment': [s for s in all_signals if s.get('level') == 'Level_4_Market_Sentiment']
+            },
+            'programmatic_vs_manual': self._categorize_by_feasibility(all_signals),
+            'acquisition_strategy': self._create_acquisition_strategy(all_signals),
+            'raw_signals': all_signals
+        }
+    
+    def _extract_primary_signals(self, thesis_text: str, processed_documents: List[Dict], ai_signals: List[Dict]) -> Dict[str, Any]:
+        """Extract only Level 0-1 signals for focused analysis"""
+        primary_signals = []
+        
+        # Level 0: Raw Economic Activity
+        level_0_signals = self._extract_level_0_comprehensive(thesis_text, processed_documents)
+        
+        # Level 1: Simple Aggregation  
+        level_1_signals = self._extract_level_1_comprehensive(thesis_text, processed_documents)
+        
+        primary_signals.extend(level_0_signals)
+        primary_signals.extend(level_1_signals)
+        
+        return {
+            'focused_analysis': True,
+            'total_signals_identified': len(primary_signals),
+            'primary_signals_count': len(primary_signals),
+            'signals_by_level': {
+                'Level_0_Raw_Economic': [s for s in primary_signals if s.get('level') == 'Level_0_Raw_Economic'],
+                'Level_1_Simple_Aggregation': [s for s in primary_signals if s.get('level') == 'Level_1_Simple_Aggregation']
+            },
+            'raw_signals': primary_signals
+        }
+
     def extract_signals_from_analysis(self, thesis_text: str, processed_documents: List[Dict], focus_primary: bool = True) -> Dict[str, Any]:
         """
         Extract and classify signals from thesis and supporting documents
@@ -627,4 +716,257 @@ class SignalClassifier:
             'correlation_signals': signal.correlation_signals or [],
             'collection_frequency': signal.collection_frequency,
             'reliability_score': signal.reliability_score
+        }
+    
+    def _extract_level_0_comprehensive(self, thesis_text: str, processed_documents: List[Dict]) -> List[Dict]:
+        """Extract Level 0 (Raw Economic Activity) signals with acquisition guidance"""
+        signals = []
+        text_lower = thesis_text.lower()
+        
+        # Production/Volume signals
+        if any(keyword in text_lower for keyword in ['units', 'production', 'volume', 'capacity']):
+            signals.append({
+                'name': 'Production Volume (Units)',
+                'level': 'Level_0_Raw_Economic',
+                'description': 'Direct measurement of production units',
+                'data_source': 'Company Reports',
+                'programmatic_feasibility': 'medium',
+                'acquisition_method': 'Quarterly earnings reports, 10-K filings',
+                'frequency': 'quarterly'
+            })
+        
+        # Employment signals
+        if any(keyword in text_lower for keyword in ['headcount', 'employees', 'hiring', 'workforce']):
+            signals.append({
+                'name': 'Headcount Growth',
+                'level': 'Level_0_Raw_Economic',
+                'description': 'Employee count changes',
+                'data_source': 'HR Analytics/Company Reports',
+                'programmatic_feasibility': 'low',
+                'acquisition_method': 'Manual research: LinkedIn employee tracking, company press releases, industry reports',
+                'alternative_sources': ['LinkedIn workforce analytics', 'Glassdoor insights', 'Local employment data'],
+                'frequency': 'quarterly'
+            })
+            
+        return signals
+    
+    def _extract_level_1_comprehensive(self, thesis_text: str, processed_documents: List[Dict]) -> List[Dict]:
+        """Extract Level 1 (Simple Aggregation) signals"""
+        signals = []
+        text_lower = thesis_text.lower()
+        
+        # Revenue signals
+        if any(keyword in text_lower for keyword in ['revenue', 'sales', 'growth']):
+            signals.append({
+                'name': 'Quarterly Revenue Growth',
+                'level': 'Level_1_Simple_Aggregation',
+                'description': 'Revenue growth rate calculation',
+                'data_source': 'FactSet Fundamentals',
+                'programmatic_feasibility': 'high',
+                'factset_identifier': 'FF_SALES(0)/FF_SALES(-1)-1',
+                'frequency': 'quarterly'
+            })
+            
+        # Margin signals
+        if any(keyword in text_lower for keyword in ['margin', 'profitability', 'efficiency']):
+            signals.append({
+                'name': 'Operating Margin',
+                'level': 'Level_1_Simple_Aggregation', 
+                'description': 'Operating income as percentage of revenue',
+                'data_source': 'FactSet Fundamentals',
+                'programmatic_feasibility': 'high',
+                'factset_identifier': 'FF_OPER_INC/FF_SALES',
+                'frequency': 'quarterly'
+            })
+            
+        return signals
+    
+    def _extract_level_2_comprehensive(self, thesis_text: str, processed_documents: List[Dict]) -> List[Dict]:
+        """Extract Level 2 (Derived Metrics) signals"""
+        signals = []
+        text_lower = thesis_text.lower()
+        
+        # Return metrics
+        if any(keyword in text_lower for keyword in ['return', 'roe', 'roic', 'efficiency']):
+            signals.append({
+                'name': 'Return on Invested Capital (ROIC)',
+                'level': 'Level_2_Derived_Metrics',
+                'description': 'NOPAT divided by invested capital',
+                'data_source': 'FactSet Calculated',
+                'programmatic_feasibility': 'medium',
+                'calculation': '(Net Income + Interest Expense * (1-Tax Rate)) / Invested Capital',
+                'required_inputs': ['Net Income', 'Interest Expense', 'Tax Rate', 'Total Debt', 'Shareholders Equity'],
+                'frequency': 'quarterly'
+            })
+            
+        # Working capital metrics
+        if any(keyword in text_lower for keyword in ['working capital', 'cash conversion', 'liquidity']):
+            signals.append({
+                'name': 'Cash Conversion Cycle',
+                'level': 'Level_2_Derived_Metrics',
+                'description': 'Days to convert investments to cash',
+                'data_source': 'FactSet Calculated',
+                'programmatic_feasibility': 'medium',
+                'calculation': 'DIO + DSO - DPO',
+                'required_inputs': ['Inventory', 'Accounts Receivable', 'Accounts Payable', 'Revenue', 'COGS'],
+                'frequency': 'quarterly'
+            })
+            
+        return signals
+    
+    def _extract_level_3_comprehensive(self, thesis_text: str, processed_documents: List[Dict]) -> List[Dict]:
+        """Extract Level 3 (Complex Ratios) signals"""
+        signals = []
+        text_lower = thesis_text.lower()
+        
+        # Valuation multiples
+        if any(keyword in text_lower for keyword in ['valuation', 'multiple', 'ev/ebitda', 'p/e']):
+            signals.append({
+                'name': 'EV/EBITDA vs Industry Average',
+                'level': 'Level_3_Complex_Ratios',
+                'description': 'Relative valuation multiple comparison',
+                'data_source': 'FactSet/Bloomberg',
+                'programmatic_feasibility': 'medium',
+                'calculation': '(Enterprise Value / EBITDA) / Industry_Median_EV_EBITDA',
+                'required_inputs': ['Market Cap', 'Total Debt', 'Cash', 'EBITDA', 'Industry Comps'],
+                'frequency': 'daily'
+            })
+            
+        # Economic value added
+        if any(keyword in text_lower for keyword in ['economic value', 'eva', 'value creation']):
+            signals.append({
+                'name': 'Economic Value Added (EVA)',
+                'level': 'Level_3_Complex_Ratios',
+                'description': 'Value creation above cost of capital',
+                'data_source': 'Manual Calculation Required',
+                'programmatic_feasibility': 'low',
+                'calculation': 'NOPAT - (Invested Capital × WACC)',
+                'acquisition_method': 'Combine FactSet financials with manual WACC calculation from Bloomberg/S&P Capital IQ',
+                'required_inputs': ['NOPAT', 'Invested Capital', 'Risk-free Rate', 'Beta', 'Market Risk Premium', 'Cost of Debt'],
+                'frequency': 'quarterly'
+            })
+            
+        return signals
+    
+    def _extract_level_4_comprehensive(self, thesis_text: str, processed_documents: List[Dict]) -> List[Dict]:
+        """Extract Level 4 (Market Sentiment) signals"""
+        signals = []
+        text_lower = thesis_text.lower()
+        
+        # Analyst sentiment
+        if any(keyword in text_lower for keyword in ['analyst', 'estimates', 'recommendations']):
+            signals.append({
+                'name': 'Analyst Estimate Revisions Momentum',
+                'level': 'Level_4_Market_Sentiment',
+                'description': 'Net upward/downward estimate revisions',
+                'data_source': 'Manual Research Required',
+                'programmatic_feasibility': 'low',
+                'acquisition_method': 'Track estimate changes via Bloomberg IBES, FactSet Estimates, or Refinitiv IBES Detail. Calculate monthly net revision ratio.',
+                'alternative_sources': ['Zacks Investment Research', 'Yahoo Finance Analyst Data', 'MarketWatch estimates'],
+                'calculation': '(Upward Revisions - Downward Revisions) / Total Analyst Count',
+                'frequency': 'monthly'
+            })
+            
+        # Management guidance accuracy
+        signals.append({
+            'name': 'Management Guidance Accuracy Score',
+            'level': 'Level_4_Market_Sentiment',
+            'description': 'Historical accuracy of management forecasts',
+            'data_source': 'Manual Research Required',
+            'programmatic_feasibility': 'low',
+            'acquisition_method': 'Extract guidance from earnings transcripts (FactSet Transcripts, Seeking Alpha), compare to actual results over 8 quarters. Calculate accuracy percentage.',
+            'alternative_sources': ['Capital IQ Transcripts', 'Thomson Reuters StreetEvents', 'Company IR websites'],
+            'calculation': '1 - Average(|Guided_Value - Actual_Value| / Actual_Value)',
+            'frequency': 'quarterly'
+        })
+        
+        # Options flow sentiment
+        if any(keyword in text_lower for keyword in ['sentiment', 'options', 'volatility']):
+            signals.append({
+                'name': 'Put/Call Ratio Trend',
+                'level': 'Level_4_Market_Sentiment',
+                'description': 'Options sentiment indicator',
+                'data_source': 'Bloomberg/CBOE',
+                'programmatic_feasibility': 'medium',
+                'acquisition_method': 'Bloomberg Terminal OMON function or CBOE data feeds. Calculate 20-day moving average.',
+                'alternative_sources': ['Yahoo Finance Options', 'Barchart Options Flow', 'TradingView Options Data'],
+                'frequency': 'daily'
+            })
+            
+        return signals
+    
+    def _assess_acquisition_feasibility(self, signal: Dict) -> Dict[str, Any]:
+        """Assess how easily a signal can be acquired programmatically"""
+        feasibility = signal.get('programmatic_feasibility', 'unknown')
+        
+        guidance = {
+            'feasibility': feasibility,
+            'automation_potential': 'high' if feasibility == 'high' else 'low',
+            'estimated_setup_time': {
+                'high': '1-2 days',
+                'medium': '1-2 weeks', 
+                'low': '2-4 weeks'
+            }.get(feasibility, 'unknown')
+        }
+        
+        if feasibility == 'low':
+            guidance['manual_research_required'] = True
+            guidance['suggested_workflow'] = signal.get('acquisition_method', 'Research via company reports and industry sources')
+            guidance['alternative_sources'] = signal.get('alternative_sources', [])
+            
+        return guidance
+    
+    def _categorize_by_feasibility(self, signals: List[Dict]) -> Dict[str, Any]:
+        """Categorize signals by acquisition feasibility"""
+        high_feasibility = [s for s in signals if s.get('programmatic_feasibility') == 'high']
+        medium_feasibility = [s for s in signals if s.get('programmatic_feasibility') == 'medium']
+        low_feasibility = [s for s in signals if s.get('programmatic_feasibility') == 'low']
+        
+        return {
+            'programmatic_signals': {
+                'count': len(high_feasibility),
+                'signals': [s['name'] for s in high_feasibility],
+                'description': 'Can be automated via FactSet/Xpressfeed APIs'
+            },
+            'semi_programmatic_signals': {
+                'count': len(medium_feasibility),
+                'signals': [s['name'] for s in medium_feasibility],
+                'description': 'Require calculation from multiple data sources'
+            },
+            'manual_research_signals': {
+                'count': len(low_feasibility),
+                'signals': [s['name'] for s in low_feasibility],
+                'description': 'Require manual data collection and analysis'
+            }
+        }
+    
+    def _create_acquisition_strategy(self, signals: List[Dict]) -> Dict[str, Any]:
+        """Create a strategic plan for acquiring all identified signals"""
+        high_priority = [s for s in signals if s.get('level') in ['Level_0_Raw_Economic', 'Level_1_Simple_Aggregation']]
+        medium_priority = [s for s in signals if s.get('level') in ['Level_2_Derived_Metrics', 'Level_3_Complex_Ratios']]
+        low_priority = [s for s in signals if s.get('level') == 'Level_4_Market_Sentiment']
+        
+        return {
+            'implementation_phases': {
+                'Phase_1_Foundation': {
+                    'timeline': '1-2 weeks',
+                    'signals': [s['name'] for s in high_priority if s.get('programmatic_feasibility') == 'high'],
+                    'approach': 'Set up FactSet/Xpressfeed API connections for core financial metrics'
+                },
+                'Phase_2_Enhanced': {
+                    'timeline': '3-4 weeks',
+                    'signals': [s['name'] for s in medium_priority],
+                    'approach': 'Build calculation engines for derived metrics'
+                },
+                'Phase_3_Advanced': {
+                    'timeline': '6-8 weeks',
+                    'signals': [s['name'] for s in low_priority],
+                    'approach': 'Establish manual research workflows for sentiment indicators'
+                }
+            },
+            'resource_requirements': {
+                'api_subscriptions': ['FactSet Fundamentals', 'Xpressfeed Market Data'],
+                'manual_research_tools': ['Bloomberg Terminal', 'Capital IQ', 'Company IR websites'],
+                'development_effort': f'{len([s for s in signals if s.get("programmatic_feasibility") == "high"])} automated signals, {len([s for s in signals if s.get("programmatic_feasibility") == "low"])} manual processes'
+            }
         }

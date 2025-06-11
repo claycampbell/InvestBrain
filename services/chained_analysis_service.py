@@ -99,9 +99,15 @@ class ChainedAnalysisService:
             # Return structured fallback based on thesis content
             return self._create_intelligent_fallback(thesis_text)
 
-    def _extract_signals(self, thesis_text: str, core_analysis: Dict) -> List[Dict[str, Any]]:
-        """Step 2: Extract trackable signals with value chain positioning"""
-        system_prompt = """You are an expert at identifying trackable investment signals from FactSet and Xpressfeed datasets. Extract 6-8 specific metrics that directly track thesis assumptions.
+    def _extract_signals(self, thesis_text: str, core_analysis: Dict, focus_primary: bool = True) -> List[Dict[str, Any]]:
+        """Step 2: Extract trackable signals with 5-level derivation framework"""
+        
+        if focus_primary:
+            system_prompt = """You are an expert at identifying trackable investment signals from FactSet and Xpressfeed datasets. Extract 6-8 Level 0-1 signals that directly track thesis assumptions.
+
+Signal Level Classification:
+- Level 0 (Raw Economic Activity): Units sold, production volume, headcount
+- Level 1 (Simple Aggregation): Revenue growth, margin expansion
 
 Available FactSet datasets: Fundamentals, Estimates, Ownership, Economics, Pricing, Credit
 Available Xpressfeed datasets: Real-time market data, News flow, Sentiment, Supply chain
@@ -110,7 +116,7 @@ Respond with valid JSON array:
 [
   {
     "name": "Revenue Growth Rate (QoQ)",
-    "type": "Level_1_Simple_Aggregation", 
+    "level": "Level_1_Simple_Aggregation", 
     "description": "Quarterly revenue growth acceleration/deceleration",
     "frequency": "quarterly",
     "threshold": 8.0,
@@ -118,7 +124,55 @@ Respond with valid JSON array:
     "data_source": "FactSet Fundamentals",
     "factset_identifier": "FF_SALES(0)/FF_SALES(-1)-1",
     "value_chain_position": "downstream",
+    "programmatic_feasibility": "high",
     "conviction_linkage": "Direct measure of core growth thesis"
+  }
+]"""
+        else:
+            system_prompt = """You are an expert at identifying comprehensive investment signals across all 5 derivation levels. Extract 12-15 signals covering the complete analytical framework.
+
+Signal Level Classification (extract signals from ALL levels):
+- Level 0 (Raw Economic Activity): Units sold, production volume, headcount, capacity utilization
+- Level 1 (Simple Aggregation): Revenue growth, margin expansion, market share
+- Level 2 (Derived Metrics): ROE, ROIC, debt-to-equity, working capital turnover
+- Level 3 (Complex Ratios): EV/EBITDA, P/E relative to growth, economic value added
+- Level 4 (Market Sentiment): Analyst revisions, short interest, options flow, credit spreads
+
+Programmatic Feasibility Guide:
+- HIGH: Available via FactSet/Xpressfeed APIs (Levels 0-2)
+- MEDIUM: Requires data combination/calculation (Level 3)
+- LOW: Manual research required (Level 4, alternative data)
+
+For LOW feasibility signals, specify exact data sources and acquisition methods.
+
+Respond with valid JSON array:
+[
+  {
+    "name": "Revenue Growth Rate (QoQ)",
+    "level": "Level_1_Simple_Aggregation", 
+    "description": "Quarterly revenue growth acceleration/deceleration",
+    "frequency": "quarterly",
+    "threshold": 8.0,
+    "threshold_type": "above",
+    "data_source": "FactSet Fundamentals",
+    "factset_identifier": "FF_SALES(0)/FF_SALES(-1)-1",
+    "value_chain_position": "downstream",
+    "programmatic_feasibility": "high",
+    "conviction_linkage": "Direct measure of core growth thesis"
+  },
+  {
+    "name": "Management Guidance Accuracy",
+    "level": "Level_4_Market_Sentiment",
+    "description": "Historical accuracy of management guidance vs actual results",
+    "frequency": "quarterly",
+    "threshold": 85.0,
+    "threshold_type": "above",
+    "data_source": "Manual Research Required",
+    "acquisition_method": "Compile from earnings transcripts via FactSet Transcripts API or Capital IQ, calculate variance between guided vs actual metrics over 8 quarters",
+    "alternative_sources": ["Bloomberg Transcript Analysis", "Refinitiv IBES Detail", "Company IR websites"],
+    "value_chain_position": "governance",
+    "programmatic_feasibility": "low",
+    "conviction_linkage": "Management credibility impacts thesis reliability"
   },
   {
     "name": "Gross Margin Expansion",
