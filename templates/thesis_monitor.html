@@ -290,7 +290,7 @@
                         <div class="row mb-4">
                             <div class="col-12">
                                 <div class="position-relative">
-                                    <canvas id="simulationChart" height="400"></canvas>
+                                    <div id="simulationChart"></div>
                                 </div>
                             </div>
                         </div>
@@ -484,7 +484,7 @@
         document.getElementById('simulationResults').classList.remove('d-none');
 
         // Create or update chart
-        const ctx = document.getElementById('simulationChart').getContext('2d');
+        const ctx = document.getElementById('simulationChart');
         
         if (simulationChart) {
             simulationChart.destroy();
@@ -503,87 +503,133 @@
             hasMultiSeries: !!(performanceData.market_performance)
         });
 
-        // Check if we have multi-series data (market, conviction, performance)
-        const datasets = [];
+        // Prepare series data for ApexCharts
+        const series = [];
         
         if (performanceData.market_performance && performanceData.thesis_performance) {
             // Two-series visualization: Market vs Thesis
-            datasets.push({
-                label: 'Market Performance',
-                data: performanceData.market_performance,
-                borderColor: 'rgb(156, 163, 175)',
-                backgroundColor: 'rgba(156, 163, 175, 0.1)',
-                fill: false,
-                tension: 0.1,
-                pointRadius: 3,
-                pointHoverRadius: 5,
-                borderWidth: 2
+            series.push({
+                name: 'Market Performance',
+                data: performanceData.market_performance.map((value, index) => ({
+                    x: timeline[index],
+                    y: value
+                }))
             });
             
-            datasets.push({
-                label: 'Thesis Performance',
-                data: performanceData.thesis_performance,
-                borderColor: 'rgb(34, 197, 94)',
-                backgroundColor: 'rgba(34, 197, 94, 0.2)',
-                fill: true,
-                tension: 0.1,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                borderWidth: 3
+            series.push({
+                name: 'Thesis Performance',
+                data: performanceData.thesis_performance.map((value, index) => ({
+                    x: timeline[index],
+                    y: value
+                }))
             });
         } else {
             // Single series fallback
-            datasets.push({
-                label: data.chart_config?.primary_metric || 'Performance Index',
-                data: Array.isArray(performanceData) ? performanceData : [],
-                borderColor: data.chart_config?.color || 'rgb(54, 162, 235)',
-                backgroundColor: data.chart_config?.color || 'rgba(54, 162, 235, 0.1)',
-                fill: true,
-                tension: 0.1,
-                pointRadius: 4,
-                pointHoverRadius: 6
+            const singleData = Array.isArray(performanceData) ? performanceData : [];
+            series.push({
+                name: data.chart_config?.primary_metric || 'Performance Index',
+                data: singleData.map((value, index) => ({
+                    x: timeline[index],
+                    y: value
+                }))
             });
         }
 
-        const chartConfig = {
-            type: 'line',
-            data: {
-                labels: timeline,
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Time'
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: data.chart_config.y_axis_label || 'Value'
-                        }
+        // Prepare event flags as annotations
+        const annotations = [];
+        console.log('Event data received:', data.events);
+        
+        if (data.events && data.events.length > 0) {
+            data.events.forEach((event, index) => {
+                const monthIndex = event.month ? Math.min(event.month - 1, timeline.length - 1) : 
+                                 Math.floor(index * timeline.length / data.events.length);
+                const validIndex = Math.max(0, Math.min(monthIndex, timeline.length - 1));
+                
+                annotations.push({
+                    x: timeline[validIndex],
+                    borderColor: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
+                    label: {
+                        borderColor: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
+                        style: {
+                            color: '#fff',
+                            background: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
+                            fontSize: '11px',
+                            padding: {
+                                left: 5,
+                                right: 5,
+                                top: 2,
+                                bottom: 2
+                            }
+                        },
+                        text: event.title.length > 25 ? event.title.substring(0, 25) + '...' : event.title,
+                        orientation: 'horizontal',
+                        position: 'top'
                     }
+                });
+            });
+        }
+
+        // Create ApexCharts configuration
+        const chartOptions = {
+            series: series,
+            chart: {
+                type: 'line',
+                height: 400,
+                zoom: {
+                    enabled: true
                 },
-                plugins: {
-                    title: {
-                        display: true,
-                        text: data.chart_config.title || 'Thesis Performance Simulation'
-                    },
-                    legend: {
-                        display: true
-                    }
+                toolbar: {
+                    show: true
                 }
-            }
+            },
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                curve: 'smooth',
+                width: [2, 3]
+            },
+            title: {
+                text: data.chart_config.title || 'Thesis Performance Simulation',
+                align: 'left',
+                style: {
+                    fontSize: '16px',
+                    fontWeight: 'bold'
+                }
+            },
+            grid: {
+                borderColor: '#e7e7e7',
+                row: {
+                    colors: ['#f3f3f3', 'transparent'],
+                    opacity: 0.5
+                },
+            },
+            xaxis: {
+                type: 'category',
+                title: {
+                    text: 'Time Period'
+                }
+            },
+            yaxis: {
+                title: {
+                    text: data.chart_config.y_axis_label || 'Value'
+                }
+            },
+            legend: {
+                position: 'top',
+                horizontalAlign: 'right',
+                floating: true,
+                offsetY: -25,
+                offsetX: -5
+            },
+            annotations: {
+                xaxis: annotations
+            },
+            colors: ['#9ca3af', '#22c55e']
         };
 
-        // Event data will be displayed as timeline below chart, not as data points
-        console.log('Event data received:', data.events);
-
-        simulationChart = new Chart(ctx, chartConfig);
+        simulationChart = new ApexCharts(ctx, chartOptions);
+        simulationChart.render();
 
         // Display events timeline if available
         if (data.events && data.events.length > 0) {
