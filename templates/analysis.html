@@ -550,20 +550,67 @@ document.addEventListener('DOMContentLoaded', function() {
     function generateMonitoringStrategy(strategy) {
         if (!strategy) return '<p class="text-muted">No monitoring recommendations</p>';
         
+        // Handle both old and new monitoring plan formats
+        const objective = strategy.objective || 'Monitor thesis performance and key assumptions';
+        const dataPulls = strategy.data_pulls || [];
+        const alertLogic = strategy.alert_logic || [];
+        const decisionTriggers = strategy.decision_triggers || [];
+        const reviewSchedule = strategy.review_schedule || strategy.review_frequency || 'Monthly';
+        
         return `
-            <div class="mb-3">
-                <strong class="small">Priority Signals:</strong>
-                <ul class="small mt-1">
-                    ${(strategy.priority_signals || []).slice(0, 3).map(signal => `<li>${signal}</li>`).join('')}
-                </ul>
+            <div class="mb-4">
+                <h6 class="text-primary">Monitoring Objective</h6>
+                <p class="small">${objective}</p>
             </div>
+            
+            ${dataPulls.length > 0 ? `
+                <div class="mb-4">
+                    <h6 class="text-primary">Key Metrics & Data Pulls</h6>
+                    ${dataPulls.map((pull, index) => `
+                        <div class="border rounded p-2 mb-2 bg-secondary">
+                            <div class="small"><strong>${String.fromCharCode(65 + index)}. ${pull.category}</strong></div>
+                            <div class="small text-light mt-1">
+                                • Metrics: ${(pull.metrics || []).join(', ')}<br>
+                                • Source: <span class="badge bg-info text-dark">${pull.data_source}</span><br>
+                                • Frequency: ${pull.frequency}
+                            </div>
+                            ${pull.query_template ? `
+                                <div class="mt-2">
+                                    <code class="small bg-dark text-light p-1 rounded d-block">${pull.query_template}</code>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            
+            ${alertLogic.length > 0 ? `
+                <div class="mb-4">
+                    <h6 class="text-primary">Alert Logic</h6>
+                    ${alertLogic.map(alert => `
+                        <div class="small mb-2">
+                            • <span class="badge bg-warning text-dark">${alert.frequency}</span>: ${alert.condition}
+                            <div class="text-muted ms-3">→ ${alert.action}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            
+            ${decisionTriggers.length > 0 ? `
+                <div class="mb-4">
+                    <h6 class="text-primary">Decision Triggers</h6>
+                    ${decisionTriggers.map(trigger => `
+                        <div class="small mb-2">
+                            • ${trigger.condition}
+                            <div class="text-muted ms-3">→ <span class="badge bg-${trigger.action === 'sell' ? 'danger' : trigger.action === 'buy' ? 'success' : 'secondary'}">${trigger.action.toUpperCase()}</span></div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            
             <div class="mb-3">
-                <strong class="small">Frequency:</strong>
-                <span class="badge bg-info">${strategy.monitoring_frequency || 'Unknown'}</span>
-            </div>
-            <div>
-                <strong class="small">Automation Opportunities:</strong>
-                <div class="small text-muted">${(strategy.automation_opportunities || []).length} signals</div>
+                <h6 class="text-primary">Review Schedule</h6>
+                <span class="badge bg-info">${reviewSchedule}</span>
             </div>
         `;
     }

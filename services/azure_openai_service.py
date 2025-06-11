@@ -110,12 +110,30 @@ Respond with valid JSON only:
     }
   ],
   "monitoring_plan": {
-    "review_frequency": "weekly|monthly",
-    "key_indicators": ["Signal 1", "Signal 2"],
-    "alert_conditions": ["Alert 1"],
-    "leading_indicators": ["Leading 1"],
-    "lagging_indicators": ["Lagging 1"],
-    "revision_triggers": ["Trigger 1"]
+    "objective": "Clear monitoring objective statement",
+    "data_pulls": [
+      {
+        "category": "Category name",
+        "metrics": ["Metric 1", "Metric 2"],
+        "data_source": "Xpressfeed|FactSet",
+        "query_template": "SELECT statement with WHERE clause",
+        "frequency": "daily|weekly|quarterly"
+      }
+    ],
+    "alert_logic": [
+      {
+        "frequency": "daily|weekly|quarterly",
+        "condition": "Specific threshold condition",
+        "action": "Flag/review action to take"
+      }
+    ],
+    "decision_triggers": [
+      {
+        "condition": "Specific exit/entry condition",
+        "action": "buy|sell|hold decision"
+      }
+    ],
+    "review_schedule": "Formal review timing"
   }
 }"""
         
