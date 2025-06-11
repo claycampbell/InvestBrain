@@ -265,6 +265,57 @@
             </div>
         </div>
     </div>
+
+    <!-- Simulation Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-area text-info"></i> Thesis Simulation
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="simulationType" style="width: auto;">
+                            <option value="performance">Performance Track</option>
+                            <option value="events">Event Scenarios</option>
+                        </select>
+                        <button class="btn btn-info btn-sm" onclick="showSimulationModal()">
+                            <i class="fas fa-play"></i> Run Simulation
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="simulationResults" class="d-none">
+                        <!-- Chart Container -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="position-relative">
+                                    <canvas id="simulationChart" height="400"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Event Timeline (for event scenarios) -->
+                        <div id="eventTimeline" class="d-none">
+                            <h6 class="mb-3">
+                                <i class="fas fa-timeline text-warning"></i> Key Events & Notifications
+                            </h6>
+                            <div id="eventList"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="simulationEmpty" class="text-center py-5">
+                        <i class="fas fa-chart-area text-muted fa-4x mb-3"></i>
+                        <h6 class="text-muted">Thesis Simulation</h6>
+                        <p class="text-muted mb-3">Run realistic simulations to test your thesis over time</p>
+                        <button class="btn btn-info" onclick="showSimulationModal()">
+                            <i class="fas fa-play"></i> Start Simulation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -379,6 +430,180 @@
         }, 5000);
     }
 
+    // Simulation functionality
+    let simulationChart = null;
+
+    function showSimulationModal() {
+        const modal = new bootstrap.Modal(document.getElementById('simulationModal'));
+        modal.show();
+    }
+
+    async function runSimulation() {
+        const timeHorizon = document.getElementById('timeHorizon').value;
+        const scenario = document.getElementById('simulationScenario').value;
+        const volatility = document.getElementById('volatility').value;
+        const includeEvents = document.getElementById('includeEvents').checked;
+        const simulationType = document.getElementById('simulationType').value;
+
+        document.getElementById('runSimBtn').disabled = true;
+        document.getElementById('runSimBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running...';
+
+        try {
+            const response = await fetch('/api/thesis/{{ thesis.id }}/simulate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    time_horizon: parseInt(timeHorizon),
+                    scenario: scenario,
+                    volatility: volatility,
+                    include_events: includeEvents,
+                    simulation_type: simulationType
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                displaySimulationResults(data);
+                bootstrap.Modal.getInstance(document.getElementById('simulationModal')).hide();
+                showAlert('Simulation completed successfully', 'success');
+            } else {
+                throw new Error('Simulation failed');
+            }
+        } catch (error) {
+            showAlert('Error running simulation: ' + error.message, 'danger');
+        } finally {
+            document.getElementById('runSimBtn').disabled = false;
+            document.getElementById('runSimBtn').innerHTML = '<i class="fas fa-play"></i> Run Simulation';
+        }
+    }
+
+    function displaySimulationResults(data) {
+        document.getElementById('simulationEmpty').classList.add('d-none');
+        document.getElementById('simulationResults').classList.remove('d-none');
+
+        // Create or update chart
+        const ctx = document.getElementById('simulationChart').getContext('2d');
+        
+        if (simulationChart) {
+            simulationChart.destroy();
+        }
+
+        const chartConfig = {
+            type: 'line',
+            data: {
+                labels: data.timeline,
+                datasets: [{
+                    label: data.chart_config.primary_metric,
+                    data: data.performance_data,
+                    borderColor: data.chart_config.color || 'rgb(75, 192, 192)',
+                    backgroundColor: data.chart_config.color || 'rgba(75, 192, 192, 0.1)',
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: data.chart_config.y_axis_label || 'Value'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: data.chart_config.title || 'Thesis Performance Simulation'
+                    },
+                    legend: {
+                        display: true
+                    }
+                }
+            }
+        };
+
+        // Add event markers for event scenarios
+        if (data.events && data.events.length > 0) {
+            chartConfig.data.datasets.push({
+                label: 'Key Events',
+                data: data.events.map(event => ({
+                    x: event.date,
+                    y: event.impact_value
+                })),
+                type: 'scatter',
+                backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                borderColor: 'rgb(255, 99, 132)',
+                pointRadius: 8,
+                pointHoverRadius: 10
+            });
+        }
+
+        simulationChart = new Chart(ctx, chartConfig);
+
+        // Display events timeline if available
+        if (data.events && data.events.length > 0) {
+            displayEventTimeline(data.events);
+            document.getElementById('eventTimeline').classList.remove('d-none');
+        } else {
+            document.getElementById('eventTimeline').classList.add('d-none');
+        }
+    }
+
+    function displayEventTimeline(events) {
+        const eventList = document.getElementById('eventList');
+        eventList.innerHTML = '';
+
+        events.forEach((event, index) => {
+            const eventCard = document.createElement('div');
+            eventCard.className = 'card mb-3 border-left-warning';
+            
+            const impactClass = event.impact_type === 'positive' ? 'success' : 
+                               event.impact_type === 'negative' ? 'danger' : 'warning';
+            
+            eventCard.innerHTML = `
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-title">${event.title}</h6>
+                            <p class="card-text small">${event.description}</p>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar"></i> ${event.date}
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-${impactClass}">${event.impact_type}</span>
+                            ${event.notification_triggered ? 
+                                '<br><small class="text-info"><i class="fas fa-bell"></i> Alert Triggered</small>' : ''
+                            }
+                        </div>
+                    </div>
+                    ${event.signals_affected ? 
+                        `<div class="mt-2">
+                            <small class="text-muted">Affected Signals:</small>
+                            <div class="mt-1">
+                                ${event.signals_affected.map(signal => 
+                                    `<span class="badge bg-secondary me-1">${signal}</span>`
+                                ).join('')}
+                            </div>
+                        </div>` : ''
+                    }
+                </div>
+            `;
+            
+            eventList.appendChild(eventCard);
+        });
+    }
+
     // Load page data on ready
     document.addEventListener('DOMContentLoaded', function() {
         console.log('Monitoring page loaded for thesis {{ thesis.id }}');
@@ -386,4 +611,63 @@
         console.log('Notifications count: {{ notifications|length }}');
     });
 </script>
+
+<!-- Simulation Modal -->
+<div class="modal fade" id="simulationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-area"></i> Configure Simulation
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="simulationForm">
+                    <div class="mb-3">
+                        <label for="timeHorizon" class="form-label">Time Horizon</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="timeHorizon" 
+                                   value="3" min="1" max="10" required>
+                            <span class="input-group-text">years</span>
+                        </div>
+                        <div class="form-text">Simulate thesis performance over this time period</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="simulationScenario" class="form-label">Scenario Type</label>
+                        <select class="form-select" id="simulationScenario" required>
+                            <option value="base">Base Case - Expected trajectory</option>
+                            <option value="bull">Bull Case - Optimistic scenario</option>
+                            <option value="bear">Bear Case - Pessimistic scenario</option>
+                            <option value="stress">Stress Test - Extreme conditions</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="volatility" class="form-label">Market Volatility</label>
+                        <select class="form-select" id="volatility">
+                            <option value="low">Low - Stable conditions</option>
+                            <option value="medium" selected>Medium - Normal conditions</option>
+                            <option value="high">High - Turbulent conditions</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="includeEvents" checked>
+                        <label class="form-check-label" for="includeEvents">
+                            Include realistic market events and notifications
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-info" onclick="runSimulation()" id="runSimBtn">
+                    <i class="fas fa-play"></i> Run Simulation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

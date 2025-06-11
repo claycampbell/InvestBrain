@@ -1,366 +1,346 @@
+"""
+Simulation Service for Investment Thesis Performance and Event Modeling
+
+Generates realistic time-series performance data and event scenarios
+using Azure OpenAI for intelligent simulation generation.
+"""
+
 import json
-import logging
-from typing import Dict, Any, List
+import random
+import math
 from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional
 from services.azure_openai_service import AzureOpenAIService
+
 
 class SimulationService:
     """
-    AI-powered simulation service for thesis testing with time horizon forecasts and event scenarios
+    Comprehensive simulation service for investment thesis modeling
     """
     
     def __init__(self):
-        self.azure_openai = AzureOpenAIService()
+        self.ai_service = AzureOpenAIService()
         
-    def run_time_horizon_forecast(self, thesis, time_horizon: str, scenario_type: str) -> Dict[str, Any]:
+    def generate_simulation(self, thesis, time_horizon: int, scenario: str, 
+                          volatility: str, include_events: bool, simulation_type: str) -> Dict[str, Any]:
         """
-        Generate time horizon forecast using AI analysis of thesis and market conditions
+        Generate comprehensive thesis simulation with performance data and events
         """
-        try:
-            # Prepare thesis context
-            thesis_context = self._prepare_thesis_context(thesis)
-            
-            # Generate forecast using Azure OpenAI
-            forecast_prompt = self._build_forecast_prompt(thesis_context, time_horizon, scenario_type)
-            
-            messages = [
-                {"role": "system", "content": self._get_forecast_system_prompt()},
-                {"role": "user", "content": forecast_prompt}
-            ]
-            
-            response = self.azure_openai.generate_completion(messages, temperature=0.7)
-            
-            # Parse AI response
-            forecast_data = json.loads(response)
-            
-            # Generate signal forecasts
-            signal_forecasts = self._generate_signal_forecasts(thesis, time_horizon, scenario_type)
-            
-            # Check for alert triggers
-            alert_triggers = self._check_alert_triggers(thesis, forecast_data, signal_forecasts)
-            
-            return {
-                'forecast': forecast_data,
-                'performance_metrics': forecast_data.get('performance_metrics', {}),
-                'signal_forecasts': signal_forecasts,
-                'alert_triggers': alert_triggers,
-                'simulation_timestamp': datetime.utcnow().isoformat()
-            }
-            
-        except Exception as e:
-            logging.error(f"Error in time horizon forecast: {str(e)}")
-            raise
-    
-    def run_event_simulation(self, thesis, event_type: str, event_severity: str) -> Dict[str, Any]:
-        """
-        Simulate real-world events and their impact on thesis performance
-        """
-        try:
-            # Prepare thesis context
-            thesis_context = self._prepare_thesis_context(thesis)
-            
-            # Generate event simulation using Azure OpenAI
-            event_prompt = self._build_event_prompt(thesis_context, event_type, event_severity)
-            
-            messages = [
-                {"role": "system", "content": self._get_event_system_prompt()},
-                {"role": "user", "content": event_prompt}
-            ]
-            
-            response = self.azure_openai.generate_completion(messages, temperature=0.8)
-            
-            # Parse AI response
-            event_data = json.loads(response)
-            
-            # Generate signal responses
-            signal_responses = self._generate_signal_responses(thesis, event_data)
-            
-            # Check for alert triggers
-            alert_triggers = self._check_event_alert_triggers(thesis, event_data, signal_responses)
-            
-            return {
-                'event_simulation': event_data,
-                'impact_analysis': event_data.get('impact_analysis', {}),
-                'signal_responses': signal_responses,
-                'alert_triggers': alert_triggers,
-                'simulation_timestamp': datetime.utcnow().isoformat()
-            }
-            
-        except Exception as e:
-            logging.error(f"Error in event simulation: {str(e)}")
-            raise
-    
-    def _prepare_thesis_context(self, thesis) -> Dict[str, Any]:
-        """Prepare thesis data for simulation prompts"""
+        # Generate base performance simulation
+        performance_data = self._generate_performance_simulation(
+            thesis, time_horizon, scenario, volatility
+        )
+        
+        # Generate timeline labels
+        timeline = self._generate_timeline(time_horizon)
+        
+        # Generate events if requested
+        events = []
+        if include_events:
+            events = self._generate_event_scenarios(
+                thesis, time_horizon, scenario, performance_data
+            )
+        
+        # Create chart configuration
+        chart_config = self._create_chart_config(thesis, scenario, simulation_type)
+        
         return {
-            'title': thesis.title,
-            'core_claim': thesis.core_claim,
-            'core_analysis': thesis.core_analysis,
-            'mental_model': thesis.mental_model,
-            'causal_chain': thesis.causal_chain if isinstance(thesis.causal_chain, list) else [],
-            'assumptions': thesis.assumptions if isinstance(thesis.assumptions, list) else [],
-            'counter_thesis': thesis.counter_thesis if isinstance(thesis.counter_thesis, list) else [],
-            'metrics_to_track': thesis.metrics_to_track if isinstance(thesis.metrics_to_track, list) else [],
-            'monitoring_plan': thesis.monitoring_plan if isinstance(thesis.monitoring_plan, dict) else {}
+            'performance_data': performance_data,
+            'timeline': timeline,
+            'events': events,
+            'chart_config': chart_config,
+            'scenario_summary': self._create_scenario_summary(thesis, scenario, time_horizon),
+            'simulation_metadata': {
+                'thesis_id': thesis.id,
+                'thesis_title': thesis.title,
+                'scenario': scenario,
+                'volatility': volatility,
+                'time_horizon': time_horizon,
+                'include_events': include_events,
+                'simulation_type': simulation_type,
+                'generated_at': datetime.utcnow().isoformat()
+            }
         }
     
-    def _get_forecast_system_prompt(self) -> str:
-        """System prompt for time horizon forecasting"""
-        return """You are an expert investment analyst specializing in scenario analysis and forecasting. 
-
-Generate realistic time horizon forecasts based on investment thesis analysis, considering market dynamics, competitive positioning, and macroeconomic factors.
-
-Respond with valid JSON only:
-{
-  "time_horizon": "forecast period",
-  "scenario_type": "bull|base|bear|black_swan",
-  "confidence": 85,
-  "key_outcomes": [
-    "Specific outcome 1",
-    "Specific outcome 2"
-  ],
-  "performance_metrics": {
-    "expected_return": 25.5,
-    "risk_level": "medium",
-    "key_risks": [
-      "Risk factor 1",
-      "Risk factor 2"
-    ]
-  },
-  "market_assumptions": [
-    "Market assumption 1",
-    "Market assumption 2"
-  ],
-  "catalyst_timeline": [
-    {
-      "timeframe": "Q1 2025",
-      "event": "Expected catalyst",
-      "impact": "Positive|Negative|Neutral"
-    }
-  ]
-}"""
+    def _generate_performance_simulation(self, thesis, time_horizon: int, 
+                                       scenario: str, volatility: str) -> List[float]:
+        """
+        Generate realistic performance data using AI-powered simulation
+        """
+        try:
+            # Create intelligent simulation prompt
+            prompt = f"""
+            Generate a realistic {time_horizon}-year performance simulation for the following investment thesis:
+            
+            Thesis: {thesis.title}
+            Core Claim: {thesis.core_claim or 'Investment opportunity analysis'}
+            Scenario: {scenario}
+            Volatility: {volatility}
+            
+            Create a monthly performance simulation with realistic market behavior including:
+            - Trend direction based on scenario (bull/bear/base/stress)
+            - Appropriate volatility levels
+            - Realistic market cycles and corrections
+            - Seasonal patterns where applicable
+            
+            Return ONLY a JSON array of {time_horizon * 12} monthly percentage values representing cumulative performance.
+            Start at 100 (baseline) and show realistic progression.
+            
+            Example format: [100, 102.5, 101.8, 105.2, ...]
+            
+            Scenario guidelines:
+            - bull: 8-15% annual growth with moderate volatility
+            - base: 3-8% annual growth with normal volatility  
+            - bear: -5% to +2% annual with higher volatility
+            - stress: -20% to -5% annual with extreme volatility
+            """
+            
+            response = self.ai_service.generate_completion([
+                {"role": "system", "content": "You are a financial modeling expert. Generate realistic market performance data."},
+                {"role": "user", "content": prompt}
+            ], temperature=0.7)
+            
+            # Parse the response
+            try:
+                performance_data = json.loads(response)
+                if isinstance(performance_data, list) and len(performance_data) == time_horizon * 12:
+                    return performance_data
+                else:
+                    raise ValueError("Invalid data format")
+            except (json.JSONDecodeError, ValueError):
+                # Fallback to algorithmic generation
+                return self._generate_algorithmic_performance(time_horizon, scenario, volatility)
+                
+        except Exception as e:
+            print(f"AI simulation failed, using algorithmic fallback: {e}")
+            return self._generate_algorithmic_performance(time_horizon, scenario, volatility)
     
-    def _get_event_system_prompt(self) -> str:
-        """System prompt for event simulation"""
-        return """You are an expert risk analyst specializing in event simulation and impact assessment.
-
-Simulate realistic market events and analyze their impact on investment thesis performance, considering both direct and indirect effects.
-
-Respond with valid JSON only:
-{
-  "event_type": "market|competitive|regulatory|macroeconomic|company_specific",
-  "severity": "minor|moderate|major|critical",
-  "description": "Detailed event description",
-  "probability": 25,
-  "impact_analysis": {
-    "thesis_impact": -15.5,
-    "recovery_time": "6-12 months",
-    "permanent_impact": false,
-    "mitigation_actions": [
-      "Action 1",
-      "Action 2"
-    ]
-  },
-  "affected_assumptions": [
-    "Assumption that would be challenged"
-  ],
-  "cascade_effects": [
-    {
-      "effect": "Secondary impact",
-      "probability": 60,
-      "timeline": "3-6 months"
-    }
-  ]
-}"""
-    
-    def _build_forecast_prompt(self, thesis_context: Dict, time_horizon: str, scenario_type: str) -> str:
-        """Build prompt for time horizon forecasting"""
-        return f"""Analyze this investment thesis and generate a {time_horizon} forecast under {scenario_type} market conditions:
-
-THESIS DETAILS:
-Core Claim: {thesis_context.get('core_claim', 'N/A')}
-Mental Model: {thesis_context.get('mental_model', 'N/A')}
-Key Assumptions: {json.dumps(thesis_context.get('assumptions', []))}
-
-CAUSAL CHAIN:
-{json.dumps(thesis_context.get('causal_chain', []))}
-
-MONITORING SIGNALS:
-{json.dumps(thesis_context.get('metrics_to_track', []))}
-
-Generate a comprehensive {time_horizon} forecast considering:
-1. Market scenario: {scenario_type} conditions
-2. Thesis-specific catalysts and risks
-3. Competitive dynamics and market evolution
-4. Macroeconomic factors
-5. Signal performance expectations
-
-Provide specific, quantitative outcomes with confidence levels and actionable insights."""
-    
-    def _build_event_prompt(self, thesis_context: Dict, event_type: str, event_severity: str) -> str:
-        """Build prompt for event simulation"""
-        return f"""Simulate a {event_severity} {event_type} event affecting this investment thesis:
-
-THESIS DETAILS:
-Core Claim: {thesis_context.get('core_claim', 'N/A')}
-Mental Model: {thesis_context.get('mental_model', 'N/A')}
-Key Assumptions: {json.dumps(thesis_context.get('assumptions', []))}
-
-COUNTER-THESIS SCENARIOS:
-{json.dumps(thesis_context.get('counter_thesis', []))}
-
-MONITORING SIGNALS:
-{json.dumps(thesis_context.get('metrics_to_track', []))}
-
-Create a realistic {event_severity} {event_type} event scenario and analyze:
-1. Specific event description and probability
-2. Direct impact on thesis validity
-3. Signal response patterns
-4. Recovery timeline and permanent effects
-5. Mitigation strategies and actions
-6. Cascade effects and secondary impacts
-
-Focus on events that could realistically challenge the thesis assumptions or trigger monitoring alerts."""
-    
-    def _generate_signal_forecasts(self, thesis, time_horizon: str, scenario_type: str) -> List[Dict[str, Any]]:
-        """Generate individual signal performance forecasts"""
-        signals = []
+    def _generate_algorithmic_performance(self, time_horizon: int, scenario: str, volatility: str) -> List[float]:
+        """
+        Fallback algorithmic performance generation
+        """
+        months = time_horizon * 12
+        data = [100.0]  # Start at baseline
         
-        if isinstance(thesis.metrics_to_track, list):
-            for metric in thesis.metrics_to_track[:6]:  # Limit to top 6 signals
-                if isinstance(metric, dict):
-                    # Simulate signal direction based on scenario
-                    direction = self._predict_signal_direction(metric, scenario_type)
-                    confidence = self._calculate_signal_confidence(metric, time_horizon)
-                    
-                    signals.append({
-                        'name': metric.get('name', 'Unknown Signal'),
-                        'current_status': 'Active',
-                        'direction': direction,
-                        'confidence': confidence
-                    })
-        
-        return signals
-    
-    def _generate_signal_responses(self, thesis, event_data: Dict) -> List[Dict[str, Any]]:
-        """Generate signal responses to simulated events"""
-        responses = []
-        
-        if isinstance(thesis.metrics_to_track, list):
-            for metric in thesis.metrics_to_track[:6]:  # Limit to top 6 signals
-                if isinstance(metric, dict):
-                    # Simulate event impact on signal
-                    impact = self._calculate_event_impact(metric, event_data)
-                    alert_triggered = abs(impact) > 10  # Trigger if >10% impact
-                    
-                    responses.append({
-                        'name': metric.get('name', 'Unknown Signal'),
-                        'pre_event': '100',
-                        'post_event': f'{100 + impact:.1f}',
-                        'impact_pct': impact,
-                        'alert_triggered': alert_triggered
-                    })
-        
-        return responses
-    
-    def _predict_signal_direction(self, metric: Dict, scenario_type: str) -> str:
-        """Predict signal direction based on scenario type"""
-        if scenario_type == 'bull':
-            return 'up'
-        elif scenario_type == 'bear':
-            return 'down'
-        elif scenario_type == 'black_swan':
-            return 'down'
-        else:  # base case
-            return 'stable'
-    
-    def _calculate_signal_confidence(self, metric: Dict, time_horizon: str) -> int:
-        """Calculate confidence in signal forecast"""
-        base_confidence = 75
-        
-        # Adjust based on time horizon
-        if time_horizon in ['3m', '6m']:
-            return min(90, base_confidence + 10)
-        elif time_horizon in ['2y', '3y']:
-            return max(50, base_confidence - 15)
-        else:  # 1y
-            return base_confidence
-    
-    def _calculate_event_impact(self, metric: Dict, event_data: Dict) -> float:
-        """Calculate event impact on individual signals"""
-        severity = event_data.get('severity', 'moderate')
-        
-        # Base impact by severity
-        impact_map = {
-            'minor': (-5, 5),
-            'moderate': (-15, 10),
-            'major': (-30, 15),
-            'critical': (-50, 20)
+        # Scenario parameters
+        scenario_params = {
+            'bull': {'annual_return': 0.12, 'volatility_mult': 1.0},
+            'base': {'annual_return': 0.06, 'volatility_mult': 1.2},
+            'bear': {'annual_return': -0.02, 'volatility_mult': 1.5},
+            'stress': {'annual_return': -0.15, 'volatility_mult': 2.0}
         }
         
-        # Get impact range and add some randomness
-        import random
-        min_impact, max_impact = impact_map.get(severity, (-10, 10))
-        return random.uniform(min_impact, max_impact)
+        volatility_params = {
+            'low': 0.5,
+            'medium': 1.0,
+            'high': 1.8
+        }
+        
+        params = scenario_params.get(scenario, scenario_params['base'])
+        vol_mult = volatility_params.get(volatility, 1.0)
+        
+        monthly_return = params['annual_return'] / 12
+        monthly_vol = (params['volatility_mult'] * vol_mult * 0.15) / math.sqrt(12)
+        
+        for i in range(1, months):
+            # Add trend + noise + some autocorrelation
+            trend = monthly_return
+            noise = random.gauss(0, monthly_vol)
+            
+            # Add market cycle effects
+            cycle_effect = 0.02 * math.sin(2 * math.pi * i / 24)  # 2-year cycle
+            
+            # Add some mean reversion
+            deviation = (data[i-1] - 100) / 100
+            reversion = -0.1 * deviation
+            
+            monthly_change = trend + noise + cycle_effect + reversion
+            data.append(data[i-1] * (1 + monthly_change))
+        
+        return data
     
-    def _check_alert_triggers(self, thesis, forecast_data: Dict, signal_forecasts: List) -> List[Dict[str, Any]]:
-        """Check if forecast triggers any monitoring alerts"""
-        alerts = []
+    def _generate_event_scenarios(self, thesis, time_horizon: int, scenario: str, 
+                                performance_data: List[float]) -> List[Dict[str, Any]]:
+        """
+        Generate realistic market events and their impacts
+        """
+        try:
+            # Use AI to generate contextual events
+            prompt = f"""
+            Generate 3-6 realistic market events over {time_horizon} years for this investment thesis:
+            
+            Thesis: {thesis.title}
+            Core Claim: {thesis.core_claim or 'Investment analysis'}
+            Scenario: {scenario}
+            
+            Create events that would realistically impact this thesis, including:
+            - Market corrections, earnings announcements, regulatory changes
+            - Industry developments, competitive threats, macroeconomic events
+            - Technology disruptions, geopolitical events
+            
+            For each event, specify:
+            - Realistic timing (month 1-{time_horizon * 12})
+            - Event title and description
+            - Impact type (positive/negative/neutral)
+            - Which signals would be affected
+            - Whether it would trigger notifications
+            
+            Return ONLY valid JSON format:
+            [{{
+                "month": 8,
+                "title": "Q2 Earnings Beat",
+                "description": "Company reports stronger than expected quarterly results",
+                "impact_type": "positive",
+                "impact_value": 105.2,
+                "notification_triggered": true,
+                "signals_affected": ["Quarterly Revenue Growth", "Operating Margin"]
+            }}]
+            """
+            
+            response = self.ai_service.generate_completion([
+                {"role": "system", "content": "You are a financial analyst. Generate realistic market events as JSON."},
+                {"role": "user", "content": prompt}
+            ], temperature=0.8)
+            
+            try:
+                events_data = json.loads(response)
+                if isinstance(events_data, list):
+                    # Process and format events
+                    formatted_events = []
+                    for event in events_data:
+                        month = event.get('month', 1)
+                        if 1 <= month <= len(performance_data):
+                            formatted_event = {
+                                'date': self._month_to_date(month, time_horizon),
+                                'title': event.get('title', 'Market Event'),
+                                'description': event.get('description', 'Market development'),
+                                'impact_type': event.get('impact_type', 'neutral'),
+                                'impact_value': performance_data[month - 1] if month <= len(performance_data) else 100,
+                                'notification_triggered': event.get('notification_triggered', False),
+                                'signals_affected': event.get('signals_affected', [])
+                            }
+                            formatted_events.append(formatted_event)
+                    
+                    return formatted_events[:6]  # Limit to 6 events
+                
+            except (json.JSONDecodeError, ValueError):
+                pass
+                
+        except Exception as e:
+            print(f"AI event generation failed: {e}")
         
-        # Check confidence threshold
-        confidence = forecast_data.get('confidence', 100)
-        if confidence < 60:
-            alerts.append({
-                'signal_name': 'Thesis Confidence',
-                'condition': f'Forecast confidence below 60% ({confidence}%)',
-                'action': 'Review thesis assumptions and market analysis',
-                'severity': 'high'
-            })
-        
-        # Check expected return
-        expected_return = forecast_data.get('performance_metrics', {}).get('expected_return', 0)
-        if expected_return < -10:
-            alerts.append({
-                'signal_name': 'Expected Return',
-                'condition': f'Negative expected return ({expected_return}%)',
-                'action': 'Consider position size reduction or exit strategy',
-                'severity': 'critical'
-            })
-        
-        # Check signal directions
-        down_signals = [s for s in signal_forecasts if s.get('direction') == 'down']
-        if len(down_signals) >= 3:
-            alerts.append({
-                'signal_name': 'Signal Deterioration',
-                'condition': f'{len(down_signals)} signals forecasting negative direction',
-                'action': 'Investigate fundamental changes in thesis drivers',
-                'severity': 'high'
-            })
-        
-        return alerts
+        # Fallback event generation
+        return self._generate_fallback_events(time_horizon, scenario, performance_data)
     
-    def _check_event_alert_triggers(self, thesis, event_data: Dict, signal_responses: List) -> List[Dict[str, Any]]:
-        """Check if event simulation triggers monitoring alerts"""
-        alerts = []
+    def _generate_fallback_events(self, time_horizon: int, scenario: str, 
+                                performance_data: List[float]) -> List[Dict[str, Any]]:
+        """
+        Generate fallback events when AI generation fails
+        """
+        event_templates = [
+            {
+                'title': 'Quarterly Earnings Release',
+                'description': 'Company reports quarterly financial results',
+                'impact_type': 'positive' if scenario in ['bull', 'base'] else 'negative',
+                'notification_triggered': True,
+                'signals_affected': ['Quarterly Revenue Growth', 'Operating Margin']
+            },
+            {
+                'title': 'Market Correction',
+                'description': 'Broader market experiences volatility',
+                'impact_type': 'negative',
+                'notification_triggered': True,
+                'signals_affected': ['Free Cash Flow']
+            },
+            {
+                'title': 'Industry Development',
+                'description': 'Significant development in the industry sector',
+                'impact_type': 'positive' if scenario == 'bull' else 'neutral',
+                'notification_triggered': False,
+                'signals_affected': []
+            }
+        ]
         
-        # Check thesis impact
-        impact = event_data.get('impact_analysis', {}).get('thesis_impact', 0)
-        if impact < -20:
-            alerts.append({
-                'signal_name': 'Thesis Impact',
-                'condition': f'Event impact exceeds -20% threshold ({impact}%)',
-                'action': 'Emergency thesis review and risk assessment required',
-                'severity': 'critical'
-            })
+        events = []
+        num_events = min(4, time_horizon + 1)
         
-        # Check signal alerts
-        triggered_signals = [s for s in signal_responses if s.get('alert_triggered')]
-        if len(triggered_signals) >= 2:
-            alerts.append({
-                'signal_name': 'Multiple Signal Alerts',
-                'condition': f'{len(triggered_signals)} signals triggered alerts',
-                'action': 'Implement monitoring plan alert procedures immediately',
-                'severity': 'high'
-            })
+        for i in range(num_events):
+            template = random.choice(event_templates)
+            month = random.randint(1, min(len(performance_data), time_horizon * 12))
+            
+            event = {
+                'date': self._month_to_date(month, time_horizon),
+                'title': template['title'],
+                'description': template['description'],
+                'impact_type': template['impact_type'],
+                'impact_value': performance_data[month - 1] if month <= len(performance_data) else 100,
+                'notification_triggered': template['notification_triggered'],
+                'signals_affected': template['signals_affected']
+            }
+            events.append(event)
         
-        return alerts
+        return events
+    
+    def _generate_timeline(self, time_horizon: int) -> List[str]:
+        """
+        Generate timeline labels for the chart
+        """
+        timeline = []
+        start_date = datetime.now()
+        
+        for month in range(time_horizon * 12):
+            date = start_date + timedelta(days=30 * month)
+            if month % 3 == 0:  # Show every quarter
+                timeline.append(date.strftime('%Y Q%q').replace('Q1', 'Q1').replace('Q2', 'Q2').replace('Q3', 'Q3').replace('Q4', 'Q4'))
+            else:
+                timeline.append('')
+        
+        return timeline
+    
+    def _month_to_date(self, month: int, time_horizon: int) -> str:
+        """
+        Convert month number to readable date
+        """
+        start_date = datetime.now()
+        target_date = start_date + timedelta(days=30 * (month - 1))
+        return target_date.strftime('%Y-%m')
+    
+    def _create_chart_config(self, thesis, scenario: str, simulation_type: str) -> Dict[str, Any]:
+        """
+        Create chart configuration based on thesis and scenario
+        """
+        scenario_colors = {
+            'bull': 'rgb(34, 197, 94)',      # Green
+            'base': 'rgb(59, 130, 246)',     # Blue  
+            'bear': 'rgb(239, 68, 68)',      # Red
+            'stress': 'rgb(147, 51, 234)'    # Purple
+        }
+        
+        scenario_names = {
+            'bull': 'Bull Case',
+            'base': 'Base Case', 
+            'bear': 'Bear Case',
+            'stress': 'Stress Test'
+        }
+        
+        return {
+            'title': f'{thesis.title} - {scenario_names.get(scenario, scenario.title())} Simulation',
+            'primary_metric': 'Performance Index',
+            'y_axis_label': 'Cumulative Performance (%)',
+            'color': scenario_colors.get(scenario, 'rgb(75, 192, 192)'),
+            'scenario': scenario,
+            'simulation_type': simulation_type
+        }
+    
+    def _create_scenario_summary(self, thesis, scenario: str, time_horizon: int) -> str:
+        """
+        Create a summary description of the simulation scenario
+        """
+        scenario_descriptions = {
+            'bull': f'Optimistic {time_horizon}-year projection assuming favorable market conditions and strong execution',
+            'base': f'Expected {time_horizon}-year trajectory under normal market conditions',
+            'bear': f'Conservative {time_horizon}-year outlook considering potential headwinds and challenges', 
+            'stress': f'Stress test scenario modeling extreme market conditions over {time_horizon} years'
+        }
+        
+        return scenario_descriptions.get(scenario, f'{time_horizon}-year simulation scenario')

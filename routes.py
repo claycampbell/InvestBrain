@@ -498,6 +498,42 @@ def simulation_page(thesis_id):
         logging.error(f"Error loading simulation page: {str(e)}")
         return render_template('404.html'), 404
 
+@app.route('/api/thesis/<int:thesis_id>/simulate', methods=['POST'])
+def simulate_thesis(thesis_id):
+    """Generate realistic thesis performance simulation"""
+    try:
+        data = request.get_json()
+        
+        # Get thesis details
+        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        
+        # Extract simulation parameters
+        time_horizon = data.get('time_horizon', 3)
+        scenario = data.get('scenario', 'base')
+        volatility = data.get('volatility', 'medium')
+        include_events = data.get('include_events', True)
+        simulation_type = data.get('simulation_type', 'performance')
+        
+        # Initialize simulation service
+        from services.simulation_service import SimulationService
+        sim_service = SimulationService()
+        
+        # Generate simulation
+        result = sim_service.generate_simulation(
+            thesis=thesis,
+            time_horizon=time_horizon,
+            scenario=scenario,
+            volatility=volatility,
+            include_events=include_events,
+            simulation_type=simulation_type
+        )
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"Error in thesis simulation: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/simulation/run', methods=['POST'])
 def run_simulation():
     """Run thesis simulation with time horizon forecasts and event scenarios"""
