@@ -31,7 +31,7 @@ class Signal:
     lead_lag_indicator: str  # "leading", "coincident", "lagging"
     raw_data_points: List[str]
     derivation_method: Optional[str] = None
-    correlation_signals: List[str] = None
+    correlation_signals: Optional[List[str]] = None
     collection_frequency: str = "unknown"
     reliability_score: float = 0.0
 

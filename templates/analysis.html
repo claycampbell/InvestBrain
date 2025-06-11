@@ -314,19 +314,231 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function generateResultsHTML(data) {
-        // This will be populated with actual analysis results
+        const signalData = data.signal_extraction || {};
+        const thesisData = data.thesis_analysis || {};
+        
         return `
             <div class="row">
-                <div class="col-md-6">
-                    <h6>Primary Signals Identified</h6>
-                    <div class="small text-muted">Results will be displayed here after analysis</div>
+                <!-- Signal Overview -->
+                <div class="col-12 mb-4">
+                    <div class="alert alert-success">
+                        <h5 class="alert-heading">Analysis Complete</h5>
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <strong>${signalData.total_signals_identified || 0}</strong>
+                                <div class="small">Total Signals</div>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>${signalData.primary_signals_count || 0}</strong>
+                                <div class="small">Primary Signals</div>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>${data.processed_documents || 0}</strong>
+                                <div class="small">Documents Processed</div>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>${signalData.quality_assessment?.assessment || 'N/A'}</strong>
+                                <div class="small">Signal Quality</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <h6>Signal Classification</h6>
-                    <div class="small text-muted">Signal hierarchy and relationships</div>
+                
+                <!-- Core Thesis Analysis -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-bullseye"></i> Core Investment Logic</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong>Core Claim:</strong>
+                                <p class="small">${thesisData.core_claim || 'Analysis in progress...'}</p>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Mental Model:</strong>
+                                <span class="badge bg-primary">${thesisData.mental_model || 'Unknown'}</span>
+                            </div>
+                            ${generateAssumptionsList(thesisData.assumptions)}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Signal Classification -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-signal"></i> Signal Classification</h6>
+                        </div>
+                        <div class="card-body">
+                            ${generateSignalsByLevel(signalData.signals_by_level)}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Value Chain Mapping -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-sitemap"></i> Value Chain Signal Mapping</h6>
+                        </div>
+                        <div class="card-body">
+                            ${generateValueChainMapping(signalData.value_chain_mapping)}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Monitoring Recommendations -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-eye"></i> Monitoring Strategy</h6>
+                        </div>
+                        <div class="card-body">
+                            ${generateMonitoringStrategy(signalData.recommended_monitoring)}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Primary Signals Detail -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-list"></i> Primary Signals Detail</h6>
+                        </div>
+                        <div class="card-body">
+                            ${generatePrimarySignalsTable(signalData.raw_signals)}
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
+    }
+    
+    function generateAssumptionsList(assumptions) {
+        if (!assumptions || !Array.isArray(assumptions)) return '';
+        
+        return `
+            <div>
+                <strong>Key Assumptions:</strong>
+                <ul class="small mt-2">
+                    ${assumptions.slice(0, 3).map(assumption => `<li>${assumption}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    function generateSignalsByLevel(signalsByLevel) {
+        if (!signalsByLevel) return '<p class="text-muted">No signals classified</p>';
+        
+        const levelBadges = {
+            'Raw Economic Activity': 'bg-success',
+            'Simple Aggregation': 'bg-info',
+            'Derived Metrics': 'bg-warning',
+            'Complex Derivatives': 'bg-secondary',
+            'Synthetic Indicators': 'bg-dark'
+        };
+        
+        return Object.entries(signalsByLevel).map(([level, signals]) => `
+            <div class="mb-2">
+                <span class="badge ${levelBadges[level] || 'bg-secondary'}">${signals.length}</span>
+                <small class="ms-2">${level}</small>
+            </div>
+        `).join('');
+    }
+    
+    function generateValueChainMapping(valueChain) {
+        if (!valueChain) return '<p class="text-muted">No value chain mapping available</p>';
+        
+        return `
+            <div class="row text-center">
+                <div class="col-4">
+                    <div class="border rounded p-2 bg-light">
+                        <strong class="small">Upstream</strong>
+                        <div class="small text-muted">${valueChain.upstream?.length || 0} signals</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="border rounded p-2 bg-light">
+                        <strong class="small">Midstream</strong>
+                        <div class="small text-muted">${valueChain.midstream?.length || 0} signals</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="border rounded p-2 bg-light">
+                        <strong class="small">Downstream</strong>
+                        <div class="small text-muted">${valueChain.downstream?.length || 0} signals</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function generateMonitoringStrategy(strategy) {
+        if (!strategy) return '<p class="text-muted">No monitoring recommendations</p>';
+        
+        return `
+            <div class="mb-3">
+                <strong class="small">Priority Signals:</strong>
+                <ul class="small mt-1">
+                    ${(strategy.priority_signals || []).slice(0, 3).map(signal => `<li>${signal}</li>`).join('')}
+                </ul>
+            </div>
+            <div class="mb-3">
+                <strong class="small">Frequency:</strong>
+                <span class="badge bg-info">${strategy.monitoring_frequency || 'Unknown'}</span>
+            </div>
+            <div>
+                <strong class="small">Automation Opportunities:</strong>
+                <div class="small text-muted">${(strategy.automation_opportunities || []).length} signals</div>
+            </div>
+        `;
+    }
+    
+    function generatePrimarySignalsTable(rawSignals) {
+        if (!rawSignals || !Array.isArray(rawSignals)) return '<p class="text-muted">No signals identified</p>';
+        
+        const primarySignals = rawSignals.filter(signal => 
+            signal.level === 'Raw Economic Activity' || signal.level === 'Simple Aggregation'
+        );
+        
+        if (primarySignals.length === 0) return '<p class="text-muted">No primary signals identified</p>';
+        
+        return `
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Signal</th>
+                            <th>Level</th>
+                            <th>Value Chain</th>
+                            <th>Predictive Power</th>
+                            <th>Reliability</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${primarySignals.slice(0, 10).map(signal => `
+                            <tr>
+                                <td><strong>${signal.name}</strong></td>
+                                <td><span class="badge ${signal.level === 'Raw Economic Activity' ? 'bg-success' : 'bg-info'}">${signal.level.replace(' ', '<br>')}</span></td>
+                                <td class="small">${signal.value_chain_position}</td>
+                                <td><span class="badge ${getPredictiveBadge(signal.predictive_power)}">${signal.predictive_power}</span></td>
+                                <td>${(signal.reliability_score * 100).toFixed(0)}%</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+    
+    function getPredictiveBadge(power) {
+        switch(power) {
+            case 'high': return 'bg-success';
+            case 'medium': return 'bg-warning';
+            case 'low': return 'bg-secondary';
+            default: return 'bg-light';
+        }
     }
 });
 </script>
