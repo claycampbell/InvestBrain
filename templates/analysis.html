@@ -981,6 +981,70 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Global publishAnalysis function for the publish button
+    window.publishAnalysis = function() {
+        if (!window.currentAnalysis) {
+            alert('No analysis data available to publish');
+            return;
+        }
+        
+        const button = document.querySelector('button[onclick="publishAnalysis()"]');
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+        }
+        
+        fetch('/publish_thesis', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(window.currentAnalysis)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Analysis published successfully! You can now monitor this thesis.');
+                window.location.href = `/monitoring/thesis/${data.thesis_id}`;
+            } else {
+                alert('Failed to publish analysis: ' + (data.error || 'Unknown error'));
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-rocket"></i> Publish for Monitoring';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error publishing analysis:', error);
+            alert('Failed to publish analysis. Please try again.');
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-rocket"></i> Publish for Monitoring';
+            }
+        });
+    };
+    
+    // Global downloadAnalysis function for the download button
+    window.downloadAnalysis = function() {
+        if (!window.currentAnalysis) {
+            alert('No analysis data available to download');
+            return;
+        }
+        
+        // Create downloadable report
+        const reportData = JSON.stringify(window.currentAnalysis, null, 2);
+        const blob = new Blob([reportData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `thesis-analysis-${new Date().getTime()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+    
     function goToSimulation(thesisId) {
         if (thesisId) {
             window.location.href = `/simulation/${thesisId}`;
