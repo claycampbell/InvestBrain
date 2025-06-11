@@ -35,7 +35,16 @@
         <div class="col-md-3 mb-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <div class="metric-value text-success">{{ active_signals|length }}</div>
+                    <div class="metric-value text-primary">{{ stats.total_published }}</div>
+                    <h6 class="card-title">Published Theses</h6>
+                    <small class="text-muted">Being monitored</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="metric-value text-success">{{ stats.active_signals }}</div>
                     <h6 class="card-title">Active Signals</h6>
                     <small class="text-muted">Currently monitoring</small>
                 </div>
@@ -44,7 +53,7 @@
         <div class="col-md-3 mb-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <div class="metric-value text-danger">{{ triggered_signals|length }}</div>
+                    <div class="metric-value text-danger">{{ stats.triggered_signals }}</div>
                     <h6 class="card-title">Triggered Alerts</h6>
                     <small class="text-muted">Require attention</small>
                 </div>
@@ -53,22 +62,9 @@
         <div class="col-md-3 mb-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <div class="metric-value text-info">{{ recent_notifications|length }}</div>
+                    <div class="metric-value text-info">{{ stats.recent_notifications }}</div>
                     <h6 class="card-title">Recent Notifications</h6>
                     <small class="text-muted">Last 24 hours</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <div class="metric-value text-warning">
-                        <i class="fas fa-heartbeat"></i>
-                    </div>
-                    <h6 class="card-title">System Status</h6>
-                    <small class="text-success">
-                        <i class="fas fa-check-circle"></i> Monitoring Active
-                    </small>
                 </div>
             </div>
         </div>
@@ -96,32 +92,101 @@
     {% endif %}
 
     <div class="row">
-        <!-- Active Signals -->
+        <!-- Published Thesis Analyses -->
         <div class="col-lg-8">
-            <!-- Signal Cards Container -->
+            <!-- Published Theses -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt"></i> Published Thesis Analyses
+                    </h5>
+                    <span class="badge bg-primary">{{ thesis_analyses|length }} Published</span>
+                </div>
+                <div class="card-body">
+                    {% if thesis_analyses %}
+                        <div class="row">
+                            {% for thesis in thesis_analyses %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-truncate">{{ thesis.title }}</h6>
+                                            <p class="card-text small text-muted">
+                                                {{ thesis.core_claim[:120] }}{% if thesis.core_claim|length > 120 %}...{% endif %}
+                                            </p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-calendar"></i> 
+                                                    {{ thesis.created_at.strftime('%m/%d/%Y') }}
+                                                </small>
+                                                <div>
+                                                    {% set signal_count = thesis.signals|length %}
+                                                    <span class="badge bg-success me-1">{{ signal_count }} signals</span>
+                                                    <a href="{{ url_for('monitor_thesis', id=thesis.id) }}" 
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-chart-line"></i> Monitor
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-alt text-muted fa-2x mb-3"></i>
+                            <h6 class="text-muted">No Published Thesis Analyses</h6>
+                            <p class="text-muted mb-0">
+                                Complete a thesis analysis and publish it to start monitoring signals.
+                            </p>
+                            <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">
+                                <i class="fas fa-plus"></i> Create First Analysis
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Active Signals Summary -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="fas fa-signal"></i> Active Monitoring Signals
                     </h5>
-                    <div class="d-flex align-items-center">
-                        <small class="text-muted me-3">Auto-refresh: 30s</small>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="auto-refresh" checked>
-                            <label class="form-check-label" for="auto-refresh">
-                                <small>Auto-refresh</small>
-                            </label>
-                        </div>
-                    </div>
+                    <span class="badge bg-success">{{ active_signals|length }} Active</span>
                 </div>
                 <div class="card-body">
-                    <div id="signals-container" class="row">
-                        <!-- Signals will be loaded here by JavaScript -->
-                        <div class="col-12 text-center py-4">
-                            <div class="loading-spinner mb-3"></div>
-                            <p class="text-muted">Loading signals...</p>
+                    {% if active_signals %}
+                        <div class="row">
+                            {% for signal, thesis_title in active_signals %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title">{{ signal.signal_name }}</h6>
+                                            <p class="card-text small">
+                                                <strong>Thesis:</strong> {{ thesis_title }}<br>
+                                                <strong>Type:</strong> {{ signal.signal_type }}<br>
+                                                <strong>Status:</strong> 
+                                                <span class="badge bg-{{ 'success' if signal.status == 'active' else 'warning' }}">
+                                                    {{ signal.status }}
+                                                </span>
+                                            </p>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock"></i>
+                                                Last checked: {{ signal.last_checked.strftime('%m/%d %H:%M') if signal.last_checked else 'Never' }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
                         </div>
-                    </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-signal text-muted fa-2x mb-2"></i>
+                            <p class="text-muted mb-0">No active signals</p>
+                            <small class="text-muted">Signals will appear here when thesis analyses are published</small>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 

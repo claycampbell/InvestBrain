@@ -16,6 +16,46 @@ document_processor = DocumentProcessor()
 signal_classifier = SignalClassifier()
 notification_service = NotificationService()
 
+def save_thesis_analysis(thesis_text, analysis_result, signals_result):
+    """Save completed analysis to database for monitoring"""
+    try:
+        # Create thesis record
+        thesis_analysis = ThesisAnalysis(
+            title=analysis_result.get('core_claim', 'Untitled Thesis')[:255],
+            original_thesis=thesis_text,
+            core_claim=analysis_result.get('core_claim', ''),
+            causal_chain=analysis_result.get('causal_chain', []),
+            assumptions=analysis_result.get('assumptions', []),
+            mental_model=analysis_result.get('mental_model', 'unknown'),
+            counter_thesis=analysis_result.get('counter_thesis_scenarios', []),
+            metrics_to_track=analysis_result.get('metrics_to_track', []),
+            monitoring_plan=analysis_result.get('monitoring_plan', {})
+        )
+        
+        db.session.add(thesis_analysis)
+        db.session.flush()  # Get the ID
+        
+        # Create signal monitoring records
+        for signal in signals_result.get('raw_signals', []):
+            signal_monitor = SignalMonitoring(
+                thesis_analysis_id=thesis_analysis.id,
+                signal_name=signal.get('name', 'Unknown Signal'),
+                signal_type=signal.get('level', 'unknown'),
+                threshold_value=signal.get('threshold', 0),
+                threshold_type=signal.get('threshold_type', 'change_percent'),
+                status='active'
+            )
+            db.session.add(signal_monitor)
+        
+        db.session.commit()
+        logging.info(f"Published thesis analysis: {thesis_analysis.title} (ID: {thesis_analysis.id})")
+        return thesis_analysis
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error saving thesis analysis: {str(e)}")
+        raise
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in Config.ALLOWED_EXTENSIONS
@@ -68,12 +108,17 @@ def analyze():
             focus_primary=focus_primary_signals
         )
         
+        # Save analysis to database for monitoring
+        thesis_record = save_thesis_analysis(thesis_text, analysis_result, signals_result)
+        
         # Combine results
         combined_result = {
             'thesis_analysis': analysis_result,
             'signal_extraction': signals_result,
             'processed_documents': len(processed_documents),
-            'focus_primary_signals': focus_primary_signals
+            'focus_primary_signals': focus_primary_signals,
+            'thesis_id': thesis_record.id,
+            'published': True
         }
         
         return jsonify(combined_result)
@@ -221,15 +266,81 @@ def document_list():
 
 @app.route('/monitoring')
 def monitoring_dashboard():
-    """Monitoring dashboard showing active signals and notifications"""
-    active_signals = SignalMonitoring.query.filter_by(status='active').all()
-    triggered_signals = SignalMonitoring.query.filter_by(status='triggered').all()
-    recent_notifications = NotificationLog.query.order_by(NotificationLog.sent_at.desc()).limit(10).all()
-    
-    return render_template('monitoring.html',
-                         active_signals=active_signals,
-                         triggered_signals=triggered_signals,
-                         recent_notifications=recent_notifications)
+    """Monitoring dashboard showing published thesis analyses and active signals"""
+    try:
+        # Get all published thesis analyses
+        thesis_analyses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).all()
+        
+        # Get active signals with thesis context
+        active_signals = db.session.query(SignalMonitoring, ThesisAnalysis.title)\
+            .join(ThesisAnalysis)\
+            .filter(SignalMonitoring.status == 'active')\
+            .order_by(SignalMonitoring.created_at.desc())\
+            .all()
+        
+        # Get recent notifications
+        recent_notifications = NotificationLog.query\
+            .order_by(NotificationLog.sent_at.desc())\
+            .limit(20).all()
+        
+        # Calculate monitoring statistics
+        stats = {
+            'total_published': len(thesis_analyses),
+            'active_signals': len(active_signals),
+            'triggered_signals': SignalMonitoring.query.filter_by(status='triggered').count(),
+            'recent_notifications': len(recent_notifications)
+        }
+        
+        return render_template('monitoring.html', 
+                             thesis_analyses=thesis_analyses,
+                             active_signals=active_signals,
+                             recent_notifications=recent_notifications,
+                             stats=stats)
+    except Exception as e:
+        return f"Error loading monitoring dashboard: {str(e)}", 500
+
+@app.route('/thesis/<int:id>/monitor')
+def monitor_thesis(id):
+    """View monitoring status for a specific published thesis"""
+    try:
+        thesis = ThesisAnalysis.query.get_or_404(id)
+        signals = SignalMonitoring.query.filter_by(thesis_analysis_id=id).all()
+        notifications = db.session.query(NotificationLog)\
+            .join(SignalMonitoring)\
+            .filter(SignalMonitoring.thesis_analysis_id == id)\
+            .order_by(NotificationLog.sent_at.desc())\
+            .all()
+        
+        return render_template('thesis_monitor.html',
+                             thesis=thesis,
+                             signals=signals,
+                             notifications=notifications)
+    except Exception as e:
+        return f"Error loading thesis monitoring: {str(e)}", 500
+
+@app.route('/api/thesis/<int:id>/status')
+def get_thesis_status(id):
+    """Get current monitoring status for a published thesis"""
+    try:
+        thesis = ThesisAnalysis.query.get_or_404(id)
+        signals = SignalMonitoring.query.filter_by(thesis_analysis_id=id).all()
+        
+        signal_status = {
+            'active': len([s for s in signals if s.status == 'active']),
+            'triggered': len([s for s in signals if s.status == 'triggered']),
+            'inactive': len([s for s in signals if s.status == 'inactive'])
+        }
+        
+        return jsonify({
+            'thesis_id': id,
+            'title': thesis.title,
+            'published_at': thesis.created_at.isoformat(),
+            'signal_status': signal_status,
+            'total_signals': len(signals),
+            'last_checked': max([s.last_checked for s in signals if s.last_checked], default=None)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/signals/check', methods=['POST'])
 def check_signals():
