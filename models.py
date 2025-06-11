@@ -8,6 +8,7 @@ class ThesisAnalysis(db.Model):
     title = db.Column(db.String(255), nullable=False)
     original_thesis = db.Column(Text, nullable=False)
     core_claim = db.Column(Text)
+    core_analysis = db.Column(Text)
     causal_chain = db.Column(JSON)
     assumptions = db.Column(JSON)
     mental_model = db.Column(db.String(255))

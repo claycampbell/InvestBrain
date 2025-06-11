@@ -79,14 +79,26 @@ class AzureOpenAIService:
     
     def analyze_thesis(self, thesis_text):
         """Analyze an investment thesis using structured prompts with signal extraction focus"""
-        system_prompt = """You are an expert investment analyst. Analyze investment theses and provide structured analysis with counter-scenarios and Level 0-1 signals.
+        system_prompt = """You are an expert investment analyst. Analyze investment theses and provide structured analysis with detailed causal chains, counter-scenarios and Level 0-1 signals.
 
-Focus on signals closest to raw economic activity with minimal processing.
+Create detailed chainlinked events showing how each step connects to the next. Focus on signals closest to raw economic activity with minimal processing.
 
 Respond with valid JSON only:
 {
   "core_claim": "One sentence investment claim",
-  "causal_chain": ["Step 1", "Step 2", "Step 3"],
+  "core_analysis": "Detailed analysis of the stock's risk/reward dynamics and key uncertainties",
+  "causal_chain": [
+    {
+      "chain_link": 1,
+      "event": "Specific market condition or business development",
+      "explanation": "Detailed explanation of how this affects the thesis"
+    },
+    {
+      "chain_link": 2, 
+      "event": "Next logical consequence or market reaction",
+      "explanation": "How this connects to the previous link and impacts outcomes"
+    }
+  ],
   "assumptions": ["Assumption 1", "Assumption 2"],
   "mental_model": "Growth|Value|Cyclical|Disruption",
   "counter_thesis_scenarios": [
