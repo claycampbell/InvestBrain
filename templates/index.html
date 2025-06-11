@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Investment Thesis Intelligence System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-1">
+                        <i class="fas fa-tachometer-alt text-primary"></i>
+                        Dashboard
+                    </h1>
+                    <p class="text-muted mb-0">Investment Thesis Intelligence System Overview</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('new_thesis') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> New Analysis
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="metric-value text-primary">{{ recent_analyses|length }}</div>
+                    <h6 class="card-title">Total Analyses</h6>
+                    <small class="text-muted">Active thesis analyses</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="metric-value text-success">{{ active_signals }}</div>
+                    <h6 class="card-title">Active Signals</h6>
+                    <small class="text-muted">Currently monitoring</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="metric-value text-warning">{{ recent_notifications|length }}</div>
+                    <h6 class="card-title">Recent Alerts</h6>
+                    <small class="text-muted">Last 24 hours</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="metric-value text-info">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <h6 class="card-title">System Status</h6>
+                    <small class="text-success">
+                        <i class="fas fa-check-circle"></i> Online
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Analyses -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line"></i> Recent Analyses
+                    </h5>
+                    <a href="{{ url_for('new_thesis') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-plus"></i> Create New
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_analyses %}
+                        {% for thesis in recent_analyses %}
+                            <div class="thesis-card card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="card-title mb-2">
+                                                <a href="{{ url_for('view_thesis', id=thesis.id) }}" 
+                                                   class="text-decoration-none">
+                                                    {{ thesis.title }}
+                                                </a>
+                                            </h6>
+                                            <p class="card-text text-muted small mb-2">
+                                                {{ thesis.original_thesis[:150] }}
+                                                {% if thesis.original_thesis|length > 150 %}...{% endif %}
+                                            </p>
+                                            <div class="d-flex align-items-center">
+                                                {% if thesis.mental_model %}
+                                                    <span class="badge bg-secondary me-2">{{ thesis.mental_model }}</span>
+                                                {% endif %}
+                                                <small class="text-muted">
+                                                    <i class="fas fa-clock"></i>
+                                                    {{ thesis.created_at.strftime('%Y-%m-%d %H:%M') if thesis.created_at else 'Unknown' }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="ms-3">
+                                            <a href="{{ url_for('view_thesis', id=thesis.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Analyses Yet</h5>
+                            <p class="text-muted mb-3">Start by creating your first investment thesis analysis</p>
+                            <a href="{{ url_for('new_thesis') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create First Analysis
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- System Activity -->
+        <div class="col-lg-4">
+            <!-- Recent Notifications -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell"></i> Recent Alerts
+                    </h5>
+                    <a href="{{ url_for('monitoring_dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_notifications %}
+                        {% for notification in recent_notifications %}
+                            <div class="notification-item mb-2">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-2">
+                                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <small class="fw-bold">{{ notification.notification_type.replace('_', ' ').title() }}</small>
+                                        <div class="small text-muted">{{ notification.message }}</div>
+                                        <div class="small text-muted">
+                                            <i class="fas fa-clock"></i>
+                                            {{ notification.sent_at.strftime('%H:%M') if notification.sent_at else 'Unknown' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-bell-slash text-muted"></i>
+                            <p class="text-muted mb-0 mt-2">No recent alerts</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('new_thesis') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> New Thesis Analysis
+                        </a>
+                        <a href="{{ url_for('upload_document') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-upload"></i> Upload Documents
+                        </a>
+                        <button class="btn btn-outline-info" onclick="refreshSignals()">
+                            <i class="fas fa-sync-alt"></i> Refresh Signals
+                        </button>
+                        <a href="{{ url_for('monitoring_dashboard') }}" class="btn btn-outline-warning">
+                            <i class="fas fa-chart-line"></i> View Monitoring
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health Banner -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-info d-flex align-items-center" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                <div class="flex-grow-1">
+                    <strong>System Information:</strong>
+                    AI Analysis Engine is ready. 
+                    {% if active_signals > 0 %}
+                        Currently monitoring {{ active_signals }} signal{{ 's' if active_signals != 1 else '' }}.
+                    {% else %}
+                        No active monitoring signals. Create thesis analyses to begin monitoring.
+                    {% endif %}
+                </div>
+                <button class="btn btn-sm btn-outline-info" onclick="checkSystemStatus()">
+                    <i class="fas fa-heartbeat"></i> Check Status
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Dashboard-specific JavaScript
+    async function refreshSignals() {
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<span class="loading-spinner"></span> Refreshing...';
+        
+        try {
+            const response = await fetch('/api/signals/check', { method: 'POST' });
+            if (response.ok) {
+                showAlert('Signals refreshed successfully', 'success');
+            } else {
+                showAlert('Failed to refresh signals', 'danger');
+            }
+        } catch (error) {
+            showAlert('Error refreshing signals: ' + error.message, 'danger');
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    }
+    
+    // Auto-refresh dashboard data every 5 minutes
+    setInterval(() => {
+        window.location.reload();
+    }, 300000);
+</script>
+{% endblock %}

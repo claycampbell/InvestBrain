@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+
+{% block title %}Document Upload - Investment Thesis Intelligence System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-1">
+                        <i class="fas fa-upload text-primary"></i>
+                        Document Management
+                    </h1>
+                    <p class="text-muted mb-0">Upload and process research documents for thesis analysis</p>
+                </div>
+                {% if not list_mode %}
+                    <div>
+                        <a href="{{ url_for('document_list') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-list"></i> View All Documents
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if not list_mode %}
+        <!-- Document Upload Section -->
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Upload Form -->
+                <form id="upload-form" method="POST" enctype="multipart/form-data">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cloud-upload-alt"></i> Upload Document
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Drag and Drop Area -->
+                            <div id="upload-area" class="upload-area">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <h5>Drag & Drop Files Here</h5>
+                                <p class="text-muted mb-3">or click to browse files</p>
+                                <input type="file" id="file-input" name="file" class="d-none" 
+                                       accept=".pdf,.xlsx,.xls,.csv">
+                                <button type="button" class="btn btn-outline-primary" 
+                                        onclick="document.getElementById('file-input').click()">
+                                    <i class="fas fa-folder-open"></i> Browse Files
+                                </button>
+                            </div>
+                            
+                            <!-- Thesis Association -->
+                            {% if theses %}
+                                <div class="mt-4">
+                                    <label class="form-label">Associate with Thesis (Optional)</label>
+                                    <select name="thesis_id" class="form-select">
+                                        <option value="">-- Select Thesis --</option>
+                                        {% for thesis in theses %}
+                                            <option value="{{ thesis.id }}">{{ thesis.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">
+                                        Link this document to an existing thesis analysis for better organization.
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    Supported formats: PDF, Excel (.xlsx, .xls), CSV | Max size: 16MB
+                                </small>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-upload"></i> Upload Document
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Upload Progress -->
+                <div id="upload-progress" style="display: none;"></div>
+
+                <!-- File Preview Area (populated by JavaScript) -->
+                <div id="file-preview"></div>
+            </div>
+
+            <!-- Upload Help Sidebar -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-info-circle"></i> Supported Documents
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h6><i class="fas fa-file-pdf text-danger"></i> PDF Files</h6>
+                            <small class="text-muted">
+                                Research reports, analyst notes, financial statements, presentations
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6><i class="fas fa-file-excel text-success"></i> Excel Files</h6>
+                            <small class="text-muted">
+                                Financial models, data tables, metrics spreadsheets
+                            </small>
+                        </div>
+                        
+                        <div>
+                            <h6><i class="fas fa-file-csv text-info"></i> CSV Files</h6>
+                            <small class="text-muted">
+                                Time series data, market data exports, structured datasets
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-cogs"></i> Processing Features
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="small mb-0">
+                            <li>Automatic text extraction</li>
+                            <li>Table and data parsing</li>
+                            <li>Key metrics identification</li>
+                            <li>Financial data recognition</li>
+                            <li>Document metadata capture</li>
+                            <li>Integration with thesis analysis</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-lightbulb"></i> Tips
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="small mb-0">
+                            <li>Use clear, descriptive filenames</li>
+                            <li>Ensure documents are not password-protected</li>
+                            <li>Associate documents with relevant theses</li>
+                            <li>Upload supporting data before creating analysis</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Document List -->
+    {% if list_mode or documents %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-file-alt"></i> 
+                            {% if list_mode %}All Documents{% else %}Recently Uploaded{% endif %}
+                        </h5>
+                        {% if not list_mode %}
+                            <a href="{{ url_for('document_list') }}" class="btn btn-sm btn-outline-primary">
+                                View All
+                            </a>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        {% if documents %}
+                            <div id="file-list">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Document</th>
+                                                <th>Type</th>
+                                                <th>Size</th>
+                                                <th>Associated Thesis</th>
+                                                <th>Uploaded</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for doc in documents %}
+                                                <tr class="file-item">
+                                                    <td>
+                                                        <i class="fas {{ 'fa-file-pdf text-danger' if doc.file_type == 'pdf' else 'fa-file-excel text-success' if doc.file_type in ['xlsx', 'xls'] else 'fa-file-csv text-info' }} me-2"></i>
+                                                        <strong>{{ doc.filename }}</strong>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-secondary">{{ doc.file_type.upper() }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <small class="text-muted">
+                                                            {% if doc.file_size %}
+                                                                {% set size_mb = (doc.file_size / 1024 / 1024) %}
+                                                                {% if size_mb < 1 %}
+                                                                    {{ "%.0f KB"|format((doc.file_size / 1024)) }}
+                                                                {% else %}
+                                                                    {{ "%.1f MB"|format(size_mb) }}
+                                                                {% endif %}
+                                                            {% else %}
+                                                                Unknown
+                                                            {% endif %}
+                                                        </small>
+                                                    </td>
+                                                    <td>
+                                                        {% if doc.thesis_analysis %}
+                                                            <a href="{{ url_for('view_thesis', id=doc.thesis_analysis.id) }}" 
+                                                               class="text-decoration-none">
+                                                                {{ doc.thesis_analysis.title[:30] }}{% if doc.thesis_analysis.title|length > 30 %}...{% endif %}
+                                                            </a>
+                                                        {% else %}
+                                                            <span class="text-muted">None</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <small class="text-muted">
+                                                            {{ doc.created_at.strftime('%Y-%m-%d %H:%M') if doc.created_at else 'Unknown' }}
+                                                        </small>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-outline-primary view-file me-1" 
+                                                                data-file-id="{{ doc.id }}" 
+                                                                data-file-name="{{ doc.filename }}">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger delete-file" 
+                                                                data-file-id="{{ doc.id }}" 
+                                                                data-file-name="{{ doc.filename }}">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-file-upload fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No Documents Uploaded</h5>
+                                <p class="text-muted mb-3">Upload your first research document to get started</p>
+                                {% if list_mode %}
+                                    <a href="{{ url_for('upload_document') }}" class="btn btn-primary">
+                                        <i class="fas fa-upload"></i> Upload Document
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Alert Container for JavaScript -->
+<div id="alert-container"></div>
+
+<script>
+    // Additional document management functions
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add any additional initialization here
+        
+        // Update file input styling when file is selected
+        const fileInput = document.getElementById('file-input');
+        if (fileInput) {
+            fileInput.addEventListener('change', function() {
+                const uploadArea = document.getElementById('upload-area');
+                if (this.files.length > 0) {
+                    uploadArea.classList.add('border-success');
+                } else {
+                    uploadArea.classList.remove('border-success');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/document-processor.js') }}"></script>
+{% endblock %}

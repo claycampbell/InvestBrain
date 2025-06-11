@@ -1,0 +1,274 @@
+/* Custom styles for Investment Thesis Intelligence System */
+/* Using minimal custom CSS to complement Bootstrap dark theme */
+
+:root {
+    --thesis-primary: #0066cc;
+    --thesis-secondary: #6c757d;
+    --thesis-success: #28a745;
+    --thesis-danger: #dc3545;
+    --thesis-warning: #ffc107;
+    --thesis-info: #17a2b8;
+}
+
+/* Layout enhancements */
+.main-content {
+    min-height: calc(100vh - 56px);
+    padding-top: 2rem;
+}
+
+/* Thesis analysis cards */
+.thesis-card {
+    border-left: 4px solid var(--bs-primary);
+    transition: all 0.3s ease;
+}
+
+.thesis-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Signal status indicators */
+.signal-status {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.signal-status.active {
+    background-color: var(--thesis-success);
+    animation: pulse 2s infinite;
+}
+
+.signal-status.triggered {
+    background-color: var(--thesis-danger);
+    animation: blink 1s infinite;
+}
+
+.signal-status.inactive {
+    background-color: var(--thesis-secondary);
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+/* Document upload area */
+.upload-area {
+    border: 2px dashed var(--bs-border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-area:hover {
+    border-color: var(--bs-primary);
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.upload-area.dragover {
+    border-color: var(--thesis-success);
+    background-color: rgba(var(--thesis-success), 0.1);
+}
+
+/* Analysis results */
+.analysis-section {
+    border-left: 3px solid var(--bs-info);
+    padding-left: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.causal-chain {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.causal-chain::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--bs-primary), var(--bs-info));
+}
+
+.causal-step {
+    position: relative;
+    padding: 0.5rem 0;
+}
+
+.causal-step::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    background-color: var(--bs-primary);
+    border-radius: 50%;
+}
+
+/* Metrics cards */
+.metric-card {
+    background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.1), rgba(var(--bs-info-rgb), 0.1));
+    border: 1px solid rgba(var(--bs-primary-rgb), 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+    border-color: var(--bs-primary);
+    box-shadow: 0 2px 8px rgba(var(--bs-primary-rgb), 0.3);
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--bs-primary);
+}
+
+/* Notification styles */
+.notification-item {
+    border-left: 4px solid var(--bs-info);
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0 4px 4px 0;
+    transition: all 0.3s ease;
+}
+
+.notification-item.unread {
+    background-color: rgba(var(--bs-info-rgb), 0.1);
+    border-left-color: var(--thesis-warning);
+}
+
+.notification-item.acknowledged {
+    opacity: 0.7;
+}
+
+/* Status badges */
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+}
+
+/* Loading states */
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(var(--bs-primary-rgb), 0.3);
+    border-radius: 50%;
+    border-top-color: var(--bs-primary);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .main-content {
+        padding-top: 1rem;
+    }
+    
+    .thesis-card {
+        margin-bottom: 1rem;
+    }
+    
+    .metric-card {
+        text-align: center;
+    }
+}
+
+/* Dark mode specific adjustments */
+[data-bs-theme="dark"] .upload-area {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-bs-theme="dark"] .thesis-card {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-bs-theme="dark"] .metric-card {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(23, 162, 184, 0.1));
+}
+
+/* Charts and visualizations */
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    margin: 1rem 0;
+}
+
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--bs-secondary);
+}
+
+/* Form enhancements */
+.form-floating > .form-control:focus,
+.form-floating > .form-control:not(:placeholder-shown) {
+    padding-top: 1.625rem;
+    padding-bottom: 0.625rem;
+}
+
+.form-floating > label {
+    opacity: 0.7;
+}
+
+/* Button enhancements */
+.btn-outline-primary:hover {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+/* Utility classes */
+.text-thesis-primary {
+    color: var(--thesis-primary) !important;
+}
+
+.bg-thesis-light {
+    background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+}
+
+.border-thesis {
+    border-color: var(--bs-primary) !important;
+}
+
+/* Print styles */
+@media print {
+    .main-content {
+        padding: 0;
+    }
+    
+    .btn, .navbar, .notification-item {
+        display: none !important;
+    }
+    
+    .thesis-card, .metric-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+}
