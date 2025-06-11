@@ -58,6 +58,7 @@ class AzureOpenAIService:
                     response = self.client.chat.completions.create(
                         messages=messages,
                         model=self.deployment_name,
+                        max_completion_tokens=max_tokens,
                         timeout=attempt_timeout
                     )
                 elif 'gpt-4o' in model_name:
@@ -282,7 +283,7 @@ Provide complete JSON response with all required fields."""
             response = self.client.chat.completions.create(
                 model=self.deployment_name,
                 messages=test_messages,
-                max_tokens=10,
+                max_completion_tokens=10,
                 timeout=30
             )
             return response and response.choices and len(response.choices) > 0
