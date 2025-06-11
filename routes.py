@@ -140,8 +140,10 @@ def analyze():
                     'data': processed_data
                 })
         
-        # Analyze thesis and extract signals
-        analysis_result = thesis_analyzer.analyze_thesis(thesis_text)
+        # Analyze thesis using chained prompts for better reliability
+        from services.chained_analysis_service import ChainedAnalysisService
+        chained_service = ChainedAnalysisService()
+        analysis_result = chained_service.analyze_thesis(thesis_text)
         
         # Extract signals from AI analysis and documents using the classification hierarchy
         signals_result = signal_classifier.extract_signals_from_ai_analysis(
