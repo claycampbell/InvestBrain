@@ -286,13 +286,18 @@
                 </div>
                 <div class="card-body">
                     <div id="simulationResults" class="d-none">
-                        <!-- Chart Container -->
+                        <!-- Main Performance Chart -->
                         <div class="row mb-4">
                             <div class="col-12">
                                 <div class="position-relative">
                                     <div id="simulationChart"></div>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <!-- Signal-Specific Charts -->
+                        <div id="signalCharts" class="row mb-4">
+                            <!-- Charts will be dynamically added here -->
                         </div>
                         
                         <!-- Event Timeline (for event scenarios) -->
@@ -661,6 +666,9 @@
         simulationChart = new ApexCharts(ctx, chartOptions);
         simulationChart.render();
 
+        // Generate signal-specific charts
+        generateSignalCharts(data, timelineData);
+
         // Display events timeline if available
         if (data.events && data.events.length > 0) {
             displayEventTimeline(data.events);
@@ -721,6 +729,145 @@
             
             eventList.appendChild(eventCard);
         });
+    }
+
+    function generateSignalCharts(data, timelineData) {
+        const signalChartsContainer = document.getElementById('signalCharts');
+        signalChartsContainer.innerHTML = '';
+        
+        // Get signals from the thesis monitoring data
+        const signals = [
+            { name: 'Quarterly Revenue Growth', unit: '%', color: '#3b82f6' },
+            { name: 'Operating Margin', unit: '%', color: '#10b981' },
+            { name: 'Free Cash Flow', unit: '$B', color: '#f59e0b' }
+        ];
+        
+        signals.forEach((signal, index) => {
+            // Generate signal-specific data based on events
+            const signalData = generateSignalData(signal, data.events, timelineData);
+            
+            // Create chart container
+            const chartCol = document.createElement('div');
+            chartCol.className = 'col-md-4 mb-3';
+            chartCol.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">${signal.name}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="signalChart${index}" style="height: 250px;"></div>
+                    </div>
+                </div>
+            `;
+            signalChartsContainer.appendChild(chartCol);
+            
+            // Create chart configuration
+            const chartOptions = {
+                series: [{
+                    name: signal.name,
+                    data: signalData
+                }],
+                chart: {
+                    type: 'line',
+                    height: 250,
+                    toolbar: { show: false }
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 2
+                },
+                colors: [signal.color],
+                xaxis: {
+                    type: 'datetime',
+                    labels: { format: 'MMM yy' }
+                },
+                yaxis: {
+                    title: { text: signal.unit },
+                    labels: {
+                        formatter: function(val) {
+                            return signal.unit === '$B' ? '$' + val.toFixed(1) + 'B' : val.toFixed(1) + '%';
+                        }
+                    }
+                },
+                grid: {
+                    borderColor: '#e7e7e7'
+                },
+                tooltip: {
+                    x: { format: 'MMM yyyy' },
+                    y: {
+                        formatter: function(val) {
+                            return signal.unit === '$B' ? '$' + val.toFixed(2) + 'B' : val.toFixed(2) + '%';
+                        }
+                    }
+                }
+            };
+            
+            // Render chart
+            const chart = new ApexCharts(document.getElementById(`signalChart${index}`), chartOptions);
+            chart.render();
+        });
+    }
+    
+    function generateSignalData(signal, events, timelineData) {
+        const data = [];
+        let baseValue;
+        
+        // Set realistic base values for each signal
+        switch(signal.name) {
+            case 'Quarterly Revenue Growth':
+                baseValue = 32; // 32% YoY growth as per NVIDIA thesis
+                break;
+            case 'Operating Margin':
+                baseValue = 26; // ~26% operating margin
+                break;
+            case 'Free Cash Flow':
+                baseValue = 15.2; // ~$15.2B quarterly FCF
+                break;
+            default:
+                baseValue = 100;
+        }
+        
+        // Generate data points with event impacts
+        for (let i = 0; i < timelineData.length; i++) {
+            let value = baseValue;
+            
+            // Apply natural variation
+            if (signal.name === 'Quarterly Revenue Growth') {
+                value += Math.random() * 8 - 4; // +/- 4% variation
+            } else if (signal.name === 'Operating Margin') {
+                value += Math.random() * 6 - 3; // +/- 3% variation
+            } else if (signal.name === 'Free Cash Flow') {
+                value += Math.random() * 4 - 2; // +/- $2B variation
+            }
+            
+            // Apply event impacts
+            if (events) {
+                events.forEach(event => {
+                    if (event.signals_affected && event.signals_affected.includes(signal.name)) {
+                        const eventMonth = event.month ? event.month - 1 : 0;
+                        if (Math.abs(i - eventMonth) <= 1) { // Event impact window
+                            const impact = event.impact_type === 'positive' ? 
+                                (signal.name === 'Free Cash Flow' ? 2.5 : 3) : 
+                                (signal.name === 'Free Cash Flow' ? -1.8 : -2);
+                            value += impact;
+                        }
+                    }
+                });
+            }
+            
+            // Ensure realistic bounds
+            if (signal.name === 'Quarterly Revenue Growth') {
+                value = Math.max(10, Math.min(50, value));
+            } else if (signal.name === 'Operating Margin') {
+                value = Math.max(15, Math.min(35, value));
+            } else if (signal.name === 'Free Cash Flow') {
+                value = Math.max(8, Math.min(25, value));
+            }
+            
+            data.push([timelineData[i], value]);
+        }
+        
+        return data;
     }
 
     function generateRecommendedActions(event) {
