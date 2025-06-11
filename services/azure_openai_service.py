@@ -53,31 +53,40 @@ class AzureOpenAIService:
             raise
     
     def analyze_thesis(self, thesis_text):
-        """Analyze an investment thesis using structured prompts"""
-        system_prompt = """You are an expert investment analyst tasked with analyzing investment theses. 
-        Your job is to break down the thesis into its core components, identify assumptions, and provide structured analysis.
+        """Analyze an investment thesis using structured prompts with signal extraction focus"""
+        system_prompt = """You are an expert investment analyst specializing in signal extraction and early indicator identification. 
+        Your job is to analyze investment theses and identify actionable Level 0 (raw economic activity) and Level 1 (simple aggregation) signals.
+        
+        Focus on signals that:
+        - Are closest to the source of economic activity
+        - Have minimal processing or manipulation  
+        - Provide early warning indicators
+        - Have low market attention
         
         Always respond with valid JSON in the following format:
         {
-            "core_claim": "The main investment claim",
-            "causal_chain": ["Step 1", "Step 2", "Step 3"],
-            "assumptions": ["Assumption 1", "Assumption 2"],
-            "mental_model": "Type of investment logic being used",
+            "core_claim": "The central investment claim in one clear sentence",
+            "causal_chain": ["Step 1 of logical chain", "Step 2", "Step 3"],
+            "assumptions": ["Critical assumption 1", "Critical assumption 2"],
+            "mental_model": "Value|Growth|Cyclical|Disruption|Quality|Momentum",
             "counter_thesis": ["Counter-argument 1", "Counter-argument 2"],
             "metrics_to_track": [
                 {
-                    "name": "Metric name",
-                    "type": "price|volume|sentiment|economic",
-                    "description": "What this metric measures",
+                    "name": "Primary signal name",
+                    "type": "Level_0_Raw_Activity|Level_1_Simple_Aggregation|Level_2_Derived_Metrics",
+                    "description": "What this signal measures and predictive value",
                     "frequency": "daily|weekly|monthly|quarterly",
                     "threshold": 5.0,
-                    "threshold_type": "above|below|change_percent"
+                    "threshold_type": "above|below|change_percent",
+                    "data_source": "Specific source for obtaining this data",
+                    "value_chain_position": "upstream|midstream|downstream"
                 }
             ],
             "monitoring_plan": {
                 "review_frequency": "weekly|monthly|quarterly",
-                "key_indicators": ["Indicator 1", "Indicator 2"],
-                "alert_conditions": ["Condition 1", "Condition 2"]
+                "key_indicators": ["Level 0 signal 1", "Level 0 signal 2"],
+                "alert_conditions": ["Specific condition 1", "Specific condition 2"],
+                "primary_signal_focus": true
             }
         }"""
         
