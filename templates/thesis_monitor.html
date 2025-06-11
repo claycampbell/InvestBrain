@@ -490,17 +490,31 @@
             simulationChart.destroy();
         }
 
+        // Extract chart data from nested structure
+        const chartData = data.chart_data || data;
+        const performanceData = chartData.performance_data || data.performance_data || [];
+        const timeline = chartData.timeline || data.timeline || [];
+        
+        console.log('Chart data structure:', {
+            hasChartData: !!data.chart_data,
+            performanceDataLength: performanceData.length,
+            timelineLength: timeline.length,
+            chartConfig: data.chart_config
+        });
+
         const chartConfig = {
             type: 'line',
             data: {
-                labels: data.timeline,
+                labels: timeline,
                 datasets: [{
-                    label: data.chart_config.primary_metric,
-                    data: data.performance_data,
-                    borderColor: data.chart_config.color || 'rgb(75, 192, 192)',
-                    backgroundColor: data.chart_config.color || 'rgba(75, 192, 192, 0.1)',
+                    label: data.chart_config?.primary_metric || 'Performance Index',
+                    data: performanceData,
+                    borderColor: data.chart_config?.color || 'rgb(54, 162, 235)',
+                    backgroundColor: data.chart_config?.color || 'rgba(54, 162, 235, 0.1)',
                     fill: true,
-                    tension: 0.1
+                    tension: 0.1,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 }]
             },
             options: {
