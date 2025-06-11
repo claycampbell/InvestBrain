@@ -53,8 +53,8 @@ class AzureOpenAIService:
     
     def analyze_thesis(self, thesis_text):
         """Analyze an investment thesis using structured prompts with signal extraction focus"""
-        system_prompt = """You are an expert investment analyst specializing in signal extraction and early indicator identification. 
-        Your job is to analyze investment theses and identify actionable Level 0 (raw economic activity) and Level 1 (simple aggregation) signals.
+        system_prompt = """You are an expert investment analyst specializing in comprehensive thesis analysis and signal extraction. 
+        Your job is to analyze investment theses and provide detailed counter-thesis scenarios, sophisticated monitoring plans, and actionable Level 0-1 signals.
         
         Focus on signals that:
         - Are closest to the source of economic activity
@@ -68,7 +68,14 @@ class AzureOpenAIService:
             "causal_chain": ["Step 1 of logical chain", "Step 2", "Step 3"],
             "assumptions": ["Critical assumption 1", "Critical assumption 2"],
             "mental_model": "Value|Growth|Cyclical|Disruption|Quality|Momentum",
-            "counter_thesis": ["Counter-argument 1", "Counter-argument 2"],
+            "counter_thesis_scenarios": [
+                {
+                    "scenario": "Counter-thesis Scenario 1 - [Brief title]",
+                    "description": "Detailed scenario explanation with specific conditions and triggers",
+                    "trigger_conditions": ["Observable condition 1", "Observable condition 2"],
+                    "data_signals": ["Specific metric changes that would confirm this scenario"]
+                }
+            ],
             "metrics_to_track": [
                 {
                     "name": "Primary signal name",
@@ -77,22 +84,26 @@ class AzureOpenAIService:
                     "frequency": "daily|weekly|monthly|quarterly",
                     "threshold": 5.0,
                     "threshold_type": "above|below|change_percent",
-                    "data_source": "Specific source for obtaining this data",
-                    "value_chain_position": "upstream|midstream|downstream"
-                    
-                Note: For value chain positioning:
-                - upstream: raw materials, commodities, mining, agriculture, extraction
-                - midstream: processing, manufacturing, transportation, logistics
-                - downstream: retail, consumer, end-user, final demand
+                    "data_source": "Specific source (FactSet, Xpressfeed, government data, etc.)",
+                    "value_chain_position": "upstream|midstream|downstream",
+                    "what_it_tells_us": "Detailed explanation of the signal's predictive value"
                 }
             ],
             "monitoring_plan": {
                 "review_frequency": "weekly|monthly|quarterly",
                 "key_indicators": ["Level 0 signal 1", "Level 0 signal 2"],
-                "alert_conditions": ["Specific condition 1", "Specific condition 2"],
-                "primary_signal_focus": true
+                "alert_conditions": ["Specific measurable condition with thresholds"],
+                "leading_indicators": ["Early warning signals"],
+                "lagging_indicators": ["Confirmatory signals"],
+                "revision_triggers": ["Conditions that would require thesis revision"],
+                "data_refresh_schedule": "How often to update each data source"
             }
-        }"""
+        }
+        
+        Note: For value chain positioning:
+        - upstream: raw materials, commodities, mining, agriculture, extraction
+        - midstream: processing, manufacturing, transportation, logistics
+        - downstream: retail, consumer, end-user, final demand"""
         
         user_prompt = f"""Analyze the following investment thesis:
 

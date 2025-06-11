@@ -178,6 +178,7 @@ class SignalClassifier:
                 if chain_position == 'unknown':
                     chain_position = self._determine_value_chain_position(metric.get('name', ''))
                 
+                # Enhanced signal creation with additional metadata
                 signal = Signal(
                     name=metric.get('name', 'Unknown Signal'),
                     level=level,
@@ -191,6 +192,11 @@ class SignalClassifier:
                     collection_frequency=metric.get('frequency', 'unknown'),
                     reliability_score=0.9  # High reliability for AI-selected signals
                 )
+                # Add enhanced metadata for detailed analysis
+                signal.what_it_tells_us = metric.get('what_it_tells_us', metric.get('description', ''))
+                signal.threshold = metric.get('threshold', 0)
+                signal.threshold_type = metric.get('threshold_type', 'change_percent')
+                
                 all_signals.append(signal)
                 logging.info(f"Added signal: {signal.name} (Level: {level.value}, Chain: {signal.value_chain_position})")
             

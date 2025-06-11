@@ -360,6 +360,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span class="badge bg-primary">${thesisData.mental_model || 'Unknown'}</span>
                             </div>
                             ${generateAssumptionsList(thesisData.assumptions)}
+                            ${generateCausalChain(thesisData.causal_chain)}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Counter-Thesis Scenarios -->
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Counter-Thesis Scenarios</h6>
+                        </div>
+                        <div class="card-body">
+                            ${generateCounterThesisScenarios(thesisData.counter_thesis_scenarios)}
                         </div>
                     </div>
                 </div>
@@ -426,6 +439,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 </ul>
             </div>
         `;
+    }
+    
+    function generateCausalChain(causalChain) {
+        if (!causalChain || !Array.isArray(causalChain)) return '';
+        
+        return `
+            <div class="mb-3">
+                <strong class="small">Causal Chain:</strong>
+                <ol class="small mt-1">
+                    ${causalChain.slice(0, 5).map(step => `<li>${step}</li>`).join('')}
+                </ol>
+            </div>
+        `;
+    }
+    
+    function generateCounterThesisScenarios(scenarios) {
+        if (!scenarios || !Array.isArray(scenarios)) return '<p class="text-muted">No counter-thesis scenarios identified</p>';
+        
+        return scenarios.slice(0, 4).map((scenario, index) => `
+            <div class="border rounded p-3 mb-3">
+                <h6 class="text-danger">${scenario.scenario || `Scenario ${index + 1}`}</h6>
+                <p class="small mb-2">${scenario.description || 'No description available'}</p>
+                ${scenario.trigger_conditions ? `
+                    <div class="mb-2">
+                        <strong class="small">Trigger Conditions:</strong>
+                        <ul class="small mb-0">
+                            ${scenario.trigger_conditions.slice(0, 3).map(condition => `<li>${condition}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+                ${scenario.data_signals ? `
+                    <div>
+                        <strong class="small">Data Signals:</strong>
+                        <ul class="small mb-0">
+                            ${scenario.data_signals.slice(0, 3).map(signal => `<li>${signal}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
     }
     
     function generateSignalsByLevel(signalsByLevel) {
