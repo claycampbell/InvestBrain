@@ -50,7 +50,7 @@ def save_thesis_analysis(thesis_text, analysis_result, signals_result):
         
         db.session.commit()
         logging.info(f"Published thesis analysis: {thesis_analysis.title} (ID: {thesis_analysis.id})")
-        return thesis_analysis
+        return thesis_analysis.id
         
     except Exception as e:
         db.session.rollback()
@@ -153,7 +153,7 @@ def analyze():
         )
         
         # Save analysis to database for monitoring
-        thesis_record = save_thesis_analysis(thesis_text, analysis_result, signals_result)
+        thesis_id = save_thesis_analysis(thesis_text, analysis_result, signals_result)
         
         # Combine results
         combined_result = {
@@ -161,7 +161,7 @@ def analyze():
             'signal_extraction': signals_result,
             'processed_documents': len(processed_documents),
             'focus_primary_signals': focus_primary_signals,
-            'thesis_id': thesis_record.id,
+            'thesis_id': thesis_id,
             'published': True
         }
         
