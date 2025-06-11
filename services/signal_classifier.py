@@ -166,21 +166,33 @@ class SignalClassifier:
             
             # Extract signals from AI analysis metrics_to_track
             metrics_to_track = ai_analysis.get('metrics_to_track', [])
+            logging.info(f"Processing {len(metrics_to_track)} metrics from AI analysis")
+            
             for metric in metrics_to_track:
+                # Map AI signal types to our enum
+                signal_type = metric.get('type', 'Level_2_Derived_Metrics')
+                level = self._parse_signal_level(signal_type)
+                
+                # Determine value chain position if not specified by AI
+                chain_position = metric.get('value_chain_position', 'unknown')
+                if chain_position == 'unknown':
+                    chain_position = self._determine_value_chain_position(metric.get('name', ''))
+                
                 signal = Signal(
                     name=metric.get('name', 'Unknown Signal'),
-                    level=self._parse_signal_level(metric.get('type', 'Level_2_Derived_Metrics')),
+                    level=level,
                     description=metric.get('description', ''),
                     data_source=metric.get('data_source', 'Unknown'),
-                    value_chain_position=metric.get('value_chain_position', 'unknown'),
-                    predictive_power='high',  # Assume high since AI selected these
-                    market_attention='low',   # Primary signals typically have low attention
+                    value_chain_position=chain_position,
+                    predictive_power='high',  # AI-selected signals are high value
+                    market_attention='low',   # Primary signals have low market attention
                     lead_lag_indicator='leading',
                     raw_data_points=[metric.get('name', '')],
                     collection_frequency=metric.get('frequency', 'unknown'),
-                    reliability_score=0.8  # High reliability for AI-selected signals
+                    reliability_score=0.9  # High reliability for AI-selected signals
                 )
                 all_signals.append(signal)
+                logging.info(f"Added signal: {signal.name} (Level: {level.value}, Chain: {signal.value_chain_position})")
             
             # Extract additional signals from document content
             document_signals = self._extract_signals_from_documents(processed_documents, focus_primary)

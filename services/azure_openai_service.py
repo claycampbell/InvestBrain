@@ -79,6 +79,11 @@ class AzureOpenAIService:
                     "threshold_type": "above|below|change_percent",
                     "data_source": "Specific source for obtaining this data",
                     "value_chain_position": "upstream|midstream|downstream"
+                    
+                Note: For value chain positioning:
+                - upstream: raw materials, commodities, mining, agriculture, extraction
+                - midstream: processing, manufacturing, transportation, logistics
+                - downstream: retail, consumer, end-user, final demand
                 }
             ],
             "monitoring_plan": {
