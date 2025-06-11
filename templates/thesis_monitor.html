@@ -512,40 +512,51 @@
             hasMultiSeries: !!(performanceData.market_performance)
         });
 
-        // Prepare series data for ApexCharts
+        // Prepare series data for ApexCharts in correct format
         const series = [];
+        
+        // Create date timestamps for timeline
+        const startDate = new Date();
+        const timelineData = timeline.map((label, index) => {
+            const date = new Date(startDate);
+            date.setMonth(date.getMonth() + index);
+            return date.getTime();
+        });
         
         if (performanceData.market_performance && performanceData.thesis_performance) {
             // Two-series visualization: Market vs Thesis
             series.push({
                 name: 'Market Performance',
-                data: performanceData.market_performance.map((value, index) => ({
-                    x: timeline[index],
-                    y: value
-                }))
+                data: performanceData.market_performance.map((value, index) => [
+                    timelineData[index],
+                    value
+                ])
             });
             
             series.push({
-                name: 'Thesis Performance',
-                data: performanceData.thesis_performance.map((value, index) => ({
-                    x: timeline[index],
-                    y: value
-                }))
+                name: 'Thesis Performance', 
+                data: performanceData.thesis_performance.map((value, index) => [
+                    timelineData[index],
+                    value
+                ])
             });
         } else {
             // Single series fallback
             const singleData = Array.isArray(performanceData) ? performanceData : [];
             series.push({
                 name: data.chart_config?.primary_metric || 'Performance Index',
-                data: singleData.map((value, index) => ({
-                    x: timeline[index],
-                    y: value
-                }))
+                data: singleData.map((value, index) => [
+                    timelineData[index],
+                    value
+                ])
             });
         }
 
-        // Prepare event flags as annotations
-        const annotations = [];
+        // Prepare event flags as xaxis annotations
+        const annotations = {
+            xaxis: []
+        };
+        
         console.log('Event data received:', data.events);
         
         if (data.events && data.events.length > 0) {
@@ -554,25 +565,18 @@
                                  Math.floor(index * timeline.length / data.events.length);
                 const validIndex = Math.max(0, Math.min(monthIndex, timeline.length - 1));
                 
-                annotations.push({
-                    x: timeline[validIndex],
+                annotations.xaxis.push({
+                    x: timelineData[validIndex],
                     borderColor: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
                     label: {
                         borderColor: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
                         style: {
                             color: '#fff',
                             background: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
-                            fontSize: '11px',
-                            padding: {
-                                left: 5,
-                                right: 5,
-                                top: 2,
-                                bottom: 2
-                            }
+                            fontSize: '11px'
                         },
-                        text: event.title.length > 25 ? event.title.substring(0, 25) + '...' : event.title,
-                        orientation: 'horizontal',
-                        position: 'top'
+                        text: event.title.length > 20 ? event.title.substring(0, 20) + '...' : event.title,
+                        orientation: 'horizontal'
                     }
                 });
             });
@@ -582,10 +586,11 @@
         const chartOptions = {
             series: series,
             chart: {
-                type: 'line',
+                type: 'area',
                 height: 400,
                 zoom: {
-                    enabled: true
+                    enabled: true,
+                    autoScaleYaxis: true
                 },
                 toolbar: {
                     show: true
@@ -614,14 +619,14 @@
                 },
             },
             xaxis: {
-                type: 'category',
+                type: 'datetime',
                 title: {
                     text: 'Time Period'
                 }
             },
             yaxis: {
                 title: {
-                    text: data.chart_config.y_axis_label || 'Value'
+                    text: data.chart_config.y_axis_label || 'Cumulative Performance (%)'
                 }
             },
             legend: {
@@ -631,10 +636,26 @@
                 offsetY: -25,
                 offsetX: -5
             },
-            annotations: {
-                xaxis: annotations
+            annotations: annotations,
+            colors: ['#9ca3af', '#22c55e'],
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.7,
+                    opacityTo: 0.9,
+                    stops: [0, 100]
+                }
             },
-            colors: ['#9ca3af', '#22c55e']
+            markers: {
+                size: 0,
+                style: 'hollow'
+            },
+            tooltip: {
+                x: {
+                    format: 'MMM yyyy'
+                }
+            }
         };
 
         simulationChart = new ApexCharts(ctx, chartOptions);
