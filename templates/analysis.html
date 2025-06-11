@@ -321,82 +321,106 @@ document.addEventListener('DOMContentLoaded', function() {
         const thesisData = data.thesis_analysis || {};
         
         return `
-            <div class="row">
-                <!-- Signal Overview -->
-                <div class="col-12 mb-4">
-                    <div class="alert alert-success">
-                        <h5 class="alert-heading">Analysis Complete</h5>
-                        <div class="row text-center">
-                            <div class="col-md-3">
-                                <strong>${signalData.total_signals_identified || 0}</strong>
-                                <div class="small">Total Signals</div>
-                            </div>
-                            <div class="col-md-3">
-                                <strong>${signalData.primary_signals_count || 0}</strong>
-                                <div class="small">Primary Signals</div>
-                            </div>
-                            <div class="col-md-3">
-                                <strong>${data.processed_documents || 0}</strong>
-                                <div class="small">Documents Processed</div>
-                            </div>
-                            <div class="col-md-3">
-                                <strong>${signalData.quality_assessment?.assessment || 'N/A'}</strong>
-                                <div class="small">Signal Quality</div>
+            <!-- Header Summary -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h5 class="text-success mb-1">
+                                        <i class="fas fa-check-circle"></i> Analysis Complete
+                                    </h5>
+                                    <p class="text-muted mb-0">${thesisData.core_claim || 'Investment thesis analysis completed successfully'}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <div class="h4 text-primary mb-0">${signalData.total_signals_identified || 0}</div>
+                                            <small class="text-muted">Signals</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="h4 text-info mb-0">${data.processed_documents || 0}</div>
+                                            <small class="text-muted">Documents</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <span class="badge bg-${thesisData.mental_model === 'Growth' ? 'success' : thesisData.mental_model === 'Disruption' ? 'warning' : 'info'} fs-6">
+                                                ${thesisData.mental_model || 'Unknown'}
+                                            </span>
+                                            <div><small class="text-muted">Model</small></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Core Thesis Analysis -->
-                <div class="col-lg-6 mb-4">
-                    <div class="card">
+            </div>
+
+            <div class="row">
+                <!-- Left Column: Core Analysis & Assumptions -->
+                <div class="col-lg-6">
+                    <!-- Core Investment Logic -->
+                    <div class="card mb-4">
                         <div class="card-header">
-                            <h6 class="mb-0"><i class="fas fa-bullseye"></i> Core Investment Logic</h6>
+                            <h6 class="mb-0"><i class="fas fa-bullseye text-primary"></i> Core Investment Logic</h6>
                         </div>
                         <div class="card-body">
-                            <div class="mb-3">
-                                <strong>Core Claim:</strong>
-                                <p class="small">${thesisData.core_claim || 'Analysis in progress...'}</p>
-                            </div>
                             ${thesisData.core_analysis ? `
-                                <div class="mb-3">
-                                    <strong>Core Analysis:</strong>
-                                    <p class="small">${thesisData.core_analysis}</p>
+                                <div class="alert alert-light border-0 mb-3">
+                                    <strong>Risk/Reward Analysis:</strong>
+                                    <p class="mb-0 mt-2">${thesisData.core_analysis}</p>
                                 </div>
                             ` : ''}
-                            <div class="mb-3">
-                                <strong>Mental Model:</strong>
-                                <span class="badge bg-primary">${thesisData.mental_model || 'Unknown'}</span>
-                            </div>
                             ${generateAssumptionsList(thesisData.assumptions)}
-                            ${generateCausalChain(thesisData.causal_chain)}
                         </div>
                     </div>
-                </div>
-                
-                <!-- Counter-Thesis Scenarios -->
-                <div class="col-12 mb-4">
-                    <div class="card">
+
+                    <!-- Causal Chain Analysis -->
+                    ${generateCausalChainCard(thesisData.causal_chain)}
+
+                    <!-- Counter-Thesis Scenarios -->
+                    <div class="card mb-4">
                         <div class="card-header">
-                            <h6 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Counter-Thesis Scenarios</h6>
+                            <h6 class="mb-0"><i class="fas fa-exclamation-triangle text-warning"></i> Risk Scenarios</h6>
                         </div>
                         <div class="card-body">
                             ${generateCounterThesisScenarios(thesisData.counter_thesis_scenarios)}
                         </div>
                     </div>
                 </div>
-                
-                <!-- Signal Classification -->
-                <div class="col-lg-6 mb-4">
-                    <div class="card">
+
+                <!-- Right Column: Signals & Monitoring -->
+                <div class="col-lg-6">
+                    <!-- Signal Classification -->
+                    <div class="card mb-4">
                         <div class="card-header">
-                            <h6 class="mb-0"><i class="fas fa-signal"></i> Signal Classification</h6>
+                            <h6 class="mb-0"><i class="fas fa-signal text-info"></i> Trackable Signals</h6>
                         </div>
                         <div class="card-body">
                             ${generateSignalsByLevel(signalData.signals_by_level)}
+                            ${generateValueChainMapping(thesisData.metrics_to_track)}
+                        </div>
+                    </div>
+
+                    <!-- Monitoring Strategy -->
+                    ${generateMonitoringPlanCard(thesisData.monitoring_plan)}
+
+                    <!-- Action Controls -->
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Ready to Monitor</h6>
+                            <p class="text-muted small mb-3">Publish this analysis to start tracking signals and receive alerts</p>
+                            <button class="btn btn-primary btn-lg me-2" onclick="publishAnalysis()">
+                                <i class="fas fa-rocket"></i> Publish for Monitoring
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="downloadAnalysis()">
+                                <i class="fas fa-download"></i> Export Report
+                            </button>
                         </div>
                     </div>
                 </div>
+            </div>
                 
                 <!-- Value Chain Mapping -->
                 <div class="col-lg-8 mb-4">
@@ -574,26 +598,225 @@ document.addEventListener('DOMContentLoaded', function() {
                         downstream.push(signalObj);
                         break;
                     default:
-                        // Intelligently categorize based on signal name/type
-                        const name = metric.name.toLowerCase();
-                        if (name.includes('prescription') || name.includes('shipment') || name.includes('production') || name.includes('manufacturing')) {
-                            upstream.push(signalObj);
-                        } else if (name.includes('coverage') || name.includes('price') || name.includes('market share') || name.includes('competition')) {
-                            midstream.push(signalObj);
-                        } else if (name.includes('adoption') || name.includes('patient') || name.includes('outcome') || name.includes('satisfaction')) {
-                            downstream.push(signalObj);
-                        } else {
-                            uncategorized.push(signalObj);
-                        }
+                        uncategorized.push(signalObj);
+                        break;
                 }
             }
         });
         
-        // Distribute uncategorized signals evenly
-        uncategorized.forEach((signal, index) => {
-            if (index % 3 === 0) upstream.push(signal);
-            else if (index % 3 === 1) midstream.push(signal);
-            else downstream.push(signal);
+        return `
+            <div class="mt-4">
+                <strong class="small d-block mb-3">Value Chain Positioning:</strong>
+                <div class="row">
+                    <div class="col-4">
+                        <div class="text-center p-2 border rounded">
+                            <div class="h6 text-primary mb-1">${upstream.length}</div>
+                            <small class="text-muted">Upstream</small>
+                            ${upstream.length > 0 ? `
+                                <div class="mt-2">
+                                    ${upstream.slice(0, 2).map(s => `
+                                        <div class="badge bg-light text-dark small mb-1 d-block">${s.name}</div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center p-2 border rounded">
+                            <div class="h6 text-info mb-1">${midstream.length}</div>
+                            <small class="text-muted">Midstream</small>
+                            ${midstream.length > 0 ? `
+                                <div class="mt-2">
+                                    ${midstream.slice(0, 2).map(s => `
+                                        <div class="badge bg-light text-dark small mb-1 d-block">${s.name}</div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center p-2 border rounded">
+                            <div class="h6 text-success mb-1">${downstream.length}</div>
+                            <small class="text-muted">Downstream</small>
+                            ${downstream.length > 0 ? `
+                                <div class="mt-2">
+                                    ${downstream.slice(0, 2).map(s => `
+                                        <div class="badge bg-light text-dark small mb-1 d-block">${s.name}</div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function generateCausalChainCard(causalChain) {
+        if (!causalChain || !Array.isArray(causalChain) || causalChain.length === 0) {
+            return `
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-link text-secondary"></i> Causal Chain</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">No causal chain identified</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-link text-secondary"></i> Chainlinked Events</h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        ${causalChain.slice(0, 6).map((link, index) => `
+                            <div class="timeline-item ${index === causalChain.length - 1 ? 'timeline-end' : ''}">
+                                <div class="timeline-marker bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 12px;">
+                                    ${link.chain_link || index + 1}
+                                </div>
+                                <div class="timeline-content ms-3">
+                                    <h6 class="mb-1">${link.event}</h6>
+                                    <p class="text-muted small mb-2">${link.explanation}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function generateMonitoringPlanCard(monitoringPlan) {
+        if (!monitoringPlan || typeof monitoringPlan !== 'object') {
+            return `
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-chart-line text-success"></i> Monitoring Strategy</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">No monitoring plan available</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-line text-success"></i> Monitoring Strategy</h6>
+                </div>
+                <div class="card-body">
+                    ${monitoringPlan.objective ? `
+                        <div class="alert alert-info border-0 mb-3">
+                            <strong>Objective:</strong> ${monitoringPlan.objective}
+                        </div>
+                    ` : ''}
+                    
+                    ${monitoringPlan.data_pulls && monitoringPlan.data_pulls.length > 0 ? `
+                        <div class="mb-3">
+                            <strong class="small d-block mb-2">Data Collection Strategy:</strong>
+                            <div class="row">
+                                ${monitoringPlan.data_pulls.slice(0, 3).map(pull => `
+                                    <div class="col-12 mb-2">
+                                        <div class="border rounded p-2">
+                                            <div class="small">
+                                                <strong>${pull.category || 'Data Category'}</strong>
+                                                <span class="badge bg-secondary ms-2">${pull.frequency || 'Regular'}</span>
+                                            </div>
+                                            ${pull.metrics ? `
+                                                <div class="small text-muted mt-1">
+                                                    ${pull.metrics.slice(0, 3).join(', ')}
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${monitoringPlan.alert_logic && monitoringPlan.alert_logic.length > 0 ? `
+                        <div class="mb-3">
+                            <strong class="small d-block mb-2">Alert Triggers:</strong>
+                            ${monitoringPlan.alert_logic.slice(0, 3).map(alert => `
+                                <div class="small border-start border-warning ps-2 mb-2">
+                                    <strong>${alert.condition || 'Alert condition'}</strong>
+                                    <div class="text-muted">${alert.action || 'Take action'}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    ${monitoringPlan.decision_triggers && monitoringPlan.decision_triggers.length > 0 ? `
+                        <div class="mb-3">
+                            <strong class="small d-block mb-2">Decision Points:</strong>
+                            ${monitoringPlan.decision_triggers.slice(0, 2).map(trigger => `
+                                <div class="alert alert-warning py-2 px-3 mb-2">
+                                    <div class="small">
+                                        <strong>If:</strong> ${trigger.condition || 'Condition met'}
+                                        <br><strong>Then:</strong> ${trigger.action || 'Take action'}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    ${monitoringPlan.review_schedule ? `
+                        <div class="text-center mt-3 pt-3 border-top">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar-alt"></i> ${monitoringPlan.review_schedule}
+                            </small>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    // Add CSS for timeline styling
+    const timelineCSS = `
+        <style>
+        .timeline {
+            position: relative;
+            padding-left: 0;
+        }
+        .timeline-item {
+            position: relative;
+            display: flex;
+            align-items-start;
+            margin-bottom: 1.5rem;
+        }
+        .timeline-item:not(.timeline-end):after {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 24px;
+            width: 2px;
+            height: calc(100% + 0.5rem);
+            background-color: var(--bs-border-color);
+        }
+        .timeline-marker {
+            position: relative;
+            z-index: 2;
+            flex-shrink: 0;
+        }
+        .timeline-content {
+            flex-grow: 1;
+        }
+        </style>
+    `;
+    
+    // Add timeline CSS to document head if not already present
+    if (!document.querySelector('#timeline-styles')) {
+        const styleElement = document.createElement('div');
+        styleElement.id = 'timeline-styles';
+        styleElement.innerHTML = timelineCSS;
+        document.head.appendChild(styleElement);
+    }
         });
         
         return `
