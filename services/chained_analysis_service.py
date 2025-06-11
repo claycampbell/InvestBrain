@@ -298,7 +298,7 @@ Create:
     def _get_fallback_structure(self, step_name: str) -> Dict[str, Any]:
         """Provide fallback structure when JSON parsing fails"""
         if step_name == "signals":
-            return []
+            return {"signals": []}
         elif step_name == "monitoring_plan":
             return {
                 "objective": "Monitor thesis performance and key assumptions",

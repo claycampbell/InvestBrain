@@ -8,6 +8,7 @@ from services.thesis_analyzer import ThesisAnalyzer
 from services.document_processor import DocumentProcessor
 from services.signal_classifier import SignalClassifier
 from services.notification_service import NotificationService
+from services.chained_analysis_service import ChainedAnalysisService
 from config import Config
 
 # Initialize services
@@ -15,6 +16,7 @@ thesis_analyzer = ThesisAnalyzer()
 document_processor = DocumentProcessor()
 signal_classifier = SignalClassifier()
 notification_service = NotificationService()
+chained_analysis_service = ChainedAnalysisService()
 
 def save_thesis_analysis(thesis_text, analysis_result, signals_result):
     """Save completed analysis to database for monitoring"""
@@ -140,10 +142,8 @@ def analyze():
                     'data': processed_data
                 })
         
-        # Analyze thesis using reliable service with intelligent fallbacks
-        from services.reliable_analysis_service import ReliableAnalysisService
-        reliable_service = ReliableAnalysisService()
-        analysis_result = reliable_service.analyze_thesis(thesis_text)
+        # Analyze thesis using chained analysis service
+        analysis_result = chained_analysis_service.analyze_thesis(thesis_text)
         
         # Extract signals from AI analysis and documents using the classification hierarchy
         signals_result = signal_classifier.extract_signals_from_ai_analysis(
