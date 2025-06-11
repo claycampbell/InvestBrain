@@ -309,6 +309,9 @@ document.addEventListener('DOMContentLoaded', function() {
         contentDiv.innerHTML = generateResultsHTML(data);
         resultsDiv.style.display = 'block';
         
+        // Store analysis data globally for publishing
+        window.currentAnalysis = data;
+        
         // Scroll to results
         resultsDiv.scrollIntoView({ behavior: 'smooth' });
     }
@@ -420,13 +423,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 
                 <!-- Primary Signals Detail -->
-                <div class="col-12">
+                <div class="col-12 mb-4">
                     <div class="card">
                         <div class="card-header">
                             <h6 class="mb-0"><i class="fas fa-list"></i> Primary Signals Detail</h6>
                         </div>
                         <div class="card-body">
                             ${generatePrimarySignalsTable(signalData.raw_signals)}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Publish Thesis -->
+                <div class="col-12">
+                    <div class="card border-success">
+                        <div class="card-body text-center">
+                            <h5 class="text-success mb-3">
+                                <i class="fas fa-check-circle"></i> Analysis Complete
+                            </h5>
+                            <p class="mb-3">Ready to publish this thesis for monitoring and simulation testing?</p>
+                            <button type="button" class="btn btn-success btn-lg me-3" onclick="publishThesis()">
+                                <i class="fas fa-upload"></i> Publish Thesis
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-lg" onclick="goToSimulation()" disabled id="simulationBtn">
+                                <i class="fas fa-play"></i> Run Simulation
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -686,6 +707,62 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'medium': return 'bg-warning';
             case 'low': return 'bg-secondary';
             default: return 'bg-light';
+        }
+    }
+    
+    // Publish thesis functionality
+    function publishThesis() {
+        if (!window.currentAnalysis) {
+            alert('No analysis data available to publish');
+            return;
+        }
+        
+        const publishBtn = document.querySelector('button[onclick="publishThesis()"]');
+        publishBtn.disabled = true;
+        publishBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+        
+        fetch('/publish_thesis', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(window.currentAnalysis)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                publishBtn.innerHTML = '<i class="fas fa-check"></i> Published';
+                publishBtn.className = 'btn btn-outline-success btn-lg me-3';
+                
+                // Enable simulation button
+                const simulationBtn = document.getElementById('simulationBtn');
+                simulationBtn.disabled = false;
+                simulationBtn.setAttribute('onclick', `goToSimulation(${data.thesis_id})`);
+                
+                // Show success message
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success mt-3';
+                alert.innerHTML = `<i class="fas fa-check-circle"></i> Thesis published successfully! You can now run simulations.`;
+                publishBtn.closest('.card-body').appendChild(alert);
+            } else {
+                publishBtn.disabled = false;
+                publishBtn.innerHTML = '<i class="fas fa-upload"></i> Publish Thesis';
+                alert('Failed to publish thesis: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            publishBtn.disabled = false;
+            publishBtn.innerHTML = '<i class="fas fa-upload"></i> Publish Thesis';
+            console.error('Error:', error);
+            alert('Failed to publish thesis');
+        });
+    }
+    
+    function goToSimulation(thesisId) {
+        if (thesisId) {
+            window.location.href = `/simulation/${thesisId}`;
+        } else {
+            alert('No thesis ID available for simulation');
         }
     }
 });

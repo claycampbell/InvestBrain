@@ -409,6 +409,49 @@ def get_thesis_data(id):
     thesis = ThesisAnalysis.query.get_or_404(id)
     return jsonify(thesis.to_dict())
 
+@app.route('/publish_thesis', methods=['POST'])
+def publish_thesis():
+    """Publish a completed thesis analysis for monitoring and simulation"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+            
+        # Extract thesis and signal data
+        thesis_data = data.get('thesis_analysis', {})
+        signal_data = data.get('signal_extraction', {})
+        
+        if not thesis_data.get('core_claim'):
+            return jsonify({'success': False, 'error': 'Invalid thesis data'}), 400
+        
+        # Save thesis analysis
+        thesis_id = save_thesis_analysis(
+            thesis_data.get('original_thesis', 'Published thesis'), 
+            thesis_data, 
+            signal_data
+        )
+        
+        return jsonify({
+            'success': True, 
+            'thesis_id': thesis_id,
+            'message': 'Thesis published successfully'
+        })
+        
+    except Exception as e:
+        logging.error(f"Error publishing thesis: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/simulation/<int:thesis_id>')
+def simulation_page(thesis_id):
+    """Thesis simulation testing page"""
+    try:
+        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        return render_template('simulation.html', thesis=thesis)
+    except Exception as e:
+        logging.error(f"Error loading simulation page: {str(e)}")
+        return render_template('404.html'), 404
+
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('404.html'), 404
