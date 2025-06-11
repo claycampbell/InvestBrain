@@ -103,16 +103,28 @@ class AzureOpenAIService:
                 
             except Exception as e:
                 error_message = str(e)
-                is_timeout = any(keyword in error_message.lower() for keyword in ['timeout', 'read timeout', 'connection timeout', 'ssl'])
+                is_retryable = any(keyword in error_message.lower() for keyword in [
+                    'timeout', 'read timeout', 'connection timeout', 'ssl', 
+                    'connection', 'network', 'reset', 'broken pipe', 'recv'
+                ])
                 
-                if is_timeout and attempt < max_retries - 1:
-                    logging.warning(f"Attempt {attempt + 1} failed with timeout, retrying in {retry_delay} seconds...")
+                if is_retryable and attempt < max_retries - 1:
+                    logging.warning(f"Attempt {attempt + 1} failed with network error: {error_message[:100]}...")
+                    logging.warning(f"Retrying in {retry_delay} seconds...")
                     import time
                     time.sleep(retry_delay)
                     retry_delay *= 2  # Exponential backoff
+                    
+                    # Reinitialize client on connection errors
+                    try:
+                        self._initialize_client()
+                        logging.info("Client reinitialized for retry")
+                    except:
+                        pass
+                    
                     continue
                 else:
-                    logging.error(f"Error generating completion: {error_message}")
+                    logging.error(f"Error generating completion after {attempt + 1} attempts: {error_message}")
                     raise
         
         # If all retries failed
