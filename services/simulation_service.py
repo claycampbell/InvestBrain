@@ -95,20 +95,9 @@ class SimulationService:
                 
                 # Generate in smaller chunks to avoid length limits
                 if months <= 12:
-                    # Generate both market and thesis conviction data
-                    prompt = f"""Generate {months} monthly data for investment simulation with 3 series:
-1. Market Performance (broad market): starting at 100
-2. Thesis Conviction (specific thesis strength): starting at 100  
-3. Combined Performance (thesis vs market): starting at 100
-
-Scenario: {scenario} case
-Volatility: {volatility}
-Months: {months}
-
-Provide ONLY a JSON object with 3 arrays of {months} numbers each (range 70-160):
-{{"market": [100, 101.2, 99.8, ...], "conviction": [100, 102.5, 104.1, ...], "performance": [100, 103.7, 103.9, ...]}}
-
-JSON:"""
+                    # Simplified prompt for better reliability
+                    prompt = f"""Generate {months} monthly values starting at 100 for {scenario} scenario.
+JSON: {{"market": [100,102,...], "conviction": [100,105,...], "performance": [100,103,...]}}"""
                     messages = [{"role": "user", "content": prompt}]
                     
                     response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=300)
@@ -167,6 +156,18 @@ JSON:"""
                 
             except Exception as e:
                 print(f"LLM generation failed: {e}")
+                
+                # If Azure OpenAI fails but credentials exist, generate minimal fallback with clear indication
+                if self.ai_service and hasattr(self.ai_service, 'client') and self.ai_service.client:
+                    print("Generating minimal three-series fallback due to timeout")
+                    # Create basic progression for demonstration
+                    base_values = [100 + i * 2 + (i % 3 - 1) * 3 for i in range(months)]
+                    return {
+                        'market_performance': [100 + (x - 100) * 0.6 for x in base_values],
+                        'thesis_conviction': [100 + (x - 100) * 1.4 for x in base_values], 
+                        'combined_performance': base_values,
+                        '_fallback_reason': 'Azure OpenAI timeout - using basic progression'
+                    }
         
         # Return error state when Azure OpenAI is not available
         return {
