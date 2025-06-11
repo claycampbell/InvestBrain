@@ -82,7 +82,7 @@ class ChainedAnalysisService:
                 raise TimeoutError("Analysis step timed out")
             
             signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(90)  # Increased to 90 second timeout
+            signal.alarm(15)  # 15 second timeout
             
             try:
                 response = self.azure_openai.generate_completion([
@@ -112,11 +112,6 @@ Signal Level Classification:
 Available FactSet datasets: Fundamentals, Estimates, Ownership, Economics, Pricing, Credit
 Available Xpressfeed datasets: Real-time market data, News flow, Sentiment, Supply chain
 
-Value Chain Classification Guide:
-- UPSTREAM: Raw material costs, supplier metrics, commodity prices, production inputs
-- MIDSTREAM: Manufacturing efficiency, capacity utilization, inventory levels, operational metrics  
-- DOWNSTREAM: Sales metrics, customer demand, market share, pricing power, end-market trends
-
 Respond with valid JSON array:
 [
   {
@@ -130,8 +125,7 @@ Respond with valid JSON array:
     "factset_identifier": "FF_SALES(0)/FF_SALES(-1)-1",
     "value_chain_position": "downstream",
     "programmatic_feasibility": "high",
-    "conviction_linkage": "Direct measure of core growth thesis",
-    "what_it_tells_us": "Indicates demand acceleration and pricing power in target markets"
+    "conviction_linkage": "Direct measure of core growth thesis"
   }
 ]"""
         else:
@@ -143,11 +137,6 @@ Signal Level Classification (extract signals from ALL levels):
 - Level 2 (Derived Metrics): ROE, ROIC, debt-to-equity, working capital turnover
 - Level 3 (Complex Ratios): EV/EBITDA, P/E relative to growth, economic value added
 - Level 4 (Market Sentiment): Analyst revisions, short interest, options flow, credit spreads
-
-Value Chain Classification Guide:
-- UPSTREAM: Raw material costs, supplier metrics, commodity prices, production inputs
-- MIDSTREAM: Manufacturing efficiency, capacity utilization, inventory levels, operational metrics  
-- DOWNSTREAM: Sales metrics, customer demand, market share, pricing power, end-market trends
 
 Programmatic Feasibility Guide:
 - HIGH: Available via FactSet/Xpressfeed APIs (Levels 0-2)
@@ -178,12 +167,11 @@ Respond with valid JSON array:
     "frequency": "quarterly",
     "threshold": 85.0,
     "threshold_type": "above",
-    "value_chain_position": "downstream",
-    "programmatic_feasibility": "low",
-    "what_it_tells_us": "Indicates management credibility and forward-looking reliability",
     "data_source": "Manual Research Required",
     "acquisition_method": "Compile from earnings transcripts via FactSet Transcripts API or Capital IQ, calculate variance between guided vs actual metrics over 8 quarters",
     "alternative_sources": ["Bloomberg Transcript Analysis", "Refinitiv IBES Detail", "Company IR websites"],
+    "value_chain_position": "governance",
+    "programmatic_feasibility": "low",
     "conviction_linkage": "Management credibility impacts thesis reliability"
   },
   {
@@ -298,7 +286,7 @@ Create:
     def _get_fallback_structure(self, step_name: str) -> Dict[str, Any]:
         """Provide fallback structure when JSON parsing fails"""
         if step_name == "signals":
-            return {"signals": []}
+            return []
         elif step_name == "monitoring_plan":
             return {
                 "objective": "Monitor thesis performance and key assumptions",

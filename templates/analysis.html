@@ -306,16 +306,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             clearInterval(interval);
             modal.hide();
-            console.error('Analysis error:', error);
-            // Show user-friendly error message
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'alert alert-danger mt-3';
-            errorDiv.innerHTML = `
-                <h6><i class="fas fa-exclamation-triangle"></i> Analysis Failed</h6>
-                <p class="mb-0">Unable to complete the analysis. Please check your thesis text and try again.</p>
-            `;
-            document.getElementById('analysis-results').appendChild(errorDiv);
-            document.getElementById('analysis-results').style.display = 'block';
+            console.error('Error:', error);
+            alert('Analysis failed. Please try again.');
         });
     });
 
@@ -335,16 +327,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function generateResultsHTML(data) {
-        // Handle both old and new data formats
-        const signalData = data.signal_extraction || data || {};
-        const thesisData = data.thesis_analysis || data || {};
-        
-        // If signals are embedded directly in the analysis result
-        if (data.trackable_signals && !signalData.signals) {
-            signalData.signals = data.trackable_signals;
-            signalData.primary_signals = data.trackable_signals.slice(0, 4);
-            signalData.total_signals_identified = data.trackable_signals.length;
-        }
+        const signalData = data.signal_extraction || {};
+        const thesisData = data.thesis_analysis || {};
         
         return `
             <!-- Header Summary -->
@@ -427,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <h6 class="mb-0"><i class="fas fa-route text-info"></i> Signal Discovery Journey</h6>
                         </div>
                         <div class="card-body">
-                            ${generateSignalJourneyMap(signalData.signals)}
+                            ${generateSignalJourneyMap(signalData.signals_by_level)}
                         </div>
                     </div>
 
@@ -437,12 +421,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             <h6 class="mb-0"><i class="fas fa-signal text-info"></i> Trackable Signals</h6>
                         </div>
                         <div class="card-body">
-                            ${generateDirectSignalsDisplay(signalData.signals)}
+                            ${generateSignalsByLevel(signalData.signals_by_level)}
+                            ${generateActualSignalsDisplay(signalData.signals_by_level)}
                         </div>
                     </div>
 
                     <!-- Monitoring Strategy -->
-                    ${generateMonitoringPlanCard(data.monitoring_plan || thesisData.monitoring_plan)}
+                    ${generateMonitoringPlanCard(thesisData.monitoring_plan)}
 
                     <!-- Action Controls -->
                     <div class="card border-primary">
@@ -612,169 +597,6 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    function getLevelBadgeClass(level) {
-        if (level && level.includes('Level_0')) return 'bg-success';
-        if (level && level.includes('Level_1')) return 'bg-info';
-        if (level && level.includes('Level_2')) return 'bg-warning text-dark';
-        return 'bg-secondary';
-    }
-    
-    function formatSignalLevel(level) {
-        if (!level) return 'Unknown';
-        return level.replace('Level_', 'L').replace('_', ' ');
-    }
-    
-    function getValueChainBadgeClass(position) {
-        if (position === 'upstream') return 'bg-primary';
-        if (position === 'midstream') return 'bg-warning text-dark';
-        if (position === 'downstream') return 'bg-success';
-        return 'bg-secondary';
-    }
-    
-    function getFeasibilityBadgeClass(feasibility) {
-        if (feasibility === 'high') return 'bg-success';
-        if (feasibility === 'medium') return 'bg-warning text-dark';
-        if (feasibility === 'low') return 'bg-danger';
-        return 'bg-secondary';
-    }
-    
-    function generateSignalJourneyMap(signals) {
-        if (!signals || !Array.isArray(signals) || signals.length === 0) {
-            return '<p class="text-muted">No signal discovery journey available</p>';
-        }
-        
-        // Group signals by level and value chain position
-        const level0Signals = signals.filter(s => s.level && s.level.includes('Level_0')).length;
-        const level1Signals = signals.filter(s => s.level && s.level.includes('Level_1')).length;
-        const upstreamSignals = signals.filter(s => s.value_chain_position === 'upstream').length;
-        const midstreamSignals = signals.filter(s => s.value_chain_position === 'midstream').length;
-        const downstreamSignals = signals.filter(s => s.value_chain_position === 'downstream').length;
-        
-        return `
-            <div class="signal-journey-container">
-                <div class="d-flex justify-content-center align-items-center mb-4" style="min-height: 120px;">
-                    
-                    <!-- Step 1: Raw Data -->
-                    <div class="signal-journey-step text-center">
-                        <div class="signal-step-icon bg-success text-white">
-                            <i class="fas fa-database"></i>
-                            <div class="signal-step-count">${level0Signals}</div>
-                        </div>
-                        <div class="signal-step-name">Raw Economic Activity</div>
-                        <div class="signal-step-desc">Direct measurements</div>
-                    </div>
-                    
-                    <i class="fas fa-arrow-right signal-journey-arrow"></i>
-                    
-                    <!-- Step 2: Aggregation -->
-                    <div class="signal-journey-step text-center">
-                        <div class="signal-step-icon bg-info text-white">
-                            <i class="fas fa-chart-bar"></i>
-                            <div class="signal-step-count">${level1Signals}</div>
-                        </div>
-                        <div class="signal-step-name">Simple Aggregation</div>
-                        <div class="signal-step-desc">Basic combinations</div>
-                    </div>
-                    
-                    <i class="fas fa-arrow-right signal-journey-arrow"></i>
-                    
-                    <!-- Step 3: Value Chain Classification -->
-                    <div class="signal-journey-step text-center">
-                        <div class="signal-step-icon bg-warning text-dark">
-                            <i class="fas fa-sitemap"></i>
-                            <div class="signal-step-count">${signals.length}</div>
-                        </div>
-                        <div class="signal-step-name">Value Chain Mapping</div>
-                        <div class="signal-step-desc">Position classification</div>
-                    </div>
-                    
-                </div>
-                
-                <!-- Value Chain Breakdown -->
-                <div class="row mt-3">
-                    <div class="col-4 text-center">
-                        <div class="card border-primary">
-                            <div class="card-body py-2">
-                                <div class="h5 text-primary mb-1">${upstreamSignals}</div>
-                                <small class="text-muted">Upstream</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-4 text-center">
-                        <div class="card border-warning">
-                            <div class="card-body py-2">
-                                <div class="h5 text-warning mb-1">${midstreamSignals}</div>
-                                <small class="text-muted">Midstream</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-4 text-center">
-                        <div class="card border-success">
-                            <div class="card-body py-2">
-                                <div class="h5 text-success mb-1">${downstreamSignals}</div>
-                                <small class="text-muted">Downstream</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    
-    function generateDirectSignalsDisplay(signals) {
-        if (!signals || !Array.isArray(signals) || signals.length === 0) {
-            return '<p class="text-muted">No signals classified</p>';
-        }
-        
-        return `
-            <div class="mt-3">
-                <strong class="small d-block mb-3">Detected Signals (${signals.length}):</strong>
-                ${signals.map((signal, index) => `
-                    <div class="signal-card border rounded p-3 mb-3" data-signal-index="${index}" style="cursor: pointer; transition: all 0.3s ease;">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <div class="d-flex align-items-center mb-2">
-                                    <strong class="me-2">${signal.name}</strong>
-                                    <span class="badge ${getLevelBadgeClass(signal.level)} me-2">${formatSignalLevel(signal.level)}</span>
-                                    <span class="badge ${getValueChainBadgeClass(signal.value_chain_position)}">${signal.value_chain_position || 'N/A'}</span>
-                                    <i class="fas fa-chevron-down signal-expand-icon ms-auto" id="expand-icon-${index}" style="font-size: 12px; transition: transform 0.3s ease;"></i>
-                                </div>
-                                <div class="text-muted small mb-2">${signal.description || ''}</div>
-                                <div class="row small">
-                                    <div class="col-sm-6">
-                                        <strong>Data Source:</strong> ${signal.data_source || 'FactSet'}
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <strong>Frequency:</strong> ${signal.frequency || 'Quarterly'}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Expanded Details -->
-                        <div class="signal-details mt-3" id="signal-details-${index}" style="display: none;">
-                            <div class="border-top pt-3">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <strong class="small">Threshold:</strong>
-                                        <div class="text-muted small">${signal.threshold || 'N/A'} (${signal.threshold_type || 'target'})</div>
-                                        
-                                        <strong class="small mt-2 d-block">Feasibility:</strong>
-                                        <span class="badge ${getFeasibilityBadgeClass(signal.programmatic_feasibility)}">${signal.programmatic_feasibility || 'Medium'}</span>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <strong class="small">What it tells us:</strong>
-                                        <div class="text-muted small">${signal.what_it_tells_us || 'Key performance indicator for thesis validation'}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    }
-    
     function generateActualSignalsDisplay(signalsByLevel) {
         if (!signalsByLevel) return '<p class="text-muted">No signals detected</p>';
         
@@ -1294,49 +1116,6 @@ document.addEventListener('DOMContentLoaded', function() {
         styleElement.innerHTML = timelineCSS;
         document.head.appendChild(styleElement);
     }
-    
-    // Signal expansion functionality with event delegation
-    window.toggleSignalExpansion = function(index) {
-        console.log('Toggling signal expansion for index:', index);
-        const detailsElement = document.getElementById(`signal-details-${index}`);
-        const iconElement = document.getElementById(`expand-icon-${index}`);
-        
-        console.log('Details element:', detailsElement);
-        console.log('Icon element:', iconElement);
-        
-        if (detailsElement && iconElement) {
-            const isHidden = detailsElement.style.display === 'none' || detailsElement.style.display === '';
-            console.log('Is hidden:', isHidden);
-            
-            if (isHidden) {
-                detailsElement.style.display = 'block';
-                iconElement.style.transform = 'rotate(180deg)';
-                iconElement.classList.remove('fa-chevron-down');
-                iconElement.classList.add('fa-chevron-up');
-                console.log('Expanded signal details');
-            } else {
-                detailsElement.style.display = 'none';
-                iconElement.style.transform = 'rotate(0deg)';
-                iconElement.classList.remove('fa-chevron-up');
-                iconElement.classList.add('fa-chevron-down');
-                console.log('Collapsed signal details');
-            }
-        } else {
-            console.error('Could not find elements for signal', index);
-        }
-    }
-    
-    // Set up event delegation for signal cards after DOM content is ready
-    document.addEventListener('DOMContentLoaded', function() {
-        document.body.addEventListener('click', function(event) {
-            const signalCard = event.target.closest('.signal-card[data-signal-index]');
-            if (signalCard) {
-                const index = signalCard.getAttribute('data-signal-index');
-                console.log('Signal card clicked, index:', index);
-                toggleSignalExpansion(index);
-            }
-        });
-    });
     
     // Helper function to add publish/download functionality
     function publishAnalysis() {

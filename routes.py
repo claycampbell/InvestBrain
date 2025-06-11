@@ -8,8 +8,6 @@ from services.thesis_analyzer import ThesisAnalyzer
 from services.document_processor import DocumentProcessor
 from services.signal_classifier import SignalClassifier
 from services.notification_service import NotificationService
-from services.chained_analysis_service import ChainedAnalysisService
-from services.simple_analysis_service import SimpleAnalysisService
 from config import Config
 
 # Initialize services
@@ -17,8 +15,6 @@ thesis_analyzer = ThesisAnalyzer()
 document_processor = DocumentProcessor()
 signal_classifier = SignalClassifier()
 notification_service = NotificationService()
-chained_analysis_service = ChainedAnalysisService()
-simple_analysis_service = SimpleAnalysisService()
 
 def save_thesis_analysis(thesis_text, analysis_result, signals_result):
     """Save completed analysis to database for monitoring"""
@@ -111,26 +107,6 @@ def index():
     """Main analysis interface for investment thesis and signal extraction"""
     return render_template('analysis.html')
 
-@app.route('/test_connection', methods=['POST'])
-def test_connection():
-    """Test Azure OpenAI connection"""
-    try:
-        from services.azure_openai_service import AzureOpenAIService
-        
-        azure_service = AzureOpenAIService()
-        is_available = azure_service.is_available()
-        
-        return jsonify({
-            'available': is_available,
-            'message': 'Azure OpenAI service is available' if is_available else 'Azure OpenAI service connection failed'
-        })
-    except Exception as e:
-        return jsonify({
-            'available': False,
-            'error': str(e),
-            'message': 'Failed to test Azure OpenAI connection'
-        }), 500
-
 @app.route('/analyze', methods=['POST'])
 def analyze():
     """Main analysis endpoint for thesis and document processing"""
@@ -164,25 +140,17 @@ def analyze():
                     'data': processed_data
                 })
         
-        # Use simplified analysis service for better reliability
-        analysis_result = simple_analysis_service.analyze_thesis(thesis_text)
+        # Analyze thesis using reliable service with intelligent fallbacks
+        from services.reliable_analysis_service import ReliableAnalysisService
+        reliable_service = ReliableAnalysisService()
+        analysis_result = reliable_service.analyze_thesis(thesis_text)
         
-        # Extract signals from simplified analysis result
-        if 'trackable_signals' in analysis_result:
-            # Signals are already included in the simplified analysis
-            signals_result = {
-                'total_signals_identified': len(analysis_result['trackable_signals']),
-                'signals': analysis_result['trackable_signals'],
-                'primary_signals': analysis_result['trackable_signals'][:4],  # First 4 as primary
-                'secondary_signals': analysis_result['trackable_signals'][4:] if len(analysis_result['trackable_signals']) > 4 else []
-            }
-        else:
-            # Fallback to signal classifier if needed
-            signals_result = signal_classifier.extract_signals_from_ai_analysis(
-                analysis_result, 
-                processed_documents, 
-                focus_primary=focus_primary_signals
-            )
+        # Extract signals from AI analysis and documents using the classification hierarchy
+        signals_result = signal_classifier.extract_signals_from_ai_analysis(
+            analysis_result, 
+            processed_documents, 
+            focus_primary=focus_primary_signals
+        )
         
         # Save analysis to database for monitoring
         thesis_id = save_thesis_analysis(thesis_text, analysis_result, signals_result)
