@@ -330,7 +330,7 @@ class SignalClassifier:
         print(f"Level 2: {len([s for s in all_signals if s.get('level') == 'Level_2_Derived_Metrics'])}")
         print(f"Level 3: {len([s for s in all_signals if s.get('level') == 'Level_3_Complex_Ratios'])}")
         print(f"Level 4: {len([s for s in all_signals if s.get('level') == 'Level_4_Market_Sentiment'])}")
-        print(f"Thesis keywords detected: {[kw for kw in ['renewable', 'peer', 'outperform', 'cost', 'capital'] if kw in thesis_text.lower()]}")
+        print(f"Thesis keywords detected: {[kw for kw in ['renewable', 'peers', 'outperform', 'cost', 'capital', 'superior', 'advantage'] if kw in thesis_text.lower()]}")
         
         return {
             'comprehensive_analysis': True,
@@ -901,18 +901,30 @@ class SignalClassifier:
         signals = []
         text_lower = thesis_text.lower()
         
-        # Peer relative performance (always include for comparative thesis)
-        if any(keyword in text_lower for keyword in ['peer', 'outperform', 'relative', 'versus', 'compare']):
+        # Always include peer relative performance for utility analysis
+        signals.append({
+            'name': 'Utility Peer Relative Total Shareholder Return',
+            'level': 'Level_3_Complex_Ratios',
+            'description': 'TSR performance relative to utility peer group',
+            'data_source': 'FactSet/Bloomberg',
+            'programmatic_feasibility': 'high',
+            'calculation': 'NextEra_TSR / Utility_Peer_Group_Average_TSR',
+            'required_inputs': ['Price Returns', 'Dividend Yields', 'Peer Group Constituents'],
+            'factset_identifier': 'P_TOTAL_RETURN_1YR vs XLU constituents',
+            'frequency': 'monthly'
+        })
+        
+        # Peer performance comparison (check for outperform keywords)
+        if any(keyword in text_lower for keyword in ['peers', 'outperform', 'relative', 'versus', 'compare', 'superior']):
             signals.append({
-                'name': 'Utility Peer Relative Total Shareholder Return',
+                'name': 'Renewable Revenue Growth vs Utility Peers',
                 'level': 'Level_3_Complex_Ratios',
-                'description': 'TSR performance relative to utility peer group',
-                'data_source': 'FactSet/Bloomberg',
-                'programmatic_feasibility': 'high',
-                'calculation': 'NextEra_TSR / Utility_Peer_Group_Average_TSR',
-                'required_inputs': ['Price Returns', 'Dividend Yields', 'Peer Group Constituents'],
-                'factset_identifier': 'P_TOTAL_RETURN_1YR vs XLU constituents',
-                'frequency': 'monthly'
+                'description': 'Renewable revenue growth rate compared to utility peer average',
+                'data_source': 'FactSet/Company Reports',
+                'programmatic_feasibility': 'medium',
+                'calculation': '(NextEra_Renewable_Revenue_Growth - Utility_Peer_Average_Growth)',
+                'required_inputs': ['Segment Revenue', 'Peer Group Financials'],
+                'frequency': 'quarterly'
             })
         
         # Valuation multiples
