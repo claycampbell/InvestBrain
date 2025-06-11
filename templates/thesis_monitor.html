@@ -582,21 +582,29 @@
 
         // Add event markers for event scenarios
         if (data.events && data.events.length > 0) {
+            // Determine which performance data to use for event positioning
+            const eventPositionData = performanceData.thesis_performance || 
+                                     performanceData.market_performance || 
+                                     (Array.isArray(performanceData) ? performanceData : [100]);
+            
             chartConfig.data.datasets.push({
                 label: 'Key Events',
                 data: data.events.map((event, index) => {
-                    // Use month index to align with timeline
-                    const monthIndex = event.month ? event.month - 1 : Math.floor(index * timeline.length / data.events.length);
+                    // Use month from event or calculate position
+                    const monthIndex = event.month ? Math.min(event.month - 1, timeline.length - 1) : 
+                                      Math.floor(index * timeline.length / data.events.length);
+                    const validIndex = Math.max(0, Math.min(monthIndex, timeline.length - 1));
                     return {
-                        x: timeline[monthIndex] || timeline[0],
-                        y: event.impact_value || performanceData[monthIndex] || 100
+                        x: timeline[validIndex],
+                        y: event.impact_value || eventPositionData[validIndex] || 100
                     };
                 }),
                 type: 'scatter',
                 backgroundColor: 'rgba(255, 99, 132, 0.8)',
                 borderColor: 'rgb(255, 99, 132)',
                 pointRadius: 8,
-                pointHoverRadius: 10
+                pointHoverRadius: 10,
+                showLine: false
             });
         }
 

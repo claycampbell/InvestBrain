@@ -360,6 +360,7 @@ JSON format: [{{"month": 6, "title": "Event Title", "description": "Brief descri
                         month = event.get('month', 1)
                         if 1 <= month <= len(performance_data):
                             formatted_event = {
+                                'month': month,
                                 'date': self._month_to_date(month, time_horizon),
                                 'title': event.get('title', 'Market Event'),
                                 'description': event.get('description', 'Market development'),
@@ -409,6 +410,7 @@ JSON format: [{{"month": 6, "title": "Event Title", "description": "Brief descri
             template = random.choice(event_templates)
             
             event = {
+                'month': month,
                 'date': self._month_to_date(month, time_horizon),
                 'title': template['title'],
                 'description': template['description'],
