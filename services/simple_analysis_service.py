@@ -17,56 +17,49 @@ class SimpleAnalysisService:
         logging.info(f"Starting simplified analysis for thesis: {thesis_text[:50]}...")
         
         try:
-            # Single comprehensive prompt that extracts everything at once
-            system_prompt = """You are an expert investment analyst. Analyze the investment thesis and extract both analysis and trackable signals in one response.
+            # Concise prompt optimized for o4-mini model
+            system_prompt = """You are an investment analyst. Respond with valid JSON only containing these exact fields:
 
-Respond with valid JSON only:
 {
-  "core_claim": "Single sentence primary investment thesis",
-  "core_analysis": "Detailed analysis of risk/reward dynamics and key uncertainties",
-  "assumptions": ["Critical assumption 1", "Critical assumption 2", "Critical assumption 3"],
-  "mental_model": "Growth|Value|Disruption|Turnaround|Quality|Cyclical",
+  "core_claim": "One sentence thesis",
+  "core_analysis": "Brief risk/reward analysis",
+  "assumptions": ["Assumption 1", "Assumption 2", "Assumption 3"],
+  "mental_model": "Growth|Value|Disruption|Cyclical",
   "causal_chain": [
-    {"chain_link": 1, "event": "Initial catalyst", "explanation": "How this affects thesis"},
-    {"chain_link": 2, "event": "Second consequence", "explanation": "Connection to previous"}
+    {"chain_link": 1, "event": "Catalyst", "explanation": "Impact"}
   ],
   "counter_thesis_scenarios": [
-    {"scenario": "Primary risk", "description": "Risk explanation", "trigger_conditions": ["Trigger 1"], "data_signals": ["Signal to watch"]}
+    {"scenario": "Risk", "description": "Brief risk", "trigger_conditions": ["Trigger"], "data_signals": ["Signal"]}
   ],
   "trackable_signals": [
     {
-      "name": "Revenue Growth Rate",
-      "level": "Level_1_Simple_Aggregation",
-      "description": "Quarterly revenue growth tracking",
+      "name": "Signal Name",
+      "level": "Level_0_Raw_Activity",
+      "description": "Signal description",
       "frequency": "quarterly",
-      "threshold": 15.0,
+      "threshold": 10.0,
       "threshold_type": "above",
-      "data_source": "FactSet Fundamentals",
+      "data_source": "FactSet",
       "value_chain_position": "downstream",
       "programmatic_feasibility": "high",
-      "what_it_tells_us": "Indicates demand acceleration"
+      "what_it_tells_us": "What this indicates"
     }
   ]
-}"""
+}
 
-            user_prompt = f"""Analyze this investment thesis: {thesis_text}
+Generate 4-6 trackable signals. Keep all text concise."""
 
-Extract:
-1. Core investment logic and key assumptions
-2. Primary risks and counter-scenarios 
-3. 4-6 trackable signals from FactSet/Xpressfeed datasets
-4. Value chain positioning (upstream/midstream/downstream)
-5. Signal classification (Level 0: Raw Economic Activity, Level 1: Simple Aggregation)
+            user_prompt = f"""Analyze: {thesis_text}
 
-Focus on signals closest to raw economic activity that can be programmatically tracked."""
+Provide concise analysis with 4-6 trackable signals from FactSet data sources."""
 
             messages = [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ]
             
-            # Single request with shorter timeout for faster response
-            response = self.azure_service.generate_completion(messages, max_tokens=2000)
+            # Single request with sufficient tokens for complete JSON response
+            response = self.azure_service.generate_completion(messages, max_tokens=8000)
             
             # Parse the JSON response
             try:
