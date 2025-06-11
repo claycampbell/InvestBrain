@@ -452,6 +452,53 @@ def simulation_page(thesis_id):
         logging.error(f"Error loading simulation page: {str(e)}")
         return render_template('404.html'), 404
 
+@app.route('/api/simulation/run', methods=['POST'])
+def run_simulation():
+    """Run thesis simulation with time horizon forecasts and event scenarios"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No simulation data provided'}), 400
+            
+        simulation_type = data.get('simulation_type')
+        thesis_id = data.get('thesis_id')
+        
+        if not simulation_type or not thesis_id:
+            return jsonify({'error': 'Missing simulation type or thesis ID'}), 400
+            
+        # Get thesis data
+        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        
+        # Import simulation service
+        from services.simulation_service import SimulationService
+        simulation_service = SimulationService()
+        
+        if simulation_type == 'forecast':
+            time_horizon = data.get('time_horizon')
+            scenario_type = data.get('scenario_type')
+            
+            result = simulation_service.run_time_horizon_forecast(
+                thesis, time_horizon, scenario_type
+            )
+            
+        elif simulation_type == 'event':
+            event_type = data.get('event_type')
+            event_severity = data.get('event_severity')
+            
+            result = simulation_service.run_event_simulation(
+                thesis, event_type, event_severity
+            )
+            
+        else:
+            return jsonify({'error': 'Invalid simulation type'}), 400
+            
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"Error running simulation: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('404.html'), 404
