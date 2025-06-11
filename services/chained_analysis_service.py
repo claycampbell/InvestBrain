@@ -82,7 +82,7 @@ class ChainedAnalysisService:
                 raise TimeoutError("Analysis step timed out")
             
             signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(15)  # 15 second timeout
+            signal.alarm(90)  # Increased to 90 second timeout
             
             try:
                 response = self.azure_openai.generate_completion([

@@ -52,7 +52,7 @@ class AzureOpenAIService:
                     response = self.client.chat.completions.create(
                         messages=messages,
                         model=self.deployment_name,
-                        timeout=90  # Increased timeout for o4-mini network issues
+                        timeout=150  # Further increased timeout for network stability
                     )
                 elif 'gpt-4o' in model_name:
                     # GPT-4o models support limited parameters
@@ -60,7 +60,7 @@ class AzureOpenAIService:
                         messages=messages,
                         model=self.deployment_name,
                         max_completion_tokens=max_tokens,
-                        timeout=45
+                        timeout=150
                     )
                 else:
                     # Standard GPT models
@@ -69,7 +69,7 @@ class AzureOpenAIService:
                         temperature=temperature,
                         max_completion_tokens=max_tokens,
                         model=self.deployment_name,
-                        timeout=45
+                        timeout=150
                     )
                 
                 # Debug the full response structure
