@@ -355,6 +355,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <strong>Core Claim:</strong>
                                 <p class="small">${thesisData.core_claim || 'Analysis in progress...'}</p>
                             </div>
+                            ${thesisData.core_analysis ? `
+                                <div class="mb-3">
+                                    <strong>Core Analysis:</strong>
+                                    <p class="small">${thesisData.core_analysis}</p>
+                                </div>
+                            ` : ''}
                             <div class="mb-3">
                                 <strong>Mental Model:</strong>
                                 <span class="badge bg-primary">${thesisData.mental_model || 'Unknown'}</span>
@@ -444,14 +450,36 @@ document.addEventListener('DOMContentLoaded', function() {
     function generateCausalChain(causalChain) {
         if (!causalChain || !Array.isArray(causalChain)) return '';
         
-        return `
-            <div class="mb-3">
-                <strong class="small">Causal Chain:</strong>
-                <ol class="small mt-1">
-                    ${causalChain.slice(0, 5).map(step => `<li>${step}</li>`).join('')}
-                </ol>
-            </div>
-        `;
+        // Handle both old format (array of strings) and new format (array of objects)
+        if (causalChain.length > 0 && typeof causalChain[0] === 'object' && causalChain[0].chain_link) {
+            // New chainlinked format
+            return `
+                <div class="mb-3">
+                    <strong class="small">Chainlinked Events:</strong>
+                    <div class="mt-2">
+                        ${causalChain.slice(0, 8).map(link => `
+                            <div class="border-start border-3 border-primary ps-3 mb-3">
+                                <div class="small">
+                                    <strong>Chain Link ${link.chain_link}:</strong>
+                                    <span class="text-primary">${link.event}</span>
+                                </div>
+                                <div class="small text-muted mt-1">${link.explanation}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            // Legacy format
+            return `
+                <div class="mb-3">
+                    <strong class="small">Causal Chain:</strong>
+                    <ol class="small mt-1">
+                        ${causalChain.slice(0, 5).map(step => `<li>${step}</li>`).join('')}
+                    </ol>
+                </div>
+            `;
+        }
     }
     
     function generateCounterThesisScenarios(scenarios) {

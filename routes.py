@@ -24,6 +24,7 @@ def save_thesis_analysis(thesis_text, analysis_result, signals_result):
             title=analysis_result.get('core_claim', 'Untitled Thesis')[:255],
             original_thesis=thesis_text,
             core_claim=analysis_result.get('core_claim', ''),
+            core_analysis=analysis_result.get('core_analysis', ''),
             causal_chain=analysis_result.get('causal_chain', []),
             assumptions=analysis_result.get('assumptions', []),
             mental_model=analysis_result.get('mental_model', 'unknown'),
