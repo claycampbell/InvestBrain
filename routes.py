@@ -370,10 +370,38 @@ def monitor_thesis(id):
         
         print(f"Found {len(notifications)} notifications")
         
+        # Convert signals to dictionaries to avoid JSON serialization issues
+        signals_data = []
+        for signal in signals:
+            signals_data.append({
+                'id': signal.id,
+                'signal_name': signal.signal_name,
+                'signal_type': signal.signal_type,
+                'status': signal.status,
+                'current_value': signal.current_value,
+                'threshold_value': signal.threshold_value,
+                'threshold_type': signal.threshold_type,
+                'last_checked': signal.last_checked.isoformat() if signal.last_checked else None,
+                'created_at': signal.created_at.isoformat() if signal.created_at else None
+            })
+        
+        # Convert notifications to dictionaries
+        notifications_data = []
+        for notification in notifications:
+            notifications_data.append({
+                'id': notification.id,
+                'notification_type': notification.notification_type,
+                'message': notification.message,
+                'sent_at': notification.sent_at.isoformat() if notification.sent_at else None,
+                'acknowledged': notification.acknowledged
+            })
+        
         return render_template('thesis_monitor.html',
                              thesis=thesis,
                              signals=signals,
-                             notifications=notifications)
+                             notifications=notifications,
+                             signals_json=signals_data,
+                             notifications_json=notifications_data)
     except Exception as e:
         print(f"Error in monitor_thesis: {str(e)}")
         return f"Error loading thesis monitoring: {str(e)}", 500

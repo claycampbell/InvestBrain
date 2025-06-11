@@ -341,8 +341,8 @@
                     core_claim: "{{ thesis.core_claim or '' }}",
                     created_at: "{{ thesis.created_at }}"
                 },
-                signals: {{ signals|tojson }},
-                notifications: {{ notifications|tojson }}
+                signals: {{ signals_json|tojson }},
+                notifications: {{ notifications_json|tojson }}
             };
             
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
