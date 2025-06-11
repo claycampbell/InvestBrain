@@ -421,61 +421,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             </div>
-                
-                <!-- Value Chain Mapping -->
-                <div class="col-lg-8 mb-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0"><i class="fas fa-sitemap"></i> Value Chain Signal Mapping</h6>
-                        </div>
-                        <div class="card-body">
-                            ${generateValueChainMapping(thesisData.metrics_to_track)}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Monitoring Recommendations -->
-                <div class="col-lg-4 mb-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0"><i class="fas fa-eye"></i> Monitoring Strategy</h6>
-                        </div>
-                        <div class="card-body">
-                            ${generateMonitoringStrategy(thesisData.monitoring_plan)}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Primary Signals Detail -->
-                <div class="col-12 mb-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0"><i class="fas fa-list"></i> Primary Signals Detail</h6>
-                        </div>
-                        <div class="card-body">
-                            ${generatePrimarySignalsTable(signalData.raw_signals)}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Publish Thesis -->
-                <div class="col-12">
-                    <div class="card border-success">
-                        <div class="card-body text-center">
-                            <h5 class="text-success mb-3">
-                                <i class="fas fa-check-circle"></i> Analysis Complete
-                            </h5>
-                            <p class="mb-3">Ready to publish this thesis for monitoring and simulation testing?</p>
-                            <button type="button" class="btn btn-success btn-lg me-3" onclick="publishThesis()">
-                                <i class="fas fa-upload"></i> Publish Thesis
-                            </button>
-                            <button type="button" class="btn btn-outline-primary btn-lg" onclick="goToSimulation()" disabled id="simulationBtn">
-                                <i class="fas fa-play"></i> Run Simulation
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
         `;
     }
     
