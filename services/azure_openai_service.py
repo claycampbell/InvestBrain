@@ -40,23 +40,32 @@ class AzureOpenAIService:
         
         response = None
         try:
-            # Check if this is an o1 model or a model that requires default temperature
+            # Handle different model types with appropriate parameters
             model_name = self.deployment_name.lower()
-            if 'o1' in model_name or 'gpt-4o' in model_name:
-                # These models only support default temperature (1.0) and specific parameter names
+            
+            if 'o1' in model_name or 'o4' in model_name:
+                # o1/o4 models have specific parameter constraints
                 response = self.client.chat.completions.create(
                     messages=messages,
                     model=self.deployment_name,
-                    timeout=30  # 30 second timeout
+                    timeout=30
+                )
+            elif 'gpt-4o' in model_name:
+                # GPT-4o models support limited parameters
+                response = self.client.chat.completions.create(
+                    messages=messages,
+                    model=self.deployment_name,
+                    max_completion_tokens=max_tokens,
+                    timeout=30
                 )
             else:
-                # Standard GPT models with custom parameters
+                # Standard GPT models
                 response = self.client.chat.completions.create(
                     messages=messages,
                     temperature=temperature,
                     max_completion_tokens=max_tokens,
                     model=self.deployment_name,
-                    timeout=30  # 30 second timeout
+                    timeout=30
                 )
             
             # Debug the full response structure
@@ -76,7 +85,14 @@ class AzureOpenAIService:
                 logging.error(f"Empty or null content from Azure OpenAI")
                 logging.error(f"Choice finish reason: {choice.finish_reason}")
                 logging.error(f"Choice message: {choice.message}")
-                raise Exception("Empty response from Azure OpenAI")
+                
+                # Handle specific finish reasons
+                if choice.finish_reason == 'length':
+                    logging.error("Response truncated due to length limit")
+                elif choice.finish_reason == 'content_filter':
+                    logging.error("Response filtered by content policy")
+                
+                raise Exception(f"Empty response from Azure OpenAI (finish_reason: {choice.finish_reason})")
             
             logging.info(f"Received valid response: {len(content)} characters")
             return content

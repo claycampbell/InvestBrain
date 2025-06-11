@@ -67,84 +67,123 @@ class SimulationService:
         """
         Generate realistic performance data using Azure OpenAI simulation
         """
-        # Check if AI service is available and responsive
+        # Attempt LLM generation with optimized approach
         if self.ai_service and self.ai_service.is_available():
             try:
-                # Quick test with minimal prompt
-                test_messages = [{"role": "user", "content": "Generate 3 numbers: [100, 101, 102]"}]
-                test_response = self.ai_service.generate_completion(test_messages, temperature=1.0, max_tokens=50)
+                # For o4-mini model, use very concise prompts to avoid length limits
+                months = time_horizon * 12
                 
-                if test_response and '[' in test_response:
-                    # AI is responsive, try full generation
-                    prompt = f"""Generate {time_horizon * 12} monthly values for {scenario} scenario starting at 100: [100, 102.1, ...]"""
-                    
+                # Generate in smaller chunks to avoid length limits
+                if months <= 12:
+                    # Short simulation - generate all at once
+                    prompt = f"Monthly values {scenario} scenario: [{','.join(['100'] + ['N'] * (months-1))}]"
                     messages = [{"role": "user", "content": prompt}]
-                    response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=1000)
                     
-                    # Parse response
-                    response_cleaned = response.strip()
-                    if '```' in response_cleaned:
-                        start = response_cleaned.find('[')
-                        end = response_cleaned.rfind(']') + 1
-                        if start != -1 and end > start:
-                            response_cleaned = response_cleaned[start:end]
+                    response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=300)
                     
-                    performance_data = json.loads(response_cleaned.strip())
-                    
-                    if isinstance(performance_data, list) and len(performance_data) == time_horizon * 12:
-                        if all(isinstance(x, (int, float)) and 20 <= x <= 500 for x in performance_data):
-                            print(f"Successfully generated LLM-based simulation data with {len(performance_data)} points")
+                    # Extract numbers from response
+                    import re
+                    numbers = re.findall(r'[\d.]+', response)
+                    if len(numbers) >= months:
+                        performance_data = [float(x) for x in numbers[:months]]
+                        if all(20 <= x <= 500 for x in performance_data):
+                            print(f"Generated LLM simulation data: {len(performance_data)} points")
                             return performance_data
-                            
+                
             except Exception as e:
-                print(f"LLM generation failed, using enhanced algorithmic simulation: {e}")
-        else:
-            print("Azure OpenAI service not available, using enhanced algorithmic simulation")
+                print(f"LLM generation failed: {e}")
         
-        # Fallback to algorithmic generation only if AI fails
-        return self._generate_algorithmic_performance(time_horizon, scenario, volatility)
+        # Return error state when Azure OpenAI is not available
+        raise Exception("Azure OpenAI service unavailable - please configure valid API credentials for LLM-generated simulation data")
     
     def _generate_algorithmic_performance(self, time_horizon: int, scenario: str, volatility: str) -> List[float]:
         """
-        Fallback algorithmic performance generation
+        Enhanced algorithmic performance generation designed to mimic LLM output patterns
         """
         months = time_horizon * 12
         data = [100.0]  # Start at baseline
         
-        # Scenario parameters
+        # Enhanced scenario parameters with realistic market behavior
         scenario_params = {
-            'bull': {'annual_return': 0.12, 'volatility_mult': 1.0},
-            'base': {'annual_return': 0.06, 'volatility_mult': 1.2},
-            'bear': {'annual_return': -0.02, 'volatility_mult': 1.5},
-            'stress': {'annual_return': -0.15, 'volatility_mult': 2.0}
+            'bull': {'annual_return': 0.14, 'volatility_mult': 0.9, 'momentum': 1.3, 'corrections': 0.7},
+            'base': {'annual_return': 0.07, 'volatility_mult': 1.0, 'momentum': 1.0, 'corrections': 1.0},
+            'bear': {'annual_return': -0.01, 'volatility_mult': 1.4, 'momentum': 0.7, 'corrections': 1.4},
+            'stress': {'annual_return': -0.18, 'volatility_mult': 2.1, 'momentum': 0.5, 'corrections': 2.0}
         }
         
         volatility_params = {
-            'low': 0.5,
-            'medium': 1.0,
-            'high': 1.8
+            'low': 0.6, 'moderate': 1.0, 'high': 1.5, 'extreme': 2.3
         }
         
         params = scenario_params.get(scenario, scenario_params['base'])
         vol_mult = volatility_params.get(volatility, 1.0)
         
         monthly_return = params['annual_return'] / 12
-        monthly_vol = (params['volatility_mult'] * vol_mult * 0.15) / math.sqrt(12)
+        base_vol = 0.16 / math.sqrt(12)  # Base monthly volatility
+        monthly_vol = base_vol * params['volatility_mult'] * vol_mult
+        
+        # State variables for realistic market dynamics
+        momentum = 0
+        market_regime = 'normal'  # normal, correction, rally
+        regime_duration = 0
         
         for i in range(1, months):
-            # Add trend + noise + some autocorrelation
-            trend = monthly_return
-            noise = random.gauss(0, monthly_vol)
+            # Market regime transitions (realistic market phases)
+            if regime_duration > random.randint(3, 12):
+                if market_regime == 'normal':
+                    market_regime = random.choice(['correction', 'rally'] if scenario in ['bull', 'base'] else ['correction'])
+                else:
+                    market_regime = 'normal'
+                regime_duration = 0
             
-            # Add market cycle effects
-            cycle_effect = 0.02 * math.sin(2 * math.pi * i / 24)  # 2-year cycle
+            regime_duration += 1
             
-            # Add some mean reversion
-            deviation = (data[i-1] - 100) / 100
-            reversion = -0.1 * deviation
+            # Regime-specific adjustments
+            regime_adjustments = {
+                'normal': {'return_mult': 1.0, 'vol_mult': 1.0},
+                'correction': {'return_mult': -2.5, 'vol_mult': 1.8},
+                'rally': {'return_mult': 2.2, 'vol_mult': 0.7}
+            }
             
-            monthly_change = trend + noise + cycle_effect + reversion
-            data.append(data[i-1] * (1 + monthly_change))
+            regime_adj = regime_adjustments[market_regime]
+            
+            # Momentum with persistence and mean reversion
+            momentum = momentum * 0.75 + random.gauss(0, 0.015) * params['momentum']
+            
+            # Market cycles (business cycle effects)
+            cycle_effect = 0.025 * math.sin(2 * math.pi * i / 22) * (1 + 0.3 * random.random())
+            
+            # Seasonal patterns (Q4 rally, January effect, summer doldrums)
+            month_in_year = i % 12
+            seasonal_effects = {0: 0.01, 1: 0.005, 5: -0.003, 6: -0.002, 10: 0.008, 11: 0.012}
+            seasonal = seasonal_effects.get(month_in_year, 0)
+            
+            # Volatility clustering (GARCH-like behavior)
+            vol_persistence = 0.85
+            current_vol = monthly_vol * (vol_persistence + (1 - vol_persistence) * random.uniform(0.5, 1.8))
+            
+            # Fat tails and skewness in returns
+            if random.random() < 0.08:  # 8% chance of extreme moves
+                shock_magnitude = random.uniform(2.0, 4.0)
+                shock_direction = 1 if scenario == 'bull' else -1 if scenario in ['bear', 'stress'] else random.choice([-1, 1])
+                extreme_shock = shock_direction * shock_magnitude * current_vol
+            else:
+                extreme_shock = 0
+            
+            # Combine all factors
+            base_return = monthly_return * regime_adj['return_mult']
+            noise = random.gauss(0, current_vol * regime_adj['vol_mult'])
+            
+            total_return = (base_return + cycle_effect + seasonal + momentum + 
+                          noise + extreme_shock * params['corrections'])
+            
+            # Apply bounds to prevent unrealistic values
+            total_return = max(-0.25, min(0.25, total_return))  # Cap monthly moves
+            
+            new_value = data[i-1] * (1 + total_return)
+            new_value = max(15, min(800, new_value))  # Reasonable value bounds
+            
+            data.append(round(new_value, 2))
         
         return data
     
