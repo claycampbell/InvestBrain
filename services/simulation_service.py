@@ -93,8 +93,16 @@ class SimulationService:
                 
                 # Generate in smaller chunks to avoid length limits
                 if months <= 12:
-                    # Short simulation - generate all at once
-                    prompt = f"Monthly values {scenario} scenario: [{','.join(['100'] + ['N'] * (months-1))}]"
+                    # Create specific prompt for numerical simulation data
+                    prompt = f"""Generate {months} monthly performance index values for an investment thesis simulation.
+Starting value: 100
+Scenario: {scenario} case
+Volatility: {volatility}
+
+Provide ONLY a JSON array of {months} numbers between 80-150, representing monthly performance index values.
+Example format: [100, 102.5, 98.2, 105.1, ...]
+
+JSON array:"""
                     messages = [{"role": "user", "content": prompt}]
                     
                     response = self.ai_service.generate_completion(messages, temperature=1.0, max_tokens=300)
