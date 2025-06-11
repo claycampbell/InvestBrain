@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <h6 class="mb-0"><i class="fas fa-sitemap"></i> Value Chain Signal Mapping</h6>
                         </div>
                         <div class="card-body">
-                            ${generateValueChainMapping(signalData.value_chain_mapping)}
+                            ${generateValueChainMapping(thesisData.metrics_to_track)}
                         </div>
                     </div>
                 </div>
@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <h6 class="mb-0"><i class="fas fa-eye"></i> Monitoring Strategy</h6>
                         </div>
                         <div class="card-body">
-                            ${generateMonitoringStrategy(signalData.recommended_monitoring)}
+                            ${generateMonitoringStrategy(thesisData.monitoring_plan)}
                         </div>
                     </div>
                 </div>
@@ -549,13 +549,52 @@ document.addEventListener('DOMContentLoaded', function() {
         `).join('');
     }
     
-    function generateValueChainMapping(valueChain) {
-        if (!valueChain) return '<p class="text-muted">No value chain mapping available</p>';
+    function generateValueChainMapping(metrics) {
+        if (!metrics || !Array.isArray(metrics)) return '<p class="text-muted">No value chain mapping available</p>';
         
-        // Calculate signal counts from the actual signal data
-        const upstream = valueChain.upstream || [];
-        const midstream = valueChain.midstream || [];
-        const downstream = valueChain.downstream || [];
+        // Categorize signals by value chain position
+        const upstream = [];
+        const midstream = [];
+        const downstream = [];
+        const uncategorized = [];
+        
+        metrics.forEach(metric => {
+            if (typeof metric === 'object' && metric.name) {
+                const position = metric.value_chain_position || 'unknown';
+                const signalObj = { name: metric.name, type: metric.type };
+                
+                switch(position) {
+                    case 'upstream':
+                        upstream.push(signalObj);
+                        break;
+                    case 'midstream':
+                        midstream.push(signalObj);
+                        break;
+                    case 'downstream':
+                        downstream.push(signalObj);
+                        break;
+                    default:
+                        // Intelligently categorize based on signal name/type
+                        const name = metric.name.toLowerCase();
+                        if (name.includes('prescription') || name.includes('shipment') || name.includes('production') || name.includes('manufacturing')) {
+                            upstream.push(signalObj);
+                        } else if (name.includes('coverage') || name.includes('price') || name.includes('market share') || name.includes('competition')) {
+                            midstream.push(signalObj);
+                        } else if (name.includes('adoption') || name.includes('patient') || name.includes('outcome') || name.includes('satisfaction')) {
+                            downstream.push(signalObj);
+                        } else {
+                            uncategorized.push(signalObj);
+                        }
+                }
+            }
+        });
+        
+        // Distribute uncategorized signals evenly
+        uncategorized.forEach((signal, index) => {
+            if (index % 3 === 0) upstream.push(signal);
+            else if (index % 3 === 1) midstream.push(signal);
+            else downstream.push(signal);
+        });
         
         return `
             <div class="row text-center">
@@ -565,7 +604,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="small text-light">${upstream.length} signals</div>
                         ${upstream.length > 0 ? `
                             <div class="mt-1">
-                                ${upstream.slice(0, 2).map(signal => `<div class="badge bg-success text-dark me-1 mb-1">${signal.name || signal}</div>`).join('')}
+                                ${upstream.slice(0, 2).map(signal => `<div class="badge bg-success text-dark me-1 mb-1" title="${signal.type || 'Unknown'}">${signal.name}</div>`).join('')}
+                                ${upstream.length > 2 ? `<div class="small text-muted">+${upstream.length - 2} more</div>` : ''}
                             </div>
                         ` : ''}
                     </div>
@@ -576,7 +616,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="small text-light">${midstream.length} signals</div>
                         ${midstream.length > 0 ? `
                             <div class="mt-1">
-                                ${midstream.slice(0, 2).map(signal => `<div class="badge bg-info text-dark me-1 mb-1">${signal.name || signal}</div>`).join('')}
+                                ${midstream.slice(0, 2).map(signal => `<div class="badge bg-info text-dark me-1 mb-1" title="${signal.type || 'Unknown'}">${signal.name}</div>`).join('')}
+                                ${midstream.length > 2 ? `<div class="small text-muted">+${midstream.length - 2} more</div>` : ''}
                             </div>
                         ` : ''}
                     </div>
@@ -587,7 +628,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="small text-light">${downstream.length} signals</div>
                         ${downstream.length > 0 ? `
                             <div class="mt-1">
-                                ${downstream.slice(0, 2).map(signal => `<div class="badge bg-warning text-dark me-1 mb-1">${signal.name || signal}</div>`).join('')}
+                                ${downstream.slice(0, 2).map(signal => `<div class="badge bg-warning text-dark me-1 mb-1" title="${signal.type || 'Unknown'}">${signal.name}</div>`).join('')}
+                                ${downstream.length > 2 ? `<div class="small text-muted">+${downstream.length - 2} more</div>` : ''}
                             </div>
                         ` : ''}
                     </div>
