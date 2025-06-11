@@ -723,28 +723,52 @@ class SignalClassifier:
         signals = []
         text_lower = thesis_text.lower()
         
-        # Production/Volume signals
-        if any(keyword in text_lower for keyword in ['units', 'production', 'volume', 'capacity']):
+        # Energy/Utility specific Level 0 signals
+        if any(keyword in text_lower for keyword in ['renewable', 'capacity', 'mw', 'gw', 'wind', 'solar']):
             signals.append({
-                'name': 'Production Volume (Units)',
+                'name': 'Quarterly Renewables Capacity Additions (MW)',
                 'level': 'Level_0_Raw_Economic',
-                'description': 'Direct measurement of production units',
-                'data_source': 'Company Reports',
+                'description': 'New renewable capacity (MW) added each quarter',
+                'data_source': 'Company Filings/EIA Data',
                 'programmatic_feasibility': 'medium',
-                'acquisition_method': 'Quarterly earnings reports, 10-K filings',
+                'acquisition_method': 'Parse quarterly earnings reports, 10-K filings, EIA Electric Power Monthly',
                 'frequency': 'quarterly'
             })
         
-        # Employment signals
-        if any(keyword in text_lower for keyword in ['headcount', 'employees', 'hiring', 'workforce']):
+        # Production/Volume signals
+        if any(keyword in text_lower for keyword in ['units', 'production', 'volume', 'output']):
             signals.append({
-                'name': 'Headcount Growth',
+                'name': 'Power Generation Volume (MWh)',
                 'level': 'Level_0_Raw_Economic',
-                'description': 'Employee count changes',
-                'data_source': 'HR Analytics/Company Reports',
+                'description': 'Direct measurement of electricity production',
+                'data_source': 'Company Reports/EIA',
+                'programmatic_feasibility': 'medium',
+                'acquisition_method': 'Quarterly earnings reports, EIA-923 forms',
+                'frequency': 'quarterly'
+            })
+        
+        # Customer/Connection signals
+        if any(keyword in text_lower for keyword in ['customer', 'connection', 'account', 'subscriber']):
+            signals.append({
+                'name': 'Customer Account Growth',
+                'level': 'Level_0_Raw_Economic',
+                'description': 'Net new customer connections',
+                'data_source': 'Utility Commission Filings',
+                'programmatic_feasibility': 'medium',
+                'acquisition_method': 'State utility commission monthly reports',
+                'frequency': 'monthly'
+            })
+        
+        # Pipeline/Project signals
+        if any(keyword in text_lower for keyword in ['pipeline', 'project', 'development', 'construction']):
+            signals.append({
+                'name': 'Project Pipeline Backlog (GW)',
+                'level': 'Level_0_Raw_Economic',
+                'description': 'Committed renewable projects under development',
+                'data_source': 'Company Reports',
                 'programmatic_feasibility': 'low',
-                'acquisition_method': 'Manual research: LinkedIn employee tracking, company press releases, industry reports',
-                'alternative_sources': ['LinkedIn workforce analytics', 'Glassdoor insights', 'Local employment data'],
+                'acquisition_method': 'Manual extraction from investor presentations and development updates',
+                'alternative_sources': ['Wood Mackenzie Power & Renewables', 'BNEF project database'],
                 'frequency': 'quarterly'
             })
             
@@ -786,8 +810,21 @@ class SignalClassifier:
         signals = []
         text_lower = thesis_text.lower()
         
+        # Cost of capital signals (always include for utility analysis)
+        signals.append({
+            'name': 'Weighted Average Cost of Capital (WACC)',
+            'level': 'Level_2_Derived_Metrics',
+            'description': "Company's blended cost of debt and equity capital",
+            'data_source': 'Bloomberg/S&P Capital IQ',
+            'programmatic_feasibility': 'medium',
+            'calculation': '(E/V × Re) + (D/V × Rd × (1-Tc))',
+            'required_inputs': ['Market Cap', 'Total Debt', 'Risk-free Rate', 'Beta', 'Market Risk Premium', 'Cost of Debt', 'Tax Rate'],
+            'acquisition_method': 'Combine FactSet financials with Bloomberg risk metrics and treasury rates',
+            'frequency': 'quarterly'
+        })
+        
         # Return metrics
-        if any(keyword in text_lower for keyword in ['return', 'roe', 'roic', 'efficiency']):
+        if any(keyword in text_lower for keyword in ['return', 'roe', 'roic', 'efficiency', 'capital']):
             signals.append({
                 'name': 'Return on Invested Capital (ROIC)',
                 'level': 'Level_2_Derived_Metrics',
@@ -798,17 +835,29 @@ class SignalClassifier:
                 'required_inputs': ['Net Income', 'Interest Expense', 'Tax Rate', 'Total Debt', 'Shareholders Equity'],
                 'frequency': 'quarterly'
             })
-            
-        # Working capital metrics
-        if any(keyword in text_lower for keyword in ['working capital', 'cash conversion', 'liquidity']):
+        
+        # Regulatory/Rate metrics
+        if any(keyword in text_lower for keyword in ['regulatory', 'rate', 'commission', 'utility']):
             signals.append({
-                'name': 'Cash Conversion Cycle',
+                'name': 'Regulatory ROE vs Authorized ROE',
                 'level': 'Level_2_Derived_Metrics',
-                'description': 'Days to convert investments to cash',
-                'data_source': 'FactSet Calculated',
-                'programmatic_feasibility': 'medium',
-                'calculation': 'DIO + DSO - DPO',
-                'required_inputs': ['Inventory', 'Accounts Receivable', 'Accounts Payable', 'Revenue', 'COGS'],
+                'description': 'Actual earned ROE relative to utility commission authorized returns',
+                'data_source': 'Utility Commission Filings',
+                'programmatic_feasibility': 'low',
+                'acquisition_method': 'Manual analysis of state utility commission rate case decisions and earnings reports',
+                'alternative_sources': ['SNL Energy', 'Regulatory Research Associates', 'State PSC websites'],
+                'frequency': 'annual'
+            })
+            
+        # Cash flow efficiency
+        if any(keyword in text_lower for keyword in ['cash', 'flow', 'generation', 'conversion']):
+            signals.append({
+                'name': 'Free Cash Flow Conversion Rate',
+                'level': 'Level_2_Derived_Metrics',
+                'description': 'Free cash flow as percentage of net income',
+                'data_source': 'FactSet Fundamentals',
+                'programmatic_feasibility': 'high',
+                'factset_identifier': 'FF_FREE_CASH_FLOW / FF_NI',
                 'frequency': 'quarterly'
             })
             
@@ -819,29 +868,56 @@ class SignalClassifier:
         signals = []
         text_lower = thesis_text.lower()
         
-        # Valuation multiples
-        if any(keyword in text_lower for keyword in ['valuation', 'multiple', 'ev/ebitda', 'p/e']):
+        # Peer relative performance (always include for comparative thesis)
+        if any(keyword in text_lower for keyword in ['peer', 'outperform', 'relative', 'versus', 'compare']):
             signals.append({
-                'name': 'EV/EBITDA vs Industry Average',
+                'name': 'Utility Peer Relative Total Shareholder Return',
                 'level': 'Level_3_Complex_Ratios',
-                'description': 'Relative valuation multiple comparison',
+                'description': 'TSR performance relative to utility peer group',
+                'data_source': 'FactSet/Bloomberg',
+                'programmatic_feasibility': 'high',
+                'calculation': 'NextEra_TSR / Utility_Peer_Group_Average_TSR',
+                'required_inputs': ['Price Returns', 'Dividend Yields', 'Peer Group Constituents'],
+                'factset_identifier': 'P_TOTAL_RETURN_1YR vs XLU constituents',
+                'frequency': 'monthly'
+            })
+        
+        # Valuation multiples
+        if any(keyword in text_lower for keyword in ['valuation', 'multiple', 'ev/ebitda', 'p/e', 'premium', 'discount']):
+            signals.append({
+                'name': 'P/E Ratio vs Utility Sector Median',
+                'level': 'Level_3_Complex_Ratios',
+                'description': 'Valuation premium/discount to utility sector',
                 'data_source': 'FactSet/Bloomberg',
                 'programmatic_feasibility': 'medium',
-                'calculation': '(Enterprise Value / EBITDA) / Industry_Median_EV_EBITDA',
-                'required_inputs': ['Market Cap', 'Total Debt', 'Cash', 'EBITDA', 'Industry Comps'],
+                'calculation': '(NextEra_PE / Utility_Sector_Median_PE) - 1',
+                'required_inputs': ['Market Cap', 'Net Income', 'Sector P/E Multiples'],
                 'frequency': 'daily'
             })
             
-        # Economic value added
-        if any(keyword in text_lower for keyword in ['economic value', 'eva', 'value creation']):
+        # Efficiency ratios
+        if any(keyword in text_lower for keyword in ['efficiency', 'productivity', 'asset utilization']):
             signals.append({
-                'name': 'Economic Value Added (EVA)',
+                'name': 'Asset Turnover vs Regulated Utility Average',
                 'level': 'Level_3_Complex_Ratios',
-                'description': 'Value creation above cost of capital',
+                'description': 'Revenue generation efficiency per dollar of assets',
+                'data_source': 'FactSet Calculated',
+                'programmatic_feasibility': 'medium',
+                'calculation': '(Revenue / Total_Assets) / Regulated_Utility_Average_Asset_Turnover',
+                'required_inputs': ['Revenue', 'Total Assets', 'Industry Benchmarks'],
+                'frequency': 'quarterly'
+            })
+            
+        # Economic value creation
+        if any(keyword in text_lower for keyword in ['value creation', 'economic value', 'eva', 'spread']):
+            signals.append({
+                'name': 'ROIC vs WACC Spread',
+                'level': 'Level_3_Complex_Ratios',
+                'description': 'Value creation measured as ROIC minus cost of capital',
                 'data_source': 'Manual Calculation Required',
                 'programmatic_feasibility': 'low',
-                'calculation': 'NOPAT - (Invested Capital × WACC)',
-                'acquisition_method': 'Combine FactSet financials with manual WACC calculation from Bloomberg/S&P Capital IQ',
+                'calculation': 'ROIC - WACC',
+                'acquisition_method': 'Combine FactSet ROIC calculation with manual WACC from Bloomberg cost of capital estimates',
                 'required_inputs': ['NOPAT', 'Invested Capital', 'Risk-free Rate', 'Beta', 'Market Risk Premium', 'Cost of Debt'],
                 'frequency': 'quarterly'
             })
