@@ -34,76 +34,89 @@ class AzureOpenAIService:
             self.client = None
     
     def generate_completion(self, messages, temperature=1.0, max_tokens=4000):
-        """Generate a completion using Azure OpenAI with timeout handling"""
+        """Generate a completion using Azure OpenAI with robust timeout and retry handling"""
         if not self.client:
             raise Exception("Azure OpenAI client not initialized")
         
-        response = None
-        try:
-            # Handle different model types with appropriate parameters
-            model_name = self.deployment_name.lower()
-            
-            if 'o1' in model_name or 'o4' in model_name:
-                # o1/o4 models have specific parameter constraints
-                response = self.client.chat.completions.create(
-                    messages=messages,
-                    model=self.deployment_name,
-                    timeout=30
-                )
-            elif 'gpt-4o' in model_name:
-                # GPT-4o models support limited parameters
-                response = self.client.chat.completions.create(
-                    messages=messages,
-                    model=self.deployment_name,
-                    max_completion_tokens=max_tokens,
-                    timeout=30
-                )
-            else:
-                # Standard GPT models
-                response = self.client.chat.completions.create(
-                    messages=messages,
-                    temperature=temperature,
-                    max_completion_tokens=max_tokens,
-                    model=self.deployment_name,
-                    timeout=30
-                )
-            
-            # Debug the full response structure
-            logging.info(f"Azure OpenAI response received")
-            logging.info(f"Response choices count: {len(response.choices) if response.choices else 0}")
-            
-            if not response.choices:
-                logging.error("No choices in Azure OpenAI response")
-                raise Exception("No choices in Azure OpenAI response")
-            
-            choice = response.choices[0]
-            logging.info(f"Choice finish reason: {choice.finish_reason}")
-            
-            content = choice.message.content if hasattr(choice.message, 'content') else None
-            
-            if not content or content.strip() == "":
-                logging.error(f"Empty or null content from Azure OpenAI")
-                logging.error(f"Choice finish reason: {choice.finish_reason}")
-                logging.error(f"Choice message: {choice.message}")
+        # Retry configuration for network issues
+        max_retries = 3
+        retry_delay = 2
+        
+        for attempt in range(max_retries):
+            try:
+                # Handle different model types with appropriate parameters
+                model_name = self.deployment_name.lower()
                 
-                # Handle specific finish reasons
-                if choice.finish_reason == 'length':
-                    logging.error("Response truncated due to length limit")
-                elif choice.finish_reason == 'content_filter':
-                    logging.error("Response filtered by content policy")
+                if 'o1' in model_name or 'o4' in model_name:
+                    # o1/o4 models have specific parameter constraints
+                    response = self.client.chat.completions.create(
+                        messages=messages,
+                        model=self.deployment_name,
+                        timeout=60  # Increased timeout for o4-mini
+                    )
+                elif 'gpt-4o' in model_name:
+                    # GPT-4o models support limited parameters
+                    response = self.client.chat.completions.create(
+                        messages=messages,
+                        model=self.deployment_name,
+                        max_completion_tokens=max_tokens,
+                        timeout=45
+                    )
+                else:
+                    # Standard GPT models
+                    response = self.client.chat.completions.create(
+                        messages=messages,
+                        temperature=temperature,
+                        max_completion_tokens=max_tokens,
+                        model=self.deployment_name,
+                        timeout=45
+                    )
                 
-                raise Exception(f"Empty response from Azure OpenAI (finish_reason: {choice.finish_reason})")
-            
-            logging.info(f"Received valid response: {len(content)} characters")
-            return content
-            
-        except Exception as e:
-            logging.error(f"Error generating completion: {str(e)}")
-            if response:
-                logging.error(f"Response object exists, choices: {len(response.choices) if response.choices else 0}")
-            else:
-                logging.error("No response object received")
-            raise
+                # Debug the full response structure
+                logging.info(f"Azure OpenAI response received")
+                logging.info(f"Response choices count: {len(response.choices) if response.choices else 0}")
+                
+                if not response.choices:
+                    logging.error("No choices in Azure OpenAI response")
+                    raise Exception("No choices in Azure OpenAI response")
+                
+                choice = response.choices[0]
+                logging.info(f"Choice finish reason: {choice.finish_reason}")
+                
+                content = choice.message.content if hasattr(choice.message, 'content') else None
+                
+                if not content or content.strip() == "":
+                    logging.error(f"Empty or null content from Azure OpenAI")
+                    logging.error(f"Choice finish reason: {choice.finish_reason}")
+                    logging.error(f"Choice message: {choice.message}")
+                    
+                    # Handle specific finish reasons
+                    if choice.finish_reason == 'length':
+                        logging.error("Response truncated due to length limit")
+                    elif choice.finish_reason == 'content_filter':
+                        logging.error("Response filtered by content policy")
+                    
+                    raise Exception(f"Empty response from Azure OpenAI (finish_reason: {choice.finish_reason})")
+                
+                logging.info(f"Received valid response: {len(content)} characters")
+                return content
+                
+            except Exception as e:
+                error_message = str(e)
+                is_timeout = any(keyword in error_message.lower() for keyword in ['timeout', 'read timeout', 'connection timeout', 'ssl'])
+                
+                if is_timeout and attempt < max_retries - 1:
+                    logging.warning(f"Attempt {attempt + 1} failed with timeout, retrying in {retry_delay} seconds...")
+                    import time
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                    continue
+                else:
+                    logging.error(f"Error generating completion: {error_message}")
+                    raise
+        
+        # If all retries failed
+        raise Exception(f"Azure OpenAI request failed after {max_retries} attempts")
     
     def analyze_thesis(self, thesis_text):
         """Analyze an investment thesis using structured prompts with signal extraction focus"""
