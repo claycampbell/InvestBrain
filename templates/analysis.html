@@ -518,7 +518,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const levelBadges = {
             'Level_0_Raw_Economic': 'bg-success',
             'Level_1_Simple_Aggregation': 'bg-info', 
-            'Level_2_Derived_Metrics': 'bg-warning',
+            'Level_2_Derived_Metrics': 'bg-warning text-dark',
             'Level_3_Complex_Ratios': 'bg-secondary',
             'Level_4_Market_Sentiment': 'bg-danger',
             // Legacy mappings for backwards compatibility
@@ -622,7 +622,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         ${signal.programmatic_feasibility ? `
                             <div class="small mt-1">
-                                <span class="badge ${signal.programmatic_feasibility === 'high' ? 'bg-success' : signal.programmatic_feasibility === 'medium' ? 'bg-warning' : 'bg-danger'} text-white">
+                                <span class="badge ${signal.programmatic_feasibility === 'high' ? 'bg-success' : signal.programmatic_feasibility === 'medium' ? 'bg-warning text-dark' : 'bg-danger'} text-white">
                                     ${signal.programmatic_feasibility} feasibility
                                 </span>
                             </div>
