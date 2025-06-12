@@ -436,8 +436,8 @@ Return JSON format:
             thesis_data.append(round(thesis_val, 1))
         
         return {
-            'market_performance': [round(x, 1) for x in market_data],
-            'thesis_performance': [round(x, 1) for x in thesis_data],
+            'performance': [round(x, 1) for x in thesis_data],
+            'benchmark': [round(x, 1) for x in market_data],
             'performance_summary': f'Thesis-based simulation with {expected_annual_growth*100:.1f}% annual target'
         }
     
