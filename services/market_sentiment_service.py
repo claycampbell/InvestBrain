@@ -4,7 +4,7 @@ import random
 import re
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
-from services.azure_openai_service import AzureOpenAIService
+# Removed Azure OpenAI dependency for fast mathematical models
 
 class MarketSentimentService:
     """
@@ -287,9 +287,8 @@ class MarketSentimentService:
             """
             
             messages = [{"role": "user", "content": prompt}]
-            response = self.openai_service.generate_completion(messages, temperature=0.5)
-            
-            return self._parse_json_response(response, "market_positioning")
+            # Use fast mathematical model instead of AI
+            return self._generate_market_positioning_fast(thesis_text, core_analysis, company_info)
             
         except Exception as e:
             self.logger.error(f"Market positioning generation failed: {str(e)}")
