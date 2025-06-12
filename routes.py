@@ -170,60 +170,7 @@ def analyze():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/thesis/new', methods=['GET', 'POST'])
-def new_thesis():
-    """Create a new thesis analysis"""
-    if request.method == 'POST':
-        title = request.form.get('title')
-        thesis_text = request.form.get('thesis_text')
-        
-        if not title or not thesis_text:
-            flash('Title and thesis text are required', 'error')
-            return render_template('thesis_analysis.html')
-        
-        try:
-            # Analyze the thesis using AI
-            analysis_result = thesis_analyzer.analyze_thesis(thesis_text)
-            
-            # Save to database
-            thesis_analysis = ThesisAnalysis(
-                title=title,
-                original_thesis=thesis_text,
-                core_claim=analysis_result.get('core_claim'),
-                causal_chain=analysis_result.get('causal_chain'),
-                assumptions=analysis_result.get('assumptions'),
-                mental_model=analysis_result.get('mental_model'),
-                counter_thesis=analysis_result.get('counter_thesis'),
-                metrics_to_track=analysis_result.get('metrics_to_track'),
-                monitoring_plan=analysis_result.get('monitoring_plan')
-            )
-            
-            db.session.add(thesis_analysis)
-            db.session.commit()
-            
-            # Set up monitoring signals
-            if analysis_result.get('metrics_to_track'):
-                for metric in analysis_result.get('metrics_to_track', []):
-                    signal = SignalMonitoring(
-                        thesis_analysis_id=thesis_analysis.id,
-                        signal_name=metric.get('name', ''),
-                        signal_type=metric.get('type', 'price'),
-                        threshold_value=metric.get('threshold'),
-                        threshold_type=metric.get('threshold_type', 'change_percent')
-                    )
-                    db.session.add(signal)
-            
-            db.session.commit()
-            
-            flash('Thesis analysis created successfully', 'success')
-            return redirect(url_for('view_thesis', id=thesis_analysis.id))
-            
-        except Exception as e:
-            logging.error(f"Error analyzing thesis: {str(e)}")
-            flash('Error analyzing thesis. Please try again.', 'error')
-            return render_template('thesis_analysis.html')
-    
-    return render_template('thesis_analysis.html')
+# Route removed - analysis functionality consolidated into dashboard
 
 @app.route('/thesis/<int:id>')
 def view_thesis(id):
