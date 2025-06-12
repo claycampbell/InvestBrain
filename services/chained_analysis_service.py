@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Dict, Any, List
 from services.azure_openai_service import AzureOpenAIService
+from services.market_sentiment_service import MarketSentimentService
 
 class ChainedAnalysisService:
     """
@@ -10,6 +11,7 @@ class ChainedAnalysisService:
     
     def __init__(self):
         self.azure_openai = AzureOpenAIService()
+        self.market_sentiment_service = MarketSentimentService()
     
     def analyze_thesis(self, thesis_text: str) -> Dict[str, Any]:
         """Analyze investment thesis using sequential chained prompts"""
@@ -40,11 +42,20 @@ class ChainedAnalysisService:
                 logging.warning(f"Step 3 failed, using fallback: {str(e)}")
                 monitoring_plan = self._get_fallback_structure("monitoring_plan")
             
+            # Step 4: Generate AI-powered market sentiment
+            try:
+                market_sentiment = self.market_sentiment_service.generate_market_sentiment(thesis_text, core_analysis)
+                logging.info("Step 4 completed: AI market sentiment generated")
+            except Exception as e:
+                logging.warning(f"Step 4 failed, market sentiment will be generated on demand: {str(e)}")
+                market_sentiment = None
+            
             # Combine all results
             complete_analysis = {
                 **core_analysis,
                 "metrics_to_track": signals,
-                "monitoring_plan": monitoring_plan
+                "monitoring_plan": monitoring_plan,
+                "ai_market_sentiment": market_sentiment
             }
             
             logging.info("Chained analysis completed successfully")

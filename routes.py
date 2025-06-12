@@ -505,6 +505,41 @@ def get_price_change(thesis_id):
             'error': str(e)
         }), 500
 
+@app.route('/api/market_sentiment/<int:thesis_id>')
+def generate_market_sentiment(thesis_id):
+    """Generate AI-powered market sentiment for a thesis"""
+    try:
+        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        
+        # Import and use the market sentiment service
+        from services.market_sentiment_service import MarketSentimentService
+        sentiment_service = MarketSentimentService()
+        
+        # Prepare core analysis from stored thesis data
+        core_analysis = {
+            'core_claim': thesis.core_claim,
+            'core_analysis': thesis.core_analysis,
+            'assumptions': thesis.assumptions or [],
+            'causal_chain': thesis.causal_chain or []
+        }
+        
+        # Generate market sentiment
+        market_sentiment = sentiment_service.generate_market_sentiment(
+            thesis.original_thesis, 
+            core_analysis
+        )
+        
+        return jsonify({
+            'success': True,
+            'market_sentiment': market_sentiment
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Unable to generate market sentiment: {str(e)}'
+        }), 500
+
 @app.route('/publish_thesis', methods=['POST'])
 def publish_thesis():
     """Publish a completed thesis analysis for monitoring and simulation"""
