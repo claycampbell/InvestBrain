@@ -104,8 +104,27 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    """Main analysis interface for investment thesis and signal extraction"""
-    return render_template('index.html')
+    """Dashboard showing system overview and recent activity"""
+    try:
+        # Get recent analyses
+        recent_analyses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).limit(5).all()
+        
+        # Get active signals count
+        active_signals = SignalMonitoring.query.filter_by(status='active').count()
+        
+        # Get recent notifications
+        recent_notifications = NotificationLog.query.order_by(NotificationLog.sent_at.desc()).limit(5).all()
+        
+        return render_template('index.html', 
+                             recent_analyses=recent_analyses,
+                             active_signals=active_signals,
+                             recent_notifications=recent_notifications)
+    except Exception as e:
+        # If database access fails, show empty dashboard
+        return render_template('index.html', 
+                             recent_analyses=[],
+                             active_signals=0,
+                             recent_notifications=[])
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
