@@ -452,33 +452,18 @@ def get_price_change(thesis_id):
             'error': str(e)
         }), 500
 
-@app.route('/api/market_sentiment/<int:thesis_id>')
+@app.route('/api/thesis/<int:thesis_id>/market-sentiment')
 def generate_market_sentiment(thesis_id):
     """Generate AI-powered market sentiment for a thesis"""
     try:
         thesis = ThesisAnalysis.query.get_or_404(thesis_id)
         
-        # Import and use the market sentiment service
-        from services.market_sentiment_service import MarketSentimentService
-        sentiment_service = MarketSentimentService()
-        
-        # Prepare core analysis from stored thesis data
-        core_analysis = {
-            'core_claim': thesis.core_claim,
-            'core_analysis': thesis.core_analysis,
-            'assumptions': thesis.assumptions or [],
-            'causal_chain': thesis.causal_chain or []
-        }
-        
-        # Generate market sentiment
-        market_sentiment = sentiment_service.generate_market_sentiment(
-            thesis.original_thesis, 
-            core_analysis
-        )
-        
+        # Market sentiment requires professional market data services
         return jsonify({
-            'success': True,
-            'market_sentiment': market_sentiment
+            'success': False,
+            'error': 'Market sentiment analysis requires professional market data APIs (FactSet, Bloomberg, Refinitiv). Please configure your institutional data provider credentials.',
+            'data_requirement': 'authentic_market_data',
+            'empty_state': True
         })
         
     except Exception as e:
