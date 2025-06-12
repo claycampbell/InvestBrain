@@ -21,10 +21,18 @@ class AzureOpenAIService:
                 logging.error("Azure OpenAI credentials not found in environment variables")
                 return
             
+            # Fix endpoint URL - extract base URL if full path provided
+            if '/openai/deployments/' in endpoint:
+                base_endpoint = endpoint.split('/openai/deployments/')[0]
+            else:
+                base_endpoint = endpoint.rstrip('/')
+                
+            logging.info(f"Using Azure endpoint: {base_endpoint}")
+            
             self.client = AzureOpenAI(
                 api_key=api_key,
                 api_version=api_version,
-                azure_endpoint=endpoint
+                azure_endpoint=base_endpoint
             )
             
             logging.info("Azure OpenAI client initialized successfully")
