@@ -168,7 +168,30 @@ def analyze():
         return jsonify(combined_result)
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        error_message = str(e)
+        
+        # Provide specific error messages for common issues
+        if any(keyword in error_message.lower() for keyword in ['timeout', 'connection', 'network', 'ssl', 'recv']):
+            return jsonify({
+                'error': 'Analysis service temporarily unavailable due to network issues. Please try again in a moment.',
+                'error_type': 'network_timeout',
+                'retry_suggested': True
+            }), 503
+        elif 'content_filter' in error_message.lower():
+            return jsonify({
+                'error': 'Content was filtered by AI safety policies. Please revise your thesis text.',
+                'error_type': 'content_filter'
+            }), 400
+        elif 'credentials' in error_message.lower() or 'authorization' in error_message.lower():
+            return jsonify({
+                'error': 'AI service configuration issue. Please contact support.',
+                'error_type': 'auth_error'
+            }), 500
+        else:
+            return jsonify({
+                'error': f'Analysis failed: {error_message}',
+                'error_type': 'general_error'
+            }), 500
 
 # Route removed - analysis functionality consolidated into dashboard
 

@@ -62,15 +62,50 @@ class ThesisAnalyzer {
                     this.clearForm();
                 }
             } else {
-                const errorText = await response.text();
-                this.showError('Analysis failed. Please try again.');
-                console.error('Analysis error:', errorText);
+                try {
+                    const errorData = await response.json();
+                    
+                    // Handle specific error types
+                    if (errorData.error_type === 'network_timeout') {
+                        this.showError('Analysis service temporarily unavailable due to network issues. Please try again in a moment.');
+                        if (errorData.retry_suggested) {
+                            setTimeout(() => {
+                                this.showRetryButton();
+                            }, 3000);
+                        }
+                    } else if (errorData.error_type === 'content_filter') {
+                        this.showError('Content was filtered by AI safety policies. Please revise your thesis text.');
+                    } else {
+                        this.showError(errorData.error || 'Analysis failed. Please try again.');
+                    }
+                } catch (parseError) {
+                    // Fallback for non-JSON error responses
+                    const errorText = await response.text();
+                    this.showError('Analysis failed. Please try again.');
+                    console.error('Analysis error:', errorText);
+                }
             }
         } catch (error) {
             console.error('Network error:', error);
             this.showError('Network error. Please check your connection and try again.');
         } finally {
             this.showLoading(false);
+        }
+    }
+    
+    showRetryButton() {
+        const alertContainer = document.getElementById('alert-container');
+        if (alertContainer) {
+            const retryButton = document.createElement('button');
+            retryButton.className = 'btn btn-outline-primary btn-sm mt-2';
+            retryButton.innerHTML = '<i class="fas fa-redo"></i> Retry Analysis';
+            retryButton.onclick = () => {
+                alertContainer.innerHTML = '';
+                const formData = new FormData(this.analysisForm);
+                this.showLoading(true);
+                this.submitAnalysis(formData);
+            };
+            alertContainer.querySelector('.alert').appendChild(retryButton);
         }
     }
     

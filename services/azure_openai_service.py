@@ -24,7 +24,8 @@ class AzureOpenAIService:
             self.client = AzureOpenAI(
                 api_key=api_key,
                 api_version=api_version,
-                azure_endpoint=endpoint
+                azure_endpoint=endpoint,
+                timeout=120  # 2 minute timeout for network issues
             )
             
             logging.info("Azure OpenAI client initialized successfully")
@@ -39,8 +40,8 @@ class AzureOpenAIService:
             raise Exception("Azure OpenAI client not initialized")
         
         # Enhanced retry configuration for network issues
-        max_retries = 3
-        retry_delay = 3
+        max_retries = 2  # Reduced retries for faster failure detection
+        retry_delay = 2
         
         for attempt in range(max_retries):
             try:
@@ -51,16 +52,14 @@ class AzureOpenAIService:
                     # o1/o4 models have specific parameter constraints
                     response = self.client.chat.completions.create(
                         messages=messages,
-                        model=self.deployment_name,
-                        timeout=90  # Increased timeout for o4-mini network issues
+                        model=self.deployment_name
                     )
                 elif 'gpt-4o' in model_name:
                     # GPT-4o models support limited parameters
                     response = self.client.chat.completions.create(
                         messages=messages,
                         model=self.deployment_name,
-                        max_completion_tokens=max_tokens,
-                        timeout=45
+                        max_completion_tokens=max_tokens
                     )
                 else:
                     # Standard GPT models
@@ -68,8 +67,7 @@ class AzureOpenAIService:
                         messages=messages,
                         temperature=temperature,
                         max_completion_tokens=max_tokens,
-                        model=self.deployment_name,
-                        timeout=45
+                        model=self.deployment_name
                     )
                 
                 # Debug the full response structure
