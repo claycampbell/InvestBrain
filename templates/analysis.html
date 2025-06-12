@@ -442,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="card-body">
                             ${generateSignalsByLevel(signalData.signals_by_level)}
-                            ${generateActualSignalsDisplay(signalData.signals_by_level)}
+                            ${generateActualSignalsDisplay(signalData)}
                         </div>
                     </div>
 
@@ -642,7 +642,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <strong>${signal.name || 'Signal Name'}</strong>
                                     <i class="fas fa-chevron-down signal-expand-icon ms-2" id="expand-icon-${index}" style="font-size: 10px; transition: transform 0.3s ease;"></i>
                                 </div>
-                                <div class="small text-muted">${signal.description || 'AI-generated signal from thesis analysis'}</div>
+                                <div class="small text-muted">${signal.description || signal.name || 'Investment signal extracted from thesis analysis'}</div>
                                 ${signal.data_source ? `
                                     <div class="small text-info mt-1">
                                         <i class="fas fa-database"></i> ${signal.data_source}
@@ -688,7 +688,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </div>
                                     <div class="small mb-2">
                                         <strong>API Identifier:</strong> 
-                                        <code class="small bg-light p-1 rounded">FF_${(signal.name || 'SIGNAL').replace(/\s+/g, '_').toUpperCase()}</code>
+                                        <code class="small bg-light p-1 rounded">${signal.name ? signal.name.replace(/\s+/g, '_').toUpperCase() : 'FF_SIGNAL'}</code>
                                     </div>
                                     <div class="small mb-2">
                                         <strong>Acquisition:</strong> API programmatic
