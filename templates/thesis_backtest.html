@@ -1,0 +1,480 @@
+{% extends "base.html" %}
+{% set active_page = "backtest" %}
+
+{% block title %}Thesis Backtesting - {{ thesis.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">Thesis Backtesting</h2>
+                    <p class="text-muted mb-0">{{ thesis.title }}</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/thesis/{{ thesis.id }}/monitor" class="btn btn-outline-secondary">
+                        <i class="fas fa-chart-line"></i> View Monitoring
+                    </a>
+                    <button class="btn btn-primary" onclick="runBacktest()">
+                        <i class="fas fa-play"></i> Run Backtest
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backtest Configuration -->
+    <div class="row mb-4">
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog text-primary"></i> Backtest Configuration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="backtest-form">
+                        <div class="mb-3">
+                            <label for="time-horizon" class="form-label">Time Horizon</label>
+                            <select class="form-select" id="time-horizon">
+                                <option value="6">6 Months</option>
+                                <option value="12" selected>12 Months</option>
+                                <option value="18">18 Months</option>
+                                <option value="24">24 Months</option>
+                                <option value="36">36 Months</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Market Scenarios</label>
+                            <div class="form-check">
+                                <input class="form-check-input scenario-check" type="checkbox" value="bull_market" id="bull-market" checked>
+                                <label class="form-check-label" for="bull-market">
+                                    Bull Market (Growth +15%)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input scenario-check" type="checkbox" value="bear_market" id="bear-market" checked>
+                                <label class="form-check-label" for="bear-market">
+                                    Bear Market (Decline -20%)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input scenario-check" type="checkbox" value="sideways" id="sideways" checked>
+                                <label class="form-check-label" for="sideways">
+                                    Sideways Market (Flat +2%)
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="stress-tests" checked>
+                                <label class="form-check-label" for="stress-tests">
+                                    Include Stress Tests
+                                </label>
+                                <small class="form-text text-muted">Test against historical crises</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include-signals" checked>
+                                <label class="form-check-label" for="include-signals">
+                                    Validate Signals
+                                </label>
+                                <small class="form-text text-muted">Analyze signal performance</small>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Thesis Overview -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Thesis Overview</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Core Claim:</strong></p>
+                    <p class="small text-muted">{{ thesis.core_claim or "No core claim available" }}</p>
+                    <p><strong>Active Signals:</strong> {{ signals|length }}</p>
+                    <p><strong>Created:</strong> {{ thesis.created_at[:10] if thesis.created_at else "Unknown" }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Area -->
+        <div class="col-lg-8">
+            <div id="backtest-results" class="d-none">
+                <!-- Performance Summary -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-bar text-success"></i> Performance Summary
+                        </h5>
+                    </div>
+                    <div class="card-body" id="performance-summary">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Scenario Results -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-globe text-info"></i> Scenario Analysis
+                        </h5>
+                    </div>
+                    <div class="card-body" id="scenario-results">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Risk Analysis -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-shield-alt text-warning"></i> Risk Analysis
+                        </h5>
+                    </div>
+                    <div class="card-body" id="risk-analysis">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Stress Tests -->
+                <div class="card mb-4" id="stress-tests-card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-exclamation-triangle text-danger"></i> Stress Tests
+                        </h5>
+                    </div>
+                    <div class="card-body" id="stress-test-results">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Recommendations -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-lightbulb text-primary"></i> Recommendations
+                        </h5>
+                    </div>
+                    <div class="card-body" id="recommendations">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="backtest-loading" class="d-none">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h5>Running Backtest Analysis</h5>
+                        <p class="text-muted">Analyzing thesis performance across market scenarios...</p>
+                        <div class="progress mt-3" style="height: 6px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Initial State -->
+            <div id="backtest-initial">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <h5>Ready for Backtesting</h5>
+                        <p class="text-muted">Configure your parameters and click "Run Backtest" to begin analysis</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const thesisData = {{ thesis | tojson }};
+const signalsData = {{ signals | tojson }};
+let backtestResults = null;
+
+async function runBacktest() {
+    try {
+        // Show loading state
+        document.getElementById('backtest-initial').classList.add('d-none');
+        document.getElementById('backtest-results').classList.add('d-none');
+        document.getElementById('backtest-loading').classList.remove('d-none');
+        
+        // Collect form data
+        const timeHorizon = parseInt(document.getElementById('time-horizon').value);
+        const stressTests = document.getElementById('stress-tests').checked;
+        const includeSignals = document.getElementById('include-signals').checked;
+        
+        // Get selected scenarios
+        const scenarios = [];
+        document.querySelectorAll('.scenario-check:checked').forEach(checkbox => {
+            scenarios.push(checkbox.value);
+        });
+        
+        if (scenarios.length === 0) {
+            showAlert('Please select at least one market scenario', 'warning');
+            resetToInitialState();
+            return;
+        }
+        
+        // Prepare request
+        const requestData = {
+            time_horizon: timeHorizon,
+            scenarios: scenarios,
+            stress_tests: stressTests,
+            include_signals: includeSignals
+        };
+        
+        // Make API call
+        const response = await fetch(`/api/thesis/${thesisData.id}/backtest`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            backtestResults = data.backtest_results;
+            displayBacktestResults();
+            showAlert('Backtesting completed successfully', 'success');
+        } else {
+            throw new Error(data.error || 'Backtesting failed');
+        }
+        
+    } catch (error) {
+        console.error('Backtest error:', error);
+        showAlert(`Backtesting failed: ${error.message}`, 'danger');
+        resetToInitialState();
+    }
+}
+
+function displayBacktestResults() {
+    // Hide loading, show results
+    document.getElementById('backtest-loading').classList.add('d-none');
+    document.getElementById('backtest-results').classList.remove('d-none');
+    
+    // Display each section
+    displayPerformanceSummary();
+    displayScenarioResults();
+    displayRiskAnalysis();
+    displayStressTests();
+    displayRecommendations();
+}
+
+function displayPerformanceSummary() {
+    const summary = backtestResults.performance_summary;
+    const container = document.getElementById('performance-summary');
+    
+    container.innerHTML = `
+        <div class="row">
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h4 class="text-primary">${summary.average_score?.toFixed(1) || 'N/A'}</h4>
+                    <small class="text-muted">Average Score</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h4 class="text-success">${summary.best_scenario || 'N/A'}</h4>
+                    <small class="text-muted">Best Scenario</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h4 class="text-danger">${summary.worst_scenario || 'N/A'}</h4>
+                    <small class="text-muted">Worst Scenario</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h4 class="text-info">${(summary.consistency * 100)?.toFixed(1) || 'N/A'}%</h4>
+                    <small class="text-muted">Consistency</small>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function displayScenarioResults() {
+    const scenarios = backtestResults.scenario_results;
+    const container = document.getElementById('scenario-results');
+    
+    let html = '<div class="row">';
+    
+    Object.entries(scenarios).forEach(([scenario, data]) => {
+        const scenarioName = scenario.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const score = data.scenario_score || 0;
+        const scoreColor = score >= 70 ? 'success' : score >= 50 ? 'warning' : 'danger';
+        
+        html += `
+            <div class="col-md-4 mb-3">
+                <div class="card border-${scoreColor}">
+                    <div class="card-body">
+                        <h6 class="card-title">${scenarioName}</h6>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-${scoreColor}">${score.toFixed(1)}/100</span>
+                            <small class="text-muted">${data.risk_level || 'medium'} risk</small>
+                        </div>
+                        <div class="progress mb-2" style="height: 4px;">
+                            <div class="progress-bar bg-${scoreColor}" style="width: ${score}%"></div>
+                        </div>
+                        ${data.simulated_returns ? `
+                            <small class="text-muted">
+                                Return: ${(data.simulated_returns.cumulative_return * 100).toFixed(1)}%<br>
+                                Volatility: ${(data.simulated_returns.volatility * 100).toFixed(1)}%
+                            </small>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function displayRiskAnalysis() {
+    const risk = backtestResults.risk_metrics;
+    const container = document.getElementById('risk-analysis');
+    
+    container.innerHTML = `
+        <div class="row">
+            <div class="col-md-4">
+                <div class="text-center border-end">
+                    <h5 class="text-danger">${(risk.var_95 * 100)?.toFixed(1) || 'N/A'}%</h5>
+                    <small class="text-muted">Value at Risk (95%)</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center border-end">
+                    <h5 class="text-warning">${(risk.return_volatility * 100)?.toFixed(1) || 'N/A'}%</h5>
+                    <small class="text-muted">Return Volatility</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <h5 class="text-info">${risk.risk_adjusted_return?.toFixed(2) || 'N/A'}</h5>
+                    <small class="text-muted">Risk-Adjusted Return</small>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3">
+            <p><strong>Expected Return:</strong> ${(risk.expected_return * 100)?.toFixed(1) || 'N/A'}%</p>
+            <p><strong>Maximum Loss:</strong> ${(risk.max_loss * 100)?.toFixed(1) || 'N/A'}%</p>
+            <p><strong>Downside Risk:</strong> ${(risk.downside_risk * 100)?.toFixed(1) || 'N/A'}%</p>
+        </div>
+    `;
+}
+
+function displayStressTests() {
+    if (!backtestResults.stress_test_results || !Object.keys(backtestResults.stress_test_results).length) {
+        document.getElementById('stress-tests-card').classList.add('d-none');
+        return;
+    }
+    
+    const stress = backtestResults.stress_test_results;
+    const container = document.getElementById('stress-test-results');
+    
+    let html = `
+        <div class="mb-3">
+            <h6>Overall Stress Score: 
+                <span class="badge bg-${stress.overall_stress_score >= 70 ? 'success' : stress.overall_stress_score >= 40 ? 'warning' : 'danger'}">
+                    ${stress.overall_stress_score?.toFixed(1) || 'N/A'}/100
+                </span>
+            </h6>
+            <p class="text-muted">Stress Resistance: ${stress.stress_resistance || 'medium'}</p>
+        </div>
+    `;
+    
+    if (stress.scenario_results) {
+        html += '<div class="row">';
+        Object.entries(stress.scenario_results).forEach(([scenario, data]) => {
+            const scenarioName = scenario.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            const score = data.stress_score || 0;
+            
+            html += `
+                <div class="col-md-6 mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="small">${scenarioName}</span>
+                        <span class="badge bg-secondary">${score.toFixed(1)}</span>
+                    </div>
+                    <div class="progress mt-1" style="height: 3px;">
+                        <div class="progress-bar" style="width: ${score}%"></div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    container.innerHTML = html;
+}
+
+function displayRecommendations() {
+    const recommendations = backtestResults.recommendations || [];
+    const container = document.getElementById('recommendations');
+    
+    if (recommendations.length === 0) {
+        container.innerHTML = '<p class="text-muted">No specific recommendations available.</p>';
+        return;
+    }
+    
+    let html = '<ul class="list-unstyled">';
+    recommendations.forEach(rec => {
+        html += `
+            <li class="mb-2">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                ${rec}
+            </li>
+        `;
+    });
+    html += '</ul>';
+    
+    container.innerHTML = html;
+}
+
+function resetToInitialState() {
+    document.getElementById('backtest-loading').classList.add('d-none');
+    document.getElementById('backtest-results').classList.add('d-none');
+    document.getElementById('backtest-initial').classList.remove('d-none');
+}
+
+function showAlert(message, type) {
+    // Simple alert implementation
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

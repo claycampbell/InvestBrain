@@ -723,6 +723,73 @@ def get_thesis_segments():
             'error': f'Failed to extract segments: {str(e)}'
         }), 500
 
+@app.route('/api/thesis/<int:thesis_id>/backtest', methods=['POST'])
+def run_thesis_backtest(thesis_id):
+    """Run backtesting simulation for a specific thesis"""
+    try:
+        from services.backtesting_service import BacktestingService
+        
+        # Get backtest parameters from request
+        data = request.get_json() or {}
+        backtest_params = {
+            'time_horizon': data.get('time_horizon', 12),  # months
+            'scenarios': data.get('scenarios', ['bull_market', 'bear_market', 'sideways']),
+            'stress_tests': data.get('stress_tests', True),
+            'include_signals': data.get('include_signals', True)
+        }
+        
+        # Run backtesting
+        backtesting_service = BacktestingService()
+        results = backtesting_service.run_thesis_backtest(thesis_id, backtest_params)
+        
+        if 'error' in results:
+            return jsonify({
+                'success': False,
+                'error': results['error']
+            }), 400
+        
+        return jsonify({
+            'success': True,
+            'backtest_results': results
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Backtesting failed: {str(e)}'
+        }), 500
+
+@app.route('/thesis/<int:thesis_id>/backtest')
+def thesis_backtest_page(thesis_id):
+    """Backtesting interface page for a specific thesis"""
+    try:
+        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        signals = SignalMonitoring.query.filter_by(thesis_analysis_id=thesis_id).all()
+        
+        # Convert to serializable format
+        thesis_data = {
+            'id': thesis.id,
+            'title': thesis.title,
+            'core_claim': thesis.core_claim,
+            'created_at': thesis.created_at.isoformat() if thesis.created_at else None,
+            'mental_model': thesis.mental_model
+        }
+        
+        signals_data = [{
+            'id': signal.id,
+            'signal_name': signal.signal_name,
+            'signal_type': signal.signal_type,
+            'threshold_value': signal.threshold_value,
+            'threshold_type': signal.threshold_type,
+            'status': signal.status
+        } for signal in signals]
+        
+        return render_template('thesis_backtest.html', 
+                             thesis=thesis_data, 
+                             signals=signals_data)
+    except Exception as e:
+        return f"Error loading backtesting page: {str(e)}", 500
+
 @app.route('/analytics')
 def analytics_dashboard():
     """Advanced analytics dashboard page"""
