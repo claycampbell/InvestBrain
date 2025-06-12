@@ -1,0 +1,1761 @@
+{% extends 'base.html' %}
+
+{% block title %}Investment Thesis Analysis - Intelligence System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Main Analysis Interface -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 mb-1">
+                <i class="fas fa-brain text-primary"></i>
+                Investment Thesis Analysis
+            </h1>
+            <p class="text-muted">Input your thesis statement, attach research documents, and extract actionable signals</p>
+        </div>
+    </div>
+
+    <form id="analysis-form" method="POST" enctype="multipart/form-data">
+        <div class="row">
+            <!-- Thesis Input -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-quote-left"></i> Investment Thesis Statement
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea name="thesis_text" class="form-control" rows="8" 
+                                  placeholder="Enter your investment thesis statement here. Describe your core investment logic, expected outcomes, and key assumptions..."
+                                  required></textarea>
+                        <div class="form-text">
+                            Provide a detailed thesis statement including your investment logic, key assumptions, and expected market dynamics.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Research Documents -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-paperclip"></i> Supporting Research Documents
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="upload-area" class="upload-area border rounded p-4 text-center">
+                            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-3"></i>
+                            <h6>Drag & Drop Research Files</h6>
+                            <p class="text-muted mb-3">PDF reports, Excel models, CSV data files</p>
+                            <input type="file" id="research-files" name="research_files" multiple 
+                                   accept=".pdf,.xlsx,.xls,.csv" class="d-none">
+                            <button type="button" class="btn btn-outline-primary" 
+                                    onclick="document.getElementById('research-files').click()">
+                                <i class="fas fa-folder-open"></i> Browse Files
+                            </button>
+                        </div>
+                        
+                        <div id="file-list" class="mt-3" style="display: none;">
+                            <h6>Selected Files:</h6>
+                            <div id="selected-files"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Controls -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="focus-primary-signals" name="focus_primary_signals" checked>
+                                    <label class="form-check-label" for="focus-primary-signals">
+                                        <strong>Focus on Primary (Level 0-1) Signals</strong>
+                                        <small class="d-block text-muted">Prioritize raw economic activity indicators</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-analytics"></i> Analyze Thesis
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signal Classification Guide -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-signal"></i> Signal Classification
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-success me-2">Level 0</span>
+                                <strong class="small">Raw Economic Activity</strong>
+                            </div>
+                            <small class="text-muted">
+                                Direct measurements: housing starts, permit applications, factory utilization
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-info me-2">Level 1</span>
+                                <strong class="small">Simple Aggregation</strong>
+                            </div>
+                            <small class="text-muted">
+                                Basic combinations: monthly spending totals, inventory levels
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-warning me-2">Level 2</span>
+                                <strong class="small">Derived Metrics</strong>
+                            </div>
+                            <small class="text-muted">
+                                Calculated ratios: growth rates, market share changes
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-secondary me-2">Level 3</span>
+                                <strong class="small">Complex Ratios</strong>
+                            </div>
+                            <small class="text-muted">
+                                Multi-variable calculations: valuation multiples, peer comparisons
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-danger me-2">Level 4</span>
+                                <strong class="small">Market Sentiment</strong>
+                            </div>
+                            <small class="text-muted">
+                                Behavioral indicators: analyst sentiment, options flow
+                            </small>
+                        </div>
+
+                        <hr>
+                        
+                        <div class="alert alert-info small">
+                            <i class="fas fa-lightbulb"></i>
+                            <strong>Focus Strategy:</strong> Prioritize Level 0-1 signals for early market detection and unique insights.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-search"></i> What We Extract
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="small mb-0">
+                            <li>Primary signal identification</li>
+                            <li>Signal classification (Level 0-4)</li>
+                            <li>Lead/lag relationships</li>
+                            <li>Value chain mapping</li>
+                            <li>Early warning indicators</li>
+                            <li>Market pricing gaps</li>
+                            <li>Correlation patterns</li>
+                            <li>Signal quality assessment</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Analysis Results (Hidden until analysis is complete) -->
+    <div id="analysis-results" style="display: none;" class="mt-5">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line"></i> Signal Analysis Results
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="results-content">
+                    <!-- Results will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="analysisModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <div class="loading-spinner mb-3"></div>
+                <h5>Analyzing Investment Thesis</h5>
+                <p class="text-muted mb-0">Extracting signals and mapping relationships...</p>
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('research-files');
+    const fileList = document.getElementById('file-list');
+    const selectedFiles = document.getElementById('selected-files');
+    const analysisForm = document.getElementById('analysis-form');
+
+    // File upload handling
+    fileInput.addEventListener('change', function() {
+        displaySelectedFiles();
+    });
+
+    // Drag and drop
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('border-primary');
+    });
+
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('border-primary');
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('border-primary');
+        fileInput.files = e.dataTransfer.files;
+        displaySelectedFiles();
+    });
+
+    function displaySelectedFiles() {
+        const files = fileInput.files;
+        if (files.length > 0) {
+            fileList.style.display = 'block';
+            selectedFiles.innerHTML = '';
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'small text-muted mb-1';
+                fileDiv.innerHTML = `
+                    <i class="fas fa-file me-2"></i>
+                    ${file.name} (${formatFileSize(file.size)})
+                `;
+                selectedFiles.appendChild(fileDiv);
+            }
+        } else {
+            fileList.style.display = 'none';
+        }
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Form submission
+    analysisForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Show loading modal
+        const modal = new bootstrap.Modal(document.getElementById('analysisModal'));
+        modal.show();
+        
+        // Simulate progress
+        const progressBar = document.querySelector('.progress-bar');
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 20;
+            if (progress > 90) progress = 90;
+            progressBar.style.width = progress + '%';
+        }, 500);
+
+        // Submit form
+        const formData = new FormData(analysisForm);
+        
+        fetch('/analyze', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            clearInterval(interval);
+            progressBar.style.width = '100%';
+            
+            setTimeout(() => {
+                modal.hide();
+                displayResults(data);
+            }, 1000);
+        })
+        .catch(error => {
+            clearInterval(interval);
+            modal.hide();
+            console.error('Error:', error);
+            alert('Analysis failed. Please try again.');
+        });
+    });
+
+    function displayResults(data) {
+        const resultsDiv = document.getElementById('analysis-results');
+        const contentDiv = document.getElementById('results-content');
+        
+        // Populate results
+        contentDiv.innerHTML = generateResultsHTML(data);
+        resultsDiv.style.display = 'block';
+        
+        // Store analysis data globally for publishing
+        window.currentAnalysis = data;
+        
+        // Scroll to results
+        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function generateResultsHTML(data) {
+        const signalData = data.signal_extraction || {};
+        const thesisData = data.thesis_analysis || {};
+        
+        return `
+            <!-- Header Summary -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h5 class="text-success mb-1">
+                                        <i class="fas fa-check-circle"></i> Analysis Complete
+                                    </h5>
+                                    <p class="text-muted mb-0">${thesisData.core_claim || 'Investment thesis analysis completed successfully'}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <div class="h4 text-primary mb-0">${signalData.total_signals_identified || 0}</div>
+                                            <small class="text-muted">Signals</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="h4 text-info mb-0">${data.processed_documents || 0}</div>
+                                            <small class="text-muted">Documents</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <span class="badge bg-${thesisData.mental_model === 'Growth' ? 'success' : thesisData.mental_model === 'Disruption' ? 'warning' : 'info'} fs-6">
+                                                ${thesisData.mental_model || 'Unknown'}
+                                            </span>
+                                            <div><small class="text-muted">Model</small></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Left Column: Core Analysis & Assumptions -->
+                <div class="col-lg-6">
+                    <!-- Core Investment Logic -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-bullseye text-primary"></i> Core Investment Logic</h6>
+                        </div>
+                        <div class="card-body">
+                            ${thesisData.core_analysis ? `
+                                <div class="alert alert-light border-0 mb-3">
+                                    <strong>Risk/Reward Analysis:</strong>
+                                    <p class="mb-0 mt-2">${thesisData.core_analysis}</p>
+                                </div>
+                            ` : ''}
+                            
+                            ${generateMentalModelsSection(thesisData.mental_models, thesisData.primary_mental_model)}
+                            ${generateConvictionDrivers(thesisData.conviction_drivers)}
+                            ${generateAssumptionsList(thesisData.assumptions)}
+                        </div>
+                    </div>
+
+                    <!-- Analyst Predicates & Movement Rationale -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-brain text-primary"></i> Analyst Predicates & Movement Rationale</h6>
+                        </div>
+                        <div class="card-body">
+                            ${generateAnalystPredicates(thesisData)}
+                        </div>
+                    </div>
+
+                    <!-- Sell-Side/Market Sentiment -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-chart-bar text-info"></i> Sell-Side & Market Sentiment</h6>
+                        </div>
+                        <div class="card-body">
+                            ${generateMarketSentiment(thesisData)}
+                        </div>
+                    </div>
+
+                    <!-- Causal Chain Analysis -->
+                    ${generateCausalChainCard(thesisData.causal_chain)}
+
+                    <!-- Counter-Thesis & Risk Scenarios -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-exclamation-triangle text-warning"></i> Counter-Thesis & Risk Scenarios</h6>
+                        </div>
+                        <div class="card-body">
+                            ${generateEnhancedCounterThesis(thesisData.counter_thesis_scenarios)}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Signals & Monitoring -->
+                <div class="col-lg-6">
+                    <!-- Signal Discovery Journey Map -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-route text-info"></i> Signal Discovery Journey</h6>
+                        </div>
+                        <div class="card-body">
+                            ${generateSignalJourneyMap(signalData.signals_by_level)}
+                        </div>
+                    </div>
+
+                    <!-- Signal Classification -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-signal text-info"></i> Trackable Signals</h6>
+                        </div>
+                        <div class="card-body">
+                            ${generateSignalsByLevel(signalData.signals_by_level)}
+                            ${generateActualSignalsDisplay(signalData.signals_by_level)}
+                        </div>
+                    </div>
+
+                    <!-- Monitoring Strategy -->
+                    ${generateMonitoringPlanCard(thesisData.monitoring_plan)}
+
+                    <!-- Action Controls -->
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Ready to Monitor</h6>
+                            <p class="text-muted small mb-3">Publish this analysis to start tracking signals and receive alerts</p>
+                            <button class="btn btn-primary btn-lg me-2" onclick="publishAnalysis()">
+                                <i class="fas fa-rocket"></i> Publish for Monitoring
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="downloadAnalysis()">
+                                <i class="fas fa-download"></i> Export Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function generateAssumptionsList(assumptions) {
+        if (!assumptions || !Array.isArray(assumptions)) return '';
+        
+        return `
+            <div>
+                <strong>Key Assumptions:</strong>
+                <ul class="small mt-2">
+                    ${assumptions.slice(0, 3).map(assumption => `<li>${assumption}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    function generateCausalChain(causalChain) {
+        if (!causalChain || !Array.isArray(causalChain)) return '';
+        
+        // Handle both old format (array of strings) and new format (array of objects)
+        if (causalChain.length > 0 && typeof causalChain[0] === 'object' && causalChain[0].chain_link) {
+            // New chainlinked format
+            return `
+                <div class="mb-3">
+                    <strong class="small">Chainlinked Events:</strong>
+                    <div class="mt-2">
+                        ${causalChain.slice(0, 8).map(link => `
+                            <div class="border-start border-3 border-primary ps-3 mb-3">
+                                <div class="small">
+                                    <strong>Chain Link ${link.chain_link}:</strong>
+                                    <span class="text-primary">${link.event}</span>
+                                </div>
+                                <div class="small text-muted mt-1">${link.explanation}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            // Legacy format
+            return `
+                <div class="mb-3">
+                    <strong class="small">Causal Chain:</strong>
+                    <ol class="small mt-1">
+                        ${causalChain.slice(0, 5).map(step => `<li>${step}</li>`).join('')}
+                    </ol>
+                </div>
+            `;
+        }
+    }
+    
+    function generateCounterThesisScenarios(scenarios) {
+        if (!scenarios || !Array.isArray(scenarios)) return '<p class="text-muted">No counter-thesis scenarios identified</p>';
+        
+        return scenarios.slice(0, 4).map((scenario, index) => `
+            <div class="border rounded p-3 mb-3">
+                <h6 class="text-danger">${scenario.scenario || `Scenario ${index + 1}`}</h6>
+                <p class="small mb-2">${scenario.description || 'No description available'}</p>
+                ${scenario.trigger_conditions ? `
+                    <div class="mb-2">
+                        <strong class="small">Trigger Conditions:</strong>
+                        <ul class="small mb-0">
+                            ${scenario.trigger_conditions.slice(0, 3).map(condition => `<li>${condition}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+                ${scenario.data_signals ? `
+                    <div>
+                        <strong class="small">Data Signals:</strong>
+                        <ul class="small mb-0">
+                            ${scenario.data_signals.slice(0, 3).map(signal => `<li>${signal}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+    }
+    
+    function generateSignalsByLevel(signalsByLevel) {
+        if (!signalsByLevel) return '<p class="text-muted">No signals classified</p>';
+        
+        const levelBadges = {
+            'Level_0_Raw_Economic': 'bg-success',
+            'Level_1_Simple_Aggregation': 'bg-info', 
+            'Level_2_Derived_Metrics': 'bg-warning text-dark',
+            'Level_3_Complex_Ratios': 'bg-secondary',
+            'Level_4_Market_Sentiment': 'bg-danger',
+            // Legacy mappings for backwards compatibility
+            'Raw Economic Activity': 'bg-success',
+            'Simple Aggregation': 'bg-info',
+            'Derived Metrics': 'bg-warning',
+            'Complex Derivatives': 'bg-secondary',
+            'Synthetic Indicators': 'bg-danger'
+        };
+        
+        const levelDisplayNames = {
+            'Level_0_Raw_Economic': 'Level_0_Raw_Economic',
+            'Level_1_Simple_Aggregation': 'Level_1_Simple_Aggregation',
+            'Level_2_Derived_Metrics': 'Level_2_Derived_Metrics', 
+            'Level_3_Complex_Ratios': 'Level_3_Complex_Ratios',
+            'Level_4_Market_Sentiment': 'Level_4_Market_Sentiment'
+        };
+        
+        return Object.entries(signalsByLevel).map(([level, signals]) => `
+            <div class="mb-2">
+                <span class="badge ${levelBadges[level] || 'bg-secondary'}">${signals.length}</span>
+                <small class="ms-2">${levelDisplayNames[level] || level}</small>
+            </div>
+        `).join('');
+    }
+    
+    function generateMentalModelsSection(mentalModels, primaryModel) {
+        if (!mentalModels || !Array.isArray(mentalModels)) {
+            return primaryModel ? `
+                <div class="mb-3">
+                    <strong class="small">Mental Model:</strong>
+                    <span class="badge bg-primary ms-2">${primaryModel}</span>
+                </div>
+            ` : '';
+        }
+        
+        return `
+            <div class="mb-3">
+                <strong class="small d-block mb-2">Investment Mental Models:</strong>
+                ${mentalModels.map(model => `
+                    <div class="border rounded p-2 mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-primary">${model.model}</span>
+                            <span class="small text-muted">${Math.round(model.weight * 100)}%</span>
+                        </div>
+                        <div class="small text-muted mt-1">${model.rationale}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    function generateConvictionDrivers(drivers) {
+        if (!drivers || !Array.isArray(drivers)) return '';
+        
+        return `
+            <div class="mb-3">
+                <strong class="small d-block mb-2">Conviction Drivers:</strong>
+                ${drivers.map((driver, index) => `
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="badge bg-success rounded-circle me-2" style="width: 20px; height: 20px; font-size: 10px;">${index + 1}</div>
+                        <small>${driver}</small>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function generateActualSignalsDisplay(signalsByLevel) {
+        if (!signalsByLevel) return '<p class="text-muted">No signals detected</p>';
+        
+        // Flatten all signals from all levels
+        const allSignals = Object.values(signalsByLevel).flat();
+        
+        if (allSignals.length === 0) return '<p class="text-muted">No signals detected</p>';
+        
+        return `
+            <div class="mt-4">
+                <strong class="small d-block mb-3">Trackable Metrics (FactSet/Xpressfeed):</strong>
+                ${allSignals.slice(0, 6).map((signal, index) => `
+                    <div class="signal-card border rounded p-2 mb-2" onclick="toggleSignalExpansion(${index})" style="cursor: pointer; transition: all 0.3s ease;">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="small d-flex align-items-center">
+                                    <strong>${signal.name}</strong>
+                                    <i class="fas fa-chevron-down signal-expand-icon ms-2" id="expand-icon-${index}" style="font-size: 10px; transition: transform 0.3s ease;"></i>
+                                </div>
+                                <div class="small text-muted">${signal.description || ''}</div>
+                                ${signal.factset_identifier ? `
+                                    <div class="small text-info mt-1">
+                                        <i class="fas fa-database"></i> ${signal.factset_identifier}
+                                    </div>
+                                ` : ''}
+                                ${signal.acquisition_method ? `
+                                    <div class="small text-warning mt-1">
+                                        <i class="fas fa-tools"></i> ${signal.acquisition_method}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-secondary small">${signal.data_source || 'FactSet'}</span>
+                                ${signal.frequency ? `<div class="small text-muted">${signal.frequency}</div>` : ''}
+                            </div>
+                        </div>
+                        ${signal.programmatic_feasibility ? `
+                            <div class="small mt-1">
+                                <span class="badge ${signal.programmatic_feasibility === 'high' ? 'bg-success' : signal.programmatic_feasibility === 'medium' ? 'bg-warning text-dark' : 'bg-danger'} text-white">
+                                    ${signal.programmatic_feasibility} feasibility
+                                </span>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Expandable Context Section -->
+                        <div class="signal-context mt-3" id="signal-context-${index}" style="display: none; border-top: 1px solid #eee; padding-top: 15px;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="small text-primary mb-2"><i class="fas fa-info-circle"></i> Signal Details</h6>
+                                    <div class="small mb-2">
+                                        <strong>Classification:</strong> ${signal.level || 'Not specified'}
+                                    </div>
+                                    <div class="small mb-2">
+                                        <strong>Value Chain:</strong> ${signal.value_chain_position || 'Not specified'}
+                                    </div>
+                                    <div class="small mb-2">
+                                        <strong>Update Frequency:</strong> ${signal.frequency || 'Not specified'}
+                                    </div>
+                                    ${signal.threshold ? `
+                                        <div class="small mb-2">
+                                            <strong>Threshold:</strong> ${signal.threshold} (${signal.threshold_type || 'above'})
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="small text-primary mb-2"><i class="fas fa-cogs"></i> Acquisition Method</h6>
+                                    <div class="small mb-2">
+                                        <strong>Source:</strong> ${signal.data_source || 'FactSet'}
+                                    </div>
+                                    ${signal.factset_identifier ? `
+                                        <div class="small mb-2">
+                                            <strong>API Identifier:</strong> 
+                                            <code class="small bg-light p-1 rounded">${signal.factset_identifier}</code>
+                                        </div>
+                                    ` : ''}
+                                    <div class="small mb-2">
+                                        <strong>Acquisition:</strong> ${signal.acquisition_method || 'API programmatic'}
+                                    </div>
+                                    <div class="small">
+                                        <strong>Implementation:</strong> 
+                                        <span class="badge ${signal.programmatic_feasibility === 'high' ? 'bg-success' : signal.programmatic_feasibility === 'medium' ? 'bg-warning text-dark' : 'bg-danger'} text-white">
+                                            ${signal.programmatic_feasibility || 'medium'} complexity
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            ${signal.what_it_tells_us ? `
+                                <div class="mt-3">
+                                    <h6 class="small text-primary mb-2"><i class="fas fa-lightbulb"></i> What This Signal Tells Us</h6>
+                                    <div class="small text-muted">${signal.what_it_tells_us}</div>
+                                </div>
+                            ` : ''}
+                            
+                            ${signal.conviction_linkage ? `
+                                <div class="mt-3">
+                                    <h6 class="small text-primary mb-2"><i class="fas fa-link"></i> Thesis Connection</h6>
+                                    <div class="small text-success">${signal.conviction_linkage}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    function generateSignalJourneyMap(signalsByLevel) {
+        if (!signalsByLevel) return '<p class="text-muted">No signal discovery journey available</p>';
+        
+        const levelOrder = [
+            'Level_0_Raw_Economic',
+            'Level_1_Simple_Aggregation', 
+            'Level_2_Derived_Metrics',
+            'Level_3_Complex_Ratios',
+            'Level_4_Market_Sentiment'
+        ];
+        
+        const levelInfo = {
+            'Level_0_Raw_Economic': { 
+                icon: 'fas fa-industry', 
+                name: 'Raw Economic', 
+                description: 'Direct economic activity',
+                color: 'success'
+            },
+            'Level_1_Simple_Aggregation': { 
+                icon: 'fas fa-calculator', 
+                name: 'Simple Aggregation', 
+                description: 'Basic data compilation',
+                color: 'info'
+            },
+            'Level_2_Derived_Metrics': { 
+                icon: 'fas fa-chart-line', 
+                name: 'Derived Metrics', 
+                description: 'Calculated indicators',
+                color: 'warning'
+            },
+            'Level_3_Complex_Ratios': { 
+                icon: 'fas fa-cogs', 
+                name: 'Complex Ratios', 
+                description: 'Advanced relationships',
+                color: 'secondary'
+            },
+            'Level_4_Market_Sentiment': { 
+                icon: 'fas fa-brain', 
+                name: 'Market Sentiment', 
+                description: 'Behavioral indicators',
+                color: 'danger'
+            }
+        };
+        
+        return `
+            <div class="signal-journey-container">
+                <style>
+                    .signal-journey-path {
+                        position: relative;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        margin: 20px 0;
+                        overflow-x: auto;
+                        padding: 10px 0;
+                    }
+                    
+                    .signal-journey-step {
+                        position: relative;
+                        text-align: center;
+                        min-width: 120px;
+                        opacity: 0;
+                        transform: translateY(20px);
+                        animation: signalDiscovery 0.8s ease-out forwards;
+                    }
+                    
+                    .signal-journey-step:nth-child(1) { animation-delay: 0.2s; }
+                    .signal-journey-step:nth-child(2) { animation-delay: 0.4s; }
+                    .signal-journey-step:nth-child(3) { animation-delay: 0.6s; }
+                    .signal-journey-step:nth-child(4) { animation-delay: 0.8s; }
+                    .signal-journey-step:nth-child(5) { animation-delay: 1.0s; }
+                    
+                    .signal-step-icon {
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin: 0 auto 8px;
+                        position: relative;
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .signal-step-icon:hover {
+                        transform: scale(1.1);
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    }
+                    
+                    .signal-step-count {
+                        position: absolute;
+                        top: -5px;
+                        right: -5px;
+                        background: #fff;
+                        border: 2px solid currentColor;
+                        border-radius: 50%;
+                        width: 20px;
+                        height: 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 10px;
+                        font-weight: bold;
+                        animation: countPulse 2s ease-in-out infinite;
+                    }
+                    
+                    .signal-step-name {
+                        font-size: 11px;
+                        font-weight: 600;
+                        margin-bottom: 2px;
+                    }
+                    
+                    .signal-step-desc {
+                        font-size: 9px;
+                        color: #666;
+                        line-height: 1.2;
+                    }
+                    
+                    .signal-journey-arrow {
+                        color: #007bff;
+                        font-size: 16px;
+                        margin: 0 10px;
+                        opacity: 0;
+                        animation: arrowAppear 0.5s ease-out forwards;
+                    }
+                    
+                    .signal-journey-arrow:nth-of-type(2) { animation-delay: 0.5s; }
+                    .signal-journey-arrow:nth-of-type(4) { animation-delay: 0.7s; }
+                    .signal-journey-arrow:nth-of-type(6) { animation-delay: 0.9s; }
+                    .signal-journey-arrow:nth-of-type(8) { animation-delay: 1.1s; }
+                    
+                    @keyframes signalDiscovery {
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+                    
+                    @keyframes arrowAppear {
+                        to {
+                            opacity: 1;
+                        }
+                    }
+                    
+                    @keyframes countPulse {
+                        0%, 100% { transform: scale(1); }
+                        50% { transform: scale(1.1); }
+                    }
+                    
+                    .discovery-summary {
+                        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin-top: 20px;
+                        text-align: center;
+                        opacity: 0;
+                        animation: summaryAppear 0.8s ease-out 1.5s forwards;
+                    }
+                    
+                    @keyframes summaryAppear {
+                        to {
+                            opacity: 1;
+                        }
+                    }
+                    
+                    .total-signals {
+                        font-size: 24px;
+                        font-weight: bold;
+                        color: #007bff;
+                        margin-bottom: 5px;
+                    }
+                </style>
+                
+                <div class="signal-journey-path">
+                    ${levelOrder.map((level, index) => {
+                        const info = levelInfo[level];
+                        const signals = signalsByLevel[level] || [];
+                        const hasSignals = signals.length > 0;
+                        
+                        let stepHtml = '';
+                        if (index > 0) {
+                            stepHtml += '<i class="fas fa-arrow-right signal-journey-arrow"></i>';
+                        }
+                        stepHtml += `
+                            <div class="signal-journey-step">
+                                <div class="signal-step-icon bg-${info.color} text-white">
+                                    <i class="${info.icon}"></i>`;
+                        if (hasSignals) {
+                            stepHtml += `<span class="signal-step-count">${signals.length}</span>`;
+                        }
+                        stepHtml += `
+                                </div>
+                                <div class="signal-step-name">${info.name}</div>
+                                <div class="signal-step-desc">${info.description}</div>
+                            </div>
+                        `;
+                        return stepHtml;
+                    }).join('')}
+                </div>
+                
+                <div class="discovery-summary">
+                    <div class="total-signals">${Object.values(signalsByLevel).flat().length}</div>
+                    <div class="small text-muted">Total Signals Discovered</div>
+                    <div class="small mt-2">
+                        <i class="fas fa-route text-info"></i> 
+                        AI analyzed thesis through 5-level signal classification framework
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function generateAnalystPredicates(thesisData) {
+        return `
+            <div class="analyst-predicates">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="small text-primary mb-3"><i class="fas fa-lightbulb"></i> Movement Drivers</h6>
+                        <div class="predicate-item mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="badge bg-success rounded-circle me-2" style="width: 20px; height: 20px; font-size: 10px;">1</div>
+                                <div>
+                                    <div class="small fw-bold">Supply-Demand Imbalance</div>
+                                    <div class="small text-muted">Persistent AI accelerator shortage driving pricing power</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="predicate-item mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="badge bg-info rounded-circle me-2" style="width: 20px; height: 20px; font-size: 10px;">2</div>
+                                <div>
+                                    <div class="small fw-bold">Market Share Expansion</div>
+                                    <div class="small text-muted">Hyperscale customer base deepening with locked-in contracts</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="small text-primary mb-3"><i class="fas fa-chart-line"></i> Rationale Framework</h6>
+                        <div class="small mb-2">
+                            <strong>Catalyst Timeline:</strong> Q4 2024 - Q2 2027
+                        </div>
+                        <div class="small mb-2">
+                            <strong>Risk-Adjusted Return:</strong> High conviction (85%)
+                        </div>
+                        <div class="small mb-2">
+                            <strong>Key Inflection Points:</strong>
+                            <ul class="small mt-1 mb-0">
+                                <li>H100/H200 production ramp</li>
+                                <li>Enterprise AI adoption acceleration</li>
+                                <li>Sovereign AI infrastructure builds</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function generateMarketSentiment(thesisData) {
+        // Use AI-generated market sentiment from server-side Azure OpenAI analysis
+        if (thesisData.ai_market_sentiment) {
+            return renderMarketSentimentData(thesisData.ai_market_sentiment);
+        } else {
+            // Load market sentiment on demand
+            return `
+                <div class="market-sentiment" id="market-sentiment-container">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div class="small mt-2 text-muted">Generating AI market sentiment...</div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    function renderMarketSentimentData(marketData) {
+        return `
+            <div class="market-sentiment">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div></div>
+                    <div class="badge bg-success text-white small">
+                        <i class="fas fa-robot"></i> Azure OpenAI Generated
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="small text-primary mb-3"><i class="fas fa-users"></i> Sell-Side Consensus</h6>
+                        <div class="sentiment-metric mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small">Buy Rating</span>
+                                <span class="badge bg-success">${marketData.buy_rating}%</span>
+                            </div>
+                            <div class="progress" style="height: 4px;">
+                                <div class="progress-bar bg-success" style="width: ${marketData.buy_rating}%"></div>
+                            </div>
+                        </div>
+                        <div class="sentiment-metric mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small">Hold Rating</span>
+                                <span class="badge bg-warning text-dark">${marketData.hold_rating}%</span>
+                            </div>
+                            <div class="progress" style="height: 4px;">
+                                <div class="progress-bar bg-warning" style="width: ${marketData.hold_rating}%"></div>
+                            </div>
+                        </div>
+                        <div class="sentiment-metric mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small">Sell Rating</span>
+                                <span class="badge bg-danger">${marketData.sell_rating}%</span>
+                            </div>
+                            <div class="progress" style="height: 4px;">
+                                <div class="progress-bar bg-danger" style="width: ${marketData.sell_rating}%"></div>
+                            </div>
+                        </div>
+                        <div class="small text-muted">
+                            <i class="fas fa-users"></i> ${marketData.total_analysts || 'N/A'} analysts covering
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="small text-primary mb-3"><i class="fas fa-chart-pie"></i> Market Positioning</h6>
+                        <div class="small mb-2">
+                            <strong>Avg Price Target:</strong> ${marketData.avg_price_target} (${marketData.upside_potential})
+                        </div>
+                        <div class="small mb-2">
+                            <strong>Sentiment Trend:</strong> 
+                            <span class="text-${marketData.sentiment_trend === 'improving' ? 'success' : marketData.sentiment_trend === 'declining' ? 'danger' : 'warning'}">
+                                <i class="fas fa-arrow-${marketData.sentiment_trend === 'improving' ? 'up' : marketData.sentiment_trend === 'declining' ? 'down' : 'right'}"></i> 
+                                ${marketData.sentiment_trend ? marketData.sentiment_trend.charAt(0).toUpperCase() + marketData.sentiment_trend.slice(1) : 'Stable'}
+                            </span>
+                        </div>
+                        <div class="small mb-2">
+                            <strong>Key Concerns:</strong>
+                            <ul class="small mt-1 mb-0">
+                                ${(marketData.key_concerns || []).map(concern => `<li>${concern}</li>`).join('')}
+                            </ul>
+                        </div>
+                        ${marketData.bullish_factors ? `
+                            <div class="small mb-2">
+                                <strong>Bullish Factors:</strong>
+                                <ul class="small mt-1 mb-0">
+                                    ${marketData.bullish_factors.map(factor => `<li class="text-success">${factor}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="mt-3 p-2 bg-light rounded">
+                    <div class="small text-muted d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fas fa-brain"></i> 
+                            Generated via Azure OpenAI analysis of thesis fundamentals and sector dynamics
+                        </span>
+                        ${marketData.confidence_score ? `
+                            <span class="badge bg-info">
+                                ${Math.round(marketData.confidence_score * 100)}% confidence
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Load AI-generated market sentiment on demand
+    async function loadMarketSentimentOnDemand() {
+        try {
+            const thesisId = currentAnalysisData?.id || extractThesisIdFromURL();
+            
+            if (!thesisId) {
+                updateMarketSentimentError('Unable to identify thesis for analysis');
+                return;
+            }
+            
+            const response = await fetch(`/api/market_sentiment/${thesisId}`);
+            const data = await response.json();
+            
+            if (data.success && data.market_sentiment) {
+                const container = document.getElementById('market-sentiment-container');
+                if (container) {
+                    container.innerHTML = renderMarketSentimentData(data.market_sentiment);
+                }
+            } else {
+                updateMarketSentimentError(data.error || 'Azure OpenAI service unavailable');
+            }
+        } catch (error) {
+            console.error('Market sentiment loading failed:', error);
+            updateMarketSentimentError('Network error - please check Azure OpenAI configuration');
+        }
+    }
+    
+    function updateMarketSentimentError(errorMessage) {
+        const container = document.getElementById('market-sentiment-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Market Sentiment Unavailable</strong><br>
+                    ${errorMessage}
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            Authentic sell-side analysis requires Azure OpenAI configuration.
+                        </small>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    function extractThesisIdFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('id') || urlParams.get('thesis_id') || null;
+    }
+    
+    function generateEnhancedCounterThesis(counterScenarios) {
+        if (!counterScenarios || !Array.isArray(counterScenarios)) {
+            return '<p class="text-muted">No counter-thesis scenarios identified</p>';
+        }
+        
+        return `
+            <div class="counter-thesis-enhanced">
+                <div class="mb-3">
+                    <h6 class="small text-warning mb-2"><i class="fas fa-exclamation-triangle"></i> Risk Scenarios Being Monitored</h6>
+                    <div class="small text-muted mb-3">Active surveillance on key thesis vulnerabilities</div>
+                </div>
+                
+                ${counterScenarios.slice(0, 3).map((scenario, index) => `
+                    <div class="risk-scenario border rounded p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-warning text-dark me-2">${index + 1}</span>
+                                <strong class="small">${scenario.scenario || 'Risk Scenario'}</strong>
+                            </div>
+                            <span class="badge bg-outline-danger small">High Priority</span>
+                        </div>
+                        
+                        <div class="small text-muted mb-2">
+                            ${scenario.description || 'No description available'}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="small mb-1"><strong>Trigger Conditions:</strong></div>
+                                <ul class="small mb-2">
+                                    ${(scenario.trigger_conditions || []).slice(0, 2).map(condition => 
+                                        `<li>${condition}</li>`
+                                    ).join('')}
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small mb-1"><strong>Watch Signals:</strong></div>
+                                <ul class="small mb-2">
+                                    ${(scenario.data_signals || []).slice(0, 2).map(signal => 
+                                        `<li><code class="small">${signal}</code></li>`
+                                    ).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-2">
+                            <span class="badge bg-light text-dark me-2">
+                                <i class="fas fa-eye"></i> Monitoring Active
+                            </span>
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-clock"></i> Real-time alerts
+                            </span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    function generateValueChainMapping(metrics) {
+        if (!metrics || !Array.isArray(metrics)) return '<p class="text-muted">No metrics identified</p>';
+        
+        // Enhanced display with FactSet/Xpressfeed data sources
+        return `
+            <div class="mt-4">
+                <strong class="small d-block mb-3">Trackable Metrics (FactSet/Xpressfeed):</strong>
+                ${metrics.slice(0, 6).map(metric => `
+                    <div class="border rounded p-2 mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="small"><strong>${metric.name}</strong></div>
+                                <div class="small text-muted">${metric.description || ''}</div>
+                                ${metric.factset_identifier ? `
+                                    <div class="small text-info mt-1">
+                                        <i class="fas fa-database"></i> ${metric.factset_identifier}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-secondary small">${metric.data_source || 'FactSet'}</span>
+                                ${metric.frequency ? `<div class="small text-muted">${metric.frequency}</div>` : ''}
+                            </div>
+                        </div>
+                        ${metric.conviction_linkage ? `
+                            <div class="small text-success mt-1">
+                                <i class="fas fa-link"></i> ${metric.conviction_linkage}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    function generateCausalChainCard(causalChain) {
+        if (!causalChain || !Array.isArray(causalChain) || causalChain.length === 0) {
+            return `
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-link text-secondary"></i> Causal Chain</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">No causal chain identified</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-link text-secondary"></i> Chainlinked Events</h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        ${causalChain.slice(0, 6).map((link, index) => `
+                            <div class="timeline-item ${index === causalChain.length - 1 ? 'timeline-end' : ''}">
+                                <div class="timeline-marker bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 12px;">
+                                    ${link.chain_link || index + 1}
+                                </div>
+                                <div class="timeline-content ms-3">
+                                    <h6 class="mb-1">${link.event}</h6>
+                                    <p class="text-muted small mb-2">${link.explanation}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function generateMonitoringPlanCard(monitoringPlan) {
+        if (!monitoringPlan || typeof monitoringPlan !== 'object') {
+            return `
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-chart-line text-success"></i> Monitoring Strategy</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">No monitoring plan available</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-line text-success"></i> Monitoring Strategy</h6>
+                </div>
+                <div class="card-body">
+                    ${monitoringPlan.objective ? `
+                        <div class="alert alert-info border-0 mb-3">
+                            <strong>Objective:</strong> ${monitoringPlan.objective}
+                        </div>
+                    ` : ''}
+                    
+                    ${monitoringPlan.data_pulls && monitoringPlan.data_pulls.length > 0 ? `
+                        <div class="mb-3">
+                            <strong class="small d-block mb-2">Data Collection Strategy:</strong>
+                            <div class="row">
+                                ${monitoringPlan.data_pulls.slice(0, 3).map(pull => `
+                                    <div class="col-12 mb-2">
+                                        <div class="border rounded p-2">
+                                            <div class="small">
+                                                <strong>${pull.category || 'Data Category'}</strong>
+                                                <span class="badge bg-secondary ms-2">${pull.frequency || 'Regular'}</span>
+                                            </div>
+                                            ${pull.metrics ? `
+                                                <div class="small text-muted mt-1">
+                                                    ${pull.metrics.slice(0, 3).join(', ')}
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${monitoringPlan.alert_logic && monitoringPlan.alert_logic.length > 0 ? `
+                        <div class="mb-3">
+                            <strong class="small d-block mb-2">Alert Triggers:</strong>
+                            ${monitoringPlan.alert_logic.slice(0, 3).map(alert => `
+                                <div class="small border-start border-warning ps-2 mb-2">
+                                    <strong>${alert.condition || 'Alert condition'}</strong>
+                                    <div class="text-muted">${alert.action || 'Take action'}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    ${monitoringPlan.decision_triggers && monitoringPlan.decision_triggers.length > 0 ? `
+                        <div class="mb-3">
+                            <strong class="small d-block mb-2">Decision Points:</strong>
+                            ${monitoringPlan.decision_triggers.slice(0, 2).map(trigger => `
+                                <div class="alert alert-warning py-2 px-3 mb-2">
+                                    <div class="small">
+                                        <strong>If:</strong> ${trigger.condition || 'Condition met'}
+                                        <br><strong>Then:</strong> ${trigger.action || 'Take action'}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    ${monitoringPlan.review_schedule ? `
+                        <div class="text-center mt-3 pt-3 border-top">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar-alt"></i> ${monitoringPlan.review_schedule}
+                            </small>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    // Add CSS for timeline styling
+    const timelineCSS = `
+        <style>
+        .timeline {
+            position: relative;
+            padding-left: 0;
+        }
+        .timeline-item {
+            position: relative;
+            display: flex;
+            align-items-start;
+            margin-bottom: 1.5rem;
+        }
+        .timeline-item:not(.timeline-end):after {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 24px;
+            width: 2px;
+            height: calc(100% + 0.5rem);
+            background-color: var(--bs-border-color);
+        }
+        .timeline-marker {
+            position: relative;
+            z-index: 2;
+            flex-shrink: 0;
+        }
+        .timeline-content {
+            flex-grow: 1;
+        }
+        </style>
+    `;
+    
+    // Add timeline CSS to document head if not already present
+    if (!document.querySelector('#timeline-styles')) {
+        const styleElement = document.createElement('div');
+        styleElement.id = 'timeline-styles';
+        styleElement.innerHTML = timelineCSS;
+        document.head.appendChild(styleElement);
+    }
+    
+    // Helper function to add publish/download functionality
+    function publishAnalysis() {
+        if (!window.currentAnalysis) {
+            alert('No analysis data available to publish');
+            return;
+        }
+        
+        // Send analysis data to publish endpoint
+        fetch('/publish_thesis', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(window.currentAnalysis)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Analysis published successfully! You can now monitor this thesis.');
+                window.location.href = `/monitoring/thesis/${data.thesis_id}`;
+            } else {
+                alert('Failed to publish analysis: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error publishing analysis:', error);
+            alert('Failed to publish analysis. Please try again.');
+        });
+    }
+    
+    function downloadAnalysis() {
+        if (!window.currentAnalysis) {
+            alert('No analysis data available to download');
+            return;
+        }
+        
+        // Create downloadable report
+        const reportData = JSON.stringify(window.currentAnalysis, null, 2);
+        const blob = new Blob([reportData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `thesis-analysis-${new Date().getTime()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    // Store analysis data globally for publish/download functions
+    function storeAnalysisData(data) {
+        window.currentAnalysis = data;
+    }
+    
+    function generateMonitoringStrategy(strategy) {
+        if (!strategy) return '<p class="text-muted">No monitoring recommendations</p>';
+        
+        // Handle both old and new monitoring plan formats
+        const objective = strategy.objective || 'Monitor thesis performance and key assumptions';
+        const dataPulls = strategy.data_pulls || [];
+        const alertLogic = strategy.alert_logic || [];
+        const decisionTriggers = strategy.decision_triggers || [];
+        const reviewSchedule = strategy.review_schedule || strategy.review_frequency || 'Monthly';
+        
+        return `
+            <div class="mb-4">
+                <h6 class="text-primary">Monitoring Objective</h6>
+                <p class="small">${objective}</p>
+            </div>
+            
+            ${dataPulls.length > 0 ? `
+                <div class="mb-4">
+                    <h6 class="text-primary">Key Metrics & Data Pulls</h6>
+                    ${dataPulls.map((pull, index) => `
+                        <div class="border rounded p-2 mb-2 bg-secondary">
+                            <div class="small"><strong>${String.fromCharCode(65 + index)}. ${pull.category}</strong></div>
+                            <div class="small text-light mt-1">
+                                • Metrics: ${(pull.metrics || []).join(', ')}<br>
+                                • Source: <span class="badge bg-info text-dark">${pull.data_source}</span><br>
+                                • Frequency: ${pull.frequency}
+                            </div>
+                            ${pull.query_template ? `
+                                <div class="mt-2">
+                                    <code class="small bg-dark text-light p-1 rounded d-block">${pull.query_template}</code>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            
+            ${alertLogic.length > 0 ? `
+                <div class="mb-4">
+                    <h6 class="text-primary">Alert Logic</h6>
+                    ${alertLogic.map(alert => `
+                        <div class="small mb-2">
+                            • <span class="badge bg-warning text-dark">${alert.frequency}</span>: ${alert.condition}
+                            <div class="text-muted ms-3">→ ${alert.action}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            
+            ${decisionTriggers.length > 0 ? `
+                <div class="mb-4">
+                    <h6 class="text-primary">Decision Triggers</h6>
+                    ${decisionTriggers.map(trigger => `
+                        <div class="small mb-2">
+                            • ${trigger.condition}
+                            <div class="text-muted ms-3">→ <span class="badge bg-${trigger.action === 'sell' ? 'danger' : trigger.action === 'buy' ? 'success' : 'secondary'}">${trigger.action.toUpperCase()}</span></div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            
+            <div class="mb-3">
+                <h6 class="text-primary">Review Schedule</h6>
+                <span class="badge bg-info">${reviewSchedule}</span>
+            </div>
+        `;
+    }
+    
+    function generatePrimarySignalsTable(rawSignals) {
+        if (!rawSignals || !Array.isArray(rawSignals)) return '<p class="text-muted">No signals identified</p>';
+        
+        const primarySignals = rawSignals.filter(signal => 
+            signal.level === 'Raw Economic Activity' || signal.level === 'Simple Aggregation'
+        );
+        
+        if (primarySignals.length === 0) return '<p class="text-muted">No primary signals identified</p>';
+        
+        return `
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Signal</th>
+                            <th>Level</th>
+                            <th>Value Chain</th>
+                            <th>Predictive Power</th>
+                            <th>Reliability</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${primarySignals.slice(0, 10).map(signal => `
+                            <tr>
+                                <td><strong>${signal.name}</strong></td>
+                                <td><span class="badge ${signal.level === 'Raw Economic Activity' ? 'bg-success' : 'bg-info'}">${signal.level.replace(' ', '<br>')}</span></td>
+                                <td class="small">${signal.value_chain_position}</td>
+                                <td><span class="badge ${getPredictiveBadge(signal.predictive_power)}">${signal.predictive_power}</span></td>
+                                <td>${(signal.reliability_score * 100).toFixed(0)}%</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+    
+    function getPredictiveBadge(power) {
+        switch(power) {
+            case 'high': return 'bg-success';
+            case 'medium': return 'bg-warning';
+            case 'low': return 'bg-secondary';
+            default: return 'bg-light';
+        }
+    }
+    
+    // Publish thesis functionality
+    function publishThesis() {
+        if (!window.currentAnalysis) {
+            alert('No analysis data available to publish');
+            return;
+        }
+        
+        const publishBtn = document.querySelector('button[onclick="publishThesis()"]');
+        publishBtn.disabled = true;
+        publishBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+        
+        fetch('/publish_thesis', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(window.currentAnalysis)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                publishBtn.innerHTML = '<i class="fas fa-check"></i> Published';
+                publishBtn.className = 'btn btn-outline-success btn-lg me-3';
+                
+                // Enable simulation button
+                const simulationBtn = document.getElementById('simulationBtn');
+                simulationBtn.disabled = false;
+                simulationBtn.setAttribute('onclick', `goToSimulation(${data.thesis_id})`);
+                
+                // Show success message
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success mt-3';
+                alert.innerHTML = `<i class="fas fa-check-circle"></i> Thesis published successfully! You can now run simulations.`;
+                publishBtn.closest('.card-body').appendChild(alert);
+            } else {
+                publishBtn.disabled = false;
+                publishBtn.innerHTML = '<i class="fas fa-upload"></i> Publish Thesis';
+                alert('Failed to publish thesis: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            publishBtn.disabled = false;
+            publishBtn.innerHTML = '<i class="fas fa-upload"></i> Publish Thesis';
+            console.error('Error:', error);
+            alert('Failed to publish thesis');
+        });
+    }
+    
+    // Global publishAnalysis function for the publish button
+    window.publishAnalysis = function() {
+        if (!window.currentAnalysis) {
+            alert('No analysis data available to publish');
+            return;
+        }
+        
+        const button = document.querySelector('button[onclick="publishAnalysis()"]');
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+        }
+        
+        fetch('/publish_thesis', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(window.currentAnalysis)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Analysis published successfully! You can now monitor this thesis.');
+                window.location.href = `/thesis/${data.thesis_id}/monitor`;
+            } else {
+                alert('Failed to publish analysis: ' + (data.error || 'Unknown error'));
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-rocket"></i> Publish for Monitoring';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error publishing analysis:', error);
+            alert('Failed to publish analysis. Please try again.');
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-rocket"></i> Publish for Monitoring';
+            }
+        });
+    };
+    
+    // Global downloadAnalysis function for the download button
+    window.downloadAnalysis = function() {
+        if (!window.currentAnalysis) {
+            alert('No analysis data available to download');
+            return;
+        }
+        
+        // Create downloadable report
+        const reportData = JSON.stringify(window.currentAnalysis, null, 2);
+        const blob = new Blob([reportData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `thesis-analysis-${new Date().getTime()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+    
+    function goToSimulation(thesisId) {
+        if (thesisId) {
+            window.location.href = `/simulation/${thesisId}`;
+        } else {
+            alert('No thesis ID available for simulation');
+        }
+    }
+    
+    // Signal Context Expansion Function
+    window.toggleSignalExpansion = function(index) {
+        const contextDiv = document.getElementById(`signal-context-${index}`);
+        const expandIcon = document.getElementById(`expand-icon-${index}`);
+        
+        if (contextDiv && expandIcon) {
+            if (contextDiv.style.display === 'none' || contextDiv.style.display === '') {
+                // Expand
+                contextDiv.style.display = 'block';
+                expandIcon.style.transform = 'rotate(180deg)';
+                expandIcon.classList.remove('fa-chevron-down');
+                expandIcon.classList.add('fa-chevron-up');
+                
+                // Add smooth fade-in animation
+                contextDiv.style.opacity = '0';
+                contextDiv.style.transition = 'opacity 0.3s ease-in-out';
+                setTimeout(() => {
+                    contextDiv.style.opacity = '1';
+                }, 10);
+                
+                // Add subtle highlight to the card
+                const signalCard = contextDiv.closest('.signal-card');
+                if (signalCard) {
+                    signalCard.style.backgroundColor = '#f8f9fa';
+                    signalCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                }
+            } else {
+                // Collapse
+                contextDiv.style.opacity = '0';
+                setTimeout(() => {
+                    contextDiv.style.display = 'none';
+                    expandIcon.style.transform = 'rotate(0deg)';
+                    expandIcon.classList.remove('fa-chevron-up');
+                    expandIcon.classList.add('fa-chevron-down');
+                    
+                    // Remove highlight from the card
+                    const signalCard = contextDiv.closest('.signal-card');
+                    if (signalCard) {
+                        signalCard.style.backgroundColor = '';
+                        signalCard.style.boxShadow = '';
+                    }
+                }, 300);
+            }
+        }
+    };
+});
+
+// Add hover effects to signal cards after DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        const signalCards = document.querySelectorAll('.signal-card');
+        signalCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                if (!this.querySelector('.signal-context[style*="block"]')) {
+                    this.style.backgroundColor = '#f8f9fa';
+                    this.style.transform = 'translateY(-1px)';
+                }
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                if (!this.querySelector('.signal-context[style*="block"]')) {
+                    this.style.backgroundColor = '';
+                    this.style.transform = '';
+                }
+            });
+        });
+    }, 1000); // Wait for dynamic content to load
+});
+</script>
+{% endblock %}

@@ -1,0 +1,469 @@
+{% extends "base.html" %}
+
+{% block title %}Thesis Simulation - {{ thesis.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-play-circle"></i> Thesis Simulation</h2>
+                    <p class="text-muted">Test your investment thesis against time horizon forecasts and real-world event scenarios</p>
+                </div>
+                <a href="/monitoring" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Monitoring
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thesis Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-bullseye"></i> {{ thesis.title }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p><strong>Core Claim:</strong> {{ thesis.core_claim or 'No core claim available' }}</p>
+                            <p><strong>Mental Model:</strong> <span class="badge bg-info">{{ thesis.mental_model or 'Unknown' }}</span></p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="text-muted small">
+                                Created: {{ thesis.created_at.strftime('%B %d, %Y') if thesis.created_at else 'Unknown' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulation Controls -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-calendar-alt"></i> Time Horizon Forecast</h6>
+                </div>
+                <div class="card-body">
+                    <form id="forecastForm">
+                        <div class="mb-3">
+                            <label for="timeHorizon" class="form-label">Forecast Period</label>
+                            <select class="form-select" id="timeHorizon" required>
+                                <option value="">Select time horizon...</option>
+                                <option value="3m">3 Months</option>
+                                <option value="6m">6 Months</option>
+                                <option value="1y">1 Year</option>
+                                <option value="2y">2 Years</option>
+                                <option value="3y">3 Years</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="scenarioType" class="form-label">Market Scenario</label>
+                            <select class="form-select" id="scenarioType" required>
+                                <option value="">Select scenario...</option>
+                                <option value="bull">Bull Market (Favorable conditions)</option>
+                                <option value="base">Base Case (Expected conditions)</option>
+                                <option value="bear">Bear Market (Adverse conditions)</option>
+                                <option value="black_swan">Black Swan (Extreme events)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-chart-line"></i> Generate Forecast
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Event Simulation</h6>
+                </div>
+                <div class="card-body">
+                    <form id="eventForm">
+                        <div class="mb-3">
+                            <label for="eventType" class="form-label">Event Category</label>
+                            <select class="form-select" id="eventType" required>
+                                <option value="">Select event type...</option>
+                                <option value="market">Market Events</option>
+                                <option value="competitive">Competitive Threats</option>
+                                <option value="regulatory">Regulatory Changes</option>
+                                <option value="macroeconomic">Macroeconomic Shifts</option>
+                                <option value="company_specific">Company-Specific Events</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventSeverity" class="form-label">Event Severity</label>
+                            <select class="form-select" id="eventSeverity" required>
+                                <option value="">Select severity...</option>
+                                <option value="minor">Minor Impact (1-5%)</option>
+                                <option value="moderate">Moderate Impact (5-15%)</option>
+                                <option value="major">Major Impact (15-30%)</option>
+                                <option value="critical">Critical Impact (30%+)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-bolt"></i> Simulate Event
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulation Results -->
+    <div id="simulationResults" style="display: none;">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-chart-area"></i> Simulation Results</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="resultsContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Triggers -->
+    <div id="alertTriggersSection" style="display: none;">
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0"><i class="fas fa-bell"></i> Alert Triggers Activated</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="alertContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal fade" id="simulationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center py-4">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5>Running Simulation...</h5>
+                    <p class="text-muted mb-0">Analyzing scenarios and generating forecasts</p>
+                    <div class="progress mt-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const forecastForm = document.getElementById('forecastForm');
+    const eventForm = document.getElementById('eventForm');
+    const thesisId = {{ thesis.id }};
+
+    // Time horizon forecast simulation
+    forecastForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const timeHorizon = document.getElementById('timeHorizon').value;
+        const scenarioType = document.getElementById('scenarioType').value;
+        
+        if (!timeHorizon || !scenarioType) {
+            alert('Please select both time horizon and scenario type');
+            return;
+        }
+        
+        runSimulation('forecast', {
+            thesis_id: thesisId,
+            time_horizon: timeHorizon,
+            scenario_type: scenarioType
+        });
+    });
+
+    // Event simulation
+    eventForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const eventType = document.getElementById('eventType').value;
+        const eventSeverity = document.getElementById('eventSeverity').value;
+        
+        if (!eventType || !eventSeverity) {
+            alert('Please select both event type and severity');
+            return;
+        }
+        
+        runSimulation('event', {
+            thesis_id: thesisId,
+            event_type: eventType,
+            event_severity: eventSeverity
+        });
+    });
+
+    function runSimulation(type, params) {
+        // Show loading modal
+        const modal = new bootstrap.Modal(document.getElementById('simulationModal'));
+        modal.show();
+        
+        // Simulate progress
+        const progressBar = document.querySelector('.progress-bar');
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 15;
+            if (progress > 90) progress = 90;
+            progressBar.style.width = progress + '%';
+        }, 800);
+
+        // Submit simulation request
+        fetch('/api/simulation/run', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                simulation_type: type,
+                ...params
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            clearInterval(interval);
+            progressBar.style.width = '100%';
+            
+            setTimeout(() => {
+                modal.hide();
+                displaySimulationResults(data, type);
+            }, 1000);
+        })
+        .catch(error => {
+            clearInterval(interval);
+            modal.hide();
+            console.error('Error:', error);
+            alert('Simulation failed. Please try again.');
+        });
+    }
+
+    function displaySimulationResults(data, type) {
+        const resultsDiv = document.getElementById('simulationResults');
+        const contentDiv = document.getElementById('resultsContent');
+        
+        if (type === 'forecast') {
+            contentDiv.innerHTML = generateForecastResults(data);
+        } else {
+            contentDiv.innerHTML = generateEventResults(data);
+        }
+        
+        resultsDiv.style.display = 'block';
+        
+        // Check for alert triggers
+        if (data.alert_triggers && data.alert_triggers.length > 0) {
+            displayAlertTriggers(data.alert_triggers);
+        }
+        
+        // Scroll to results
+        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function generateForecastResults(data) {
+        const forecast = data.forecast || {};
+        const metrics = data.performance_metrics || {};
+        
+        return `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-3">Forecast Summary</h6>
+                    <div class="mb-3">
+                        <strong>Time Horizon:</strong> ${forecast.time_horizon || 'N/A'}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Scenario:</strong> <span class="badge bg-info">${forecast.scenario_type || 'N/A'}</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Thesis Confidence:</strong> 
+                        <span class="badge bg-${getConfidenceBadge(forecast.confidence)}">${forecast.confidence || 'N/A'}%</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Key Outcomes:</strong>
+                        <ul class="mt-2">
+                            ${(forecast.key_outcomes || []).map(outcome => `<li>${outcome}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-3">Performance Metrics</h6>
+                    <div class="mb-2">
+                        <strong>Expected Return:</strong> 
+                        <span class="text-${metrics.expected_return >= 0 ? 'success' : 'danger'}">
+                            ${metrics.expected_return || 'N/A'}%
+                        </span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Risk Level:</strong> <span class="badge bg-warning">${metrics.risk_level || 'N/A'}</span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Key Risks:</strong>
+                        <ul class="mt-2">
+                            ${(metrics.key_risks || []).map(risk => `<li class="text-danger">${risk}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h6 class="text-primary mb-3">Signal Performance Forecast</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Signal</th>
+                                <th>Current Status</th>
+                                <th>Forecast Direction</th>
+                                <th>Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(data.signal_forecasts || []).map(signal => `
+                                <tr>
+                                    <td>${signal.name || 'N/A'}</td>
+                                    <td><span class="badge bg-secondary">${signal.current_status || 'N/A'}</span></td>
+                                    <td>
+                                        <i class="fas fa-arrow-${signal.direction === 'up' ? 'up text-success' : signal.direction === 'down' ? 'down text-danger' : 'right text-muted'}"></i>
+                                        ${signal.direction || 'N/A'}
+                                    </td>
+                                    <td>${signal.confidence || 'N/A'}%</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    function generateEventResults(data) {
+        const event = data.event_simulation || {};
+        const impact = data.impact_analysis || {};
+        
+        return `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-warning mb-3">Event Simulation</h6>
+                    <div class="mb-3">
+                        <strong>Event Type:</strong> ${event.event_type || 'N/A'}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Severity:</strong> <span class="badge bg-warning">${event.severity || 'N/A'}</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Event Description:</strong>
+                        <p class="mt-1">${event.description || 'No description available'}</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-danger mb-3">Impact Analysis</h6>
+                    <div class="mb-2">
+                        <strong>Thesis Impact:</strong> 
+                        <span class="text-${impact.thesis_impact >= 0 ? 'success' : 'danger'}">
+                            ${impact.thesis_impact || 'N/A'}%
+                        </span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Recovery Time:</strong> ${impact.recovery_time || 'N/A'}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Mitigation Actions:</strong>
+                        <ul class="mt-2">
+                            ${(impact.mitigation_actions || []).map(action => `<li>${action}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h6 class="text-danger mb-3">Signal Response Analysis</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Signal</th>
+                                <th>Pre-Event</th>
+                                <th>Post-Event</th>
+                                <th>Impact</th>
+                                <th>Alert Triggered</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(data.signal_responses || []).map(signal => `
+                                <tr>
+                                    <td>${signal.name || 'N/A'}</td>
+                                    <td>${signal.pre_event || 'N/A'}</td>
+                                    <td>${signal.post_event || 'N/A'}</td>
+                                    <td class="text-${signal.impact_pct >= 0 ? 'success' : 'danger'}">
+                                        ${signal.impact_pct || 'N/A'}%
+                                    </td>
+                                    <td>
+                                        ${signal.alert_triggered ? 
+                                            '<i class="fas fa-bell text-warning"></i> Yes' : 
+                                            '<i class="fas fa-times text-muted"></i> No'
+                                        }
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    function displayAlertTriggers(triggers) {
+        const alertDiv = document.getElementById('alertTriggersSection');
+        const contentDiv = document.getElementById('alertContent');
+        
+        contentDiv.innerHTML = `
+            <div class="alert alert-warning">
+                <h6><i class="fas fa-exclamation-triangle"></i> ${triggers.length} Alert(s) Triggered</h6>
+                <p>The simulation has activated the following monitoring alerts:</p>
+            </div>
+            
+            ${triggers.map(alert => `
+                <div class="border rounded p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-danger">${alert.signal_name || 'Unknown Signal'}</h6>
+                            <p class="mb-2">${alert.condition || 'No condition specified'}</p>
+                            <div class="small text-muted">
+                                <strong>Recommended Action:</strong> ${alert.action || 'No action specified'}
+                            </div>
+                        </div>
+                        <span class="badge bg-${alert.severity === 'critical' ? 'danger' : alert.severity === 'high' ? 'warning' : 'info'}">
+                            ${alert.severity || 'N/A'}
+                        </span>
+                    </div>
+                </div>
+            `).join('')}
+        `;
+        
+        alertDiv.style.display = 'block';
+    }
+
+    function getConfidenceBadge(confidence) {
+        if (confidence >= 80) return 'success';
+        if (confidence >= 60) return 'warning';
+        return 'danger';
+    }
+});
+</script>
+{% endblock %}

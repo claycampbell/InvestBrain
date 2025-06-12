@@ -1,24 +1,27 @@
 import os
 import logging
 import pandas as pd
-from pypdf import PdfReader
-from openpyxl import load_workbook
-from services.azure_openai_service import AzureOpenAIService
+from datetime import datetime
+import pypdf
+import openpyxl
+from pathlib import Path
 
 class DocumentProcessor:
     def __init__(self):
-        self.openai_service = AzureOpenAIService()
-        self.supported_formats = ['.pdf', '.xlsx', '.xls', '.csv']
+        self.supported_formats = {'.pdf', '.xlsx', '.xls', '.csv'}
     
     def process_document(self, file_path):
         """
-        Process uploaded research documents and extract key data
+        Process a document and extract structured data
         """
         try:
-            if not os.path.exists(file_path):
-                raise Exception(f"File not found: {file_path}")
+            file_path = Path(file_path)
+            file_extension = file_path.suffix.lower()
             
-            file_extension = os.path.splitext(file_path)[1].lower()
+            if file_extension not in self.supported_formats:
+                raise ValueError(f"Unsupported file format: {file_extension}")
+            
+            logging.info(f"Processing document: {file_path.name}")
             
             if file_extension == '.pdf':
                 return self._process_pdf(file_path)
@@ -27,169 +30,283 @@ class DocumentProcessor:
             elif file_extension == '.csv':
                 return self._process_csv(file_path)
             else:
-                raise Exception(f"Unsupported file format: {file_extension}")
+                raise ValueError(f"Unsupported file format: {file_extension}")
                 
         except Exception as e:
             logging.error(f"Error processing document {file_path}: {str(e)}")
-            return {
-                'status': 'error',
-                'message': str(e),
-                'data': None
-            }
+            raise
     
     def _process_pdf(self, file_path):
-        """Extract text content from PDF files"""
+        """Process PDF document and extract text and tables"""
         try:
             with open(file_path, 'rb') as file:
-                pdf_reader = PdfReader(file)
+                pdf_reader = pypdf.PdfReader(file)
+                
+                # Extract metadata
+                metadata = {
+                    'document_type': 'pdf',
+                    'page_count': len(pdf_reader.pages),
+                    'file_size': os.path.getsize(file_path),
+                    'processed_at': datetime.utcnow().isoformat()
+                }
+                
+                # Extract text content
                 text_content = ""
+                tables = []
                 
-                for page in pdf_reader.pages:
-                    text_content += page.extract_text() + "\n"
+                for page_num, page in enumerate(pdf_reader.pages):
+                    page_text = page.extract_text()
+                    text_content += f"\n--- Page {page_num + 1} ---\n{page_text}"
+                    
+                    # Try to extract table-like data from text
+                    page_tables = self._extract_tables_from_text(page_text)
+                    if page_tables:
+                        tables.extend(page_tables)
                 
-                # Limit text length for processing
-                if len(text_content) > 10000:
-                    text_content = text_content[:10000] + "... [truncated]"
-                
-                # Extract key insights using AI if available
-                insights = self._extract_insights(text_content, 'pdf')
+                # Analyze content for key financial terms
+                key_metrics = self._extract_financial_metrics(text_content)
                 
                 return {
-                    'status': 'success',
-                    'file_type': 'pdf',
-                    'text_content': text_content,
-                    'insights': insights,
-                    'metadata': {
-                        'pages': len(pdf_reader.pages),
-                        'file_size': os.path.getsize(file_path)
-                    }
+                    'text_content': text_content.strip(),
+                    'tables': tables,
+                    'key_metrics': key_metrics,
+                    'document_metadata': metadata,
+                    'summary': self._create_document_summary(text_content, tables, metadata)
                 }
                 
         except Exception as e:
             logging.error(f"Error processing PDF {file_path}: {str(e)}")
-            return {
-                'status': 'error',
-                'message': f"PDF processing failed: {str(e)}",
-                'data': None
-            }
+            raise
     
     def _process_excel(self, file_path):
-        """Extract data from Excel files"""
+        """Process Excel document and extract data from all sheets"""
         try:
-            # Read Excel file
-            df = pd.read_excel(file_path, sheet_name=None)
+            # Load workbook
+            workbook = openpyxl.load_workbook(file_path, data_only=True)
             
-            processed_sheets = {}
-            summary_data = []
+            metadata = {
+                'document_type': 'excel',
+                'sheet_count': len(workbook.sheetnames),
+                'sheet_names': workbook.sheetnames,
+                'file_size': os.path.getsize(file_path),
+                'processed_at': datetime.utcnow().isoformat()
+            }
             
-            for sheet_name, sheet_data in df.items():
-                # Process each sheet
-                sheet_summary = {
-                    'sheet_name': sheet_name,
-                    'rows': len(sheet_data),
-                    'columns': len(sheet_data.columns),
-                    'column_names': list(sheet_data.columns)
-                }
+            sheets_data = {}
+            all_tables = []
+            
+            for sheet_name in workbook.sheetnames:
+                sheet = workbook[sheet_name]
                 
-                # Extract numeric data for analysis
-                numeric_columns = sheet_data.select_dtypes(include=['number']).columns
-                if len(numeric_columns) > 0:
-                    sheet_summary['numeric_summary'] = sheet_data[numeric_columns].describe().to_dict()
+                # Convert sheet to DataFrame
+                data = []
+                for row in sheet.iter_rows(values_only=True):
+                    data.append(row)
                 
-                processed_sheets[sheet_name] = sheet_summary
-                summary_data.append(f"Sheet '{sheet_name}': {len(sheet_data)} rows, {len(sheet_data.columns)} columns")
+                if data:
+                    # Create DataFrame and clean it
+                    df = pd.DataFrame(data)
+                    df = df.dropna(how='all').dropna(axis=1, how='all')
+                    
+                    if not df.empty:
+                        # Convert to dictionary format
+                        sheet_dict = df.to_dict('records')
+                        sheets_data[sheet_name] = sheet_dict
+                        
+                        # Add to tables list
+                        all_tables.append({
+                            'sheet_name': sheet_name,
+                            'data': sheet_dict,
+                            'shape': df.shape,
+                            'columns': list(df.columns) if hasattr(df, 'columns') else []
+                        })
             
-            # Generate insights from the data
-            data_summary = "; ".join(summary_data)
-            insights = self._extract_insights(data_summary, 'excel')
+            # Extract key metrics from numerical data
+            key_metrics = self._extract_metrics_from_tables(all_tables)
             
             return {
-                'status': 'success',
-                'file_type': 'excel',
-                'sheets': processed_sheets,
-                'insights': insights,
-                'metadata': {
-                    'sheet_count': len(df),
-                    'file_size': os.path.getsize(file_path)
-                }
+                'sheets_data': sheets_data,
+                'tables': all_tables,
+                'key_metrics': key_metrics,
+                'document_metadata': metadata,
+                'summary': self._create_excel_summary(sheets_data, metadata)
             }
             
         except Exception as e:
-            logging.error(f"Error processing Excel {file_path}: {str(e)}")
-            return {
-                'status': 'error',
-                'message': f"Excel processing failed: {str(e)}",
-                'data': None
-            }
+            logging.error(f"Error processing Excel file {file_path}: {str(e)}")
+            raise
     
     def _process_csv(self, file_path):
-        """Extract data from CSV files"""
+        """Process CSV file"""
         try:
+            # Read CSV file
             df = pd.read_csv(file_path)
             
-            # Basic data analysis
-            data_summary = {
-                'rows': len(df),
-                'columns': len(df.columns),
-                'column_names': list(df.columns)
+            metadata = {
+                'document_type': 'csv',
+                'row_count': len(df),
+                'column_count': len(df.columns),
+                'columns': list(df.columns),
+                'file_size': os.path.getsize(file_path),
+                'processed_at': datetime.utcnow().isoformat()
             }
             
-            # Numeric data summary
-            numeric_columns = df.select_dtypes(include=['number']).columns
-            if len(numeric_columns) > 0:
-                data_summary['numeric_summary'] = df[numeric_columns].describe().to_dict()
+            # Convert to dictionary format
+            data = df.to_dict('records')
             
-            # Generate insights
-            summary_text = f"CSV with {len(df)} rows and {len(df.columns)} columns: {', '.join(df.columns[:5])}"
-            insights = self._extract_insights(summary_text, 'csv')
+            # Create table structure
+            table = {
+                'data': data,
+                'shape': df.shape,
+                'columns': list(df.columns)
+            }
+            
+            # Extract key metrics
+            key_metrics = self._extract_metrics_from_dataframe(df)
             
             return {
-                'status': 'success',
-                'file_type': 'csv',
-                'data_summary': data_summary,
-                'insights': insights,
-                'metadata': {
-                    'file_size': os.path.getsize(file_path)
-                }
+                'data': data,
+                'tables': [table],
+                'key_metrics': key_metrics,
+                'document_metadata': metadata,
+                'summary': self._create_csv_summary(df, metadata)
             }
             
         except Exception as e:
-            logging.error(f"Error processing CSV {file_path}: {str(e)}")
-            return {
-                'status': 'error',
-                'message': f"CSV processing failed: {str(e)}",
-                'data': None
-            }
+            logging.error(f"Error processing CSV file {file_path}: {str(e)}")
+            raise
     
-    def _extract_insights(self, content, file_type):
-        """Extract key insights from document content using AI"""
-        if not self.openai_service.is_available():
-            return ["Document processed successfully but AI analysis unavailable"]
+    def _extract_tables_from_text(self, text):
+        """Extract table-like structures from text"""
+        tables = []
+        lines = text.split('\n')
         
-        try:
-            prompt = f"""Analyze this {file_type} document content and extract key investment-relevant insights:
-
-{content}
-
-Please provide:
-1. Key financial metrics or data points
-2. Important trends or patterns
-3. Relevant market information
-4. Investment implications
-
-Keep the response concise and actionable."""
-
-            response = self.openai_service.generate_completion([
-                {"role": "system", "content": "You are a financial analyst extracting key insights from research documents."},
-                {"role": "user", "content": prompt}
-            ], temperature=0.3)
+        current_table = []
+        in_table = False
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                if current_table and in_table:
+                    tables.append(current_table)
+                    current_table = []
+                    in_table = False
+                continue
             
-            return [response] if response else ["Document processed but no insights extracted"]
-            
-        except Exception as e:
-            logging.error(f"Error extracting insights: {str(e)}")
-            return [f"Document processed successfully ({file_type})"]
+            # Check if line looks like a table row (contains multiple columns)
+            if '\t' in line or '  ' in line:
+                if not in_table:
+                    in_table = True
+                
+                # Split by tabs or multiple spaces
+                columns = [col.strip() for col in line.replace('\t', '|').split('|') if col.strip()]
+                if len(columns) > 1:
+                    current_table.append(columns)
+        
+        # Add the last table if exists
+        if current_table:
+            tables.append(current_table)
+        
+        return tables
+    
+    def _extract_financial_metrics(self, text):
+        """Extract financial metrics and key numbers from text"""
+        import re
+        
+        metrics = {}
+        
+        # Common financial patterns
+        patterns = {
+            'revenue': r'revenue[:\s]+\$?([\d,\.]+)',
+            'profit': r'profit[:\s]+\$?([\d,\.]+)',
+            'margin': r'margin[:\s]+([\d,\.]+)%?',
+            'growth': r'growth[:\s]+([\d,\.]+)%?',
+            'price': r'price[:\s]+\$?([\d,\.]+)',
+            'volume': r'volume[:\s]+([\d,\.]+)',
+            'eps': r'eps[:\s]+\$?([\d,\.]+)',
+            'pe_ratio': r'p/e[:\s]+([\d,\.]+)'
+        }
+        
+        for metric_name, pattern in patterns.items():
+            matches = re.findall(pattern, text.lower())
+            if matches:
+                # Take the first match and clean it
+                value = matches[0].replace(',', '')
+                try:
+                    metrics[metric_name] = float(value)
+                except ValueError:
+                    metrics[metric_name] = value
+        
+        return metrics
+    
+    def _extract_metrics_from_tables(self, tables):
+        """Extract key metrics from table data"""
+        metrics = {}
+        
+        for table in tables:
+            if 'data' in table:
+                for row in table['data']:
+                    if isinstance(row, dict):
+                        for key, value in row.items():
+                            if isinstance(value, (int, float)):
+                                # Store numeric values with their context
+                                metric_key = f"{table.get('sheet_name', 'table')}_{key}"
+                                metrics[metric_key] = value
+        
+        return metrics
+    
+    def _extract_metrics_from_dataframe(self, df):
+        """Extract key metrics from a pandas DataFrame"""
+        metrics = {}
+        
+        # Get numeric columns
+        numeric_columns = df.select_dtypes(include=['number']).columns
+        
+        for col in numeric_columns:
+            series = df[col].dropna()
+            if not series.empty:
+                metrics[f"{col}_mean"] = series.mean()
+                metrics[f"{col}_max"] = series.max()
+                metrics[f"{col}_min"] = series.min()
+                if len(series) > 1:
+                    metrics[f"{col}_std"] = series.std()
+        
+        return metrics
+    
+    def _create_document_summary(self, text_content, tables, metadata):
+        """Create a summary of the PDF document"""
+        word_count = len(text_content.split())
+        table_count = len(tables)
+        
+        return {
+            'word_count': word_count,
+            'table_count': table_count,
+            'page_count': metadata.get('page_count', 0),
+            'has_financial_data': bool(tables),
+            'content_preview': text_content[:200] + '...' if len(text_content) > 200 else text_content
+        }
+    
+    def _create_excel_summary(self, sheets_data, metadata):
+        """Create a summary of the Excel document"""
+        total_rows = sum(len(sheet_data) for sheet_data in sheets_data.values())
+        
+        return {
+            'sheet_count': metadata.get('sheet_count', 0),
+            'total_rows': total_rows,
+            'sheet_names': metadata.get('sheet_names', []),
+            'has_data': total_rows > 0
+        }
+    
+    def _create_csv_summary(self, df, metadata):
+        """Create a summary of the CSV file"""
+        return {
+            'row_count': len(df),
+            'column_count': len(df.columns),
+            'columns': list(df.columns),
+            'numeric_columns': list(df.select_dtypes(include=['number']).columns),
+            'has_data': len(df) > 0
+        }
     
     def get_supported_formats(self):
         """Return list of supported file formats"""
-        return self.supported_formats
+        return list(self.supported_formats)
