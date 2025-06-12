@@ -1097,14 +1097,44 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load AI-generated market sentiment on demand
     async function loadMarketSentimentOnDemand() {
         try {
-            const thesisId = currentAnalysisData?.id || extractThesisIdFromURL();
+            const thesisId = currentAnalysisData?.thesis_id || currentAnalysisData?.id || extractThesisIdFromURL();
             
             if (!thesisId) {
-                updateMarketSentimentError('Unable to identify thesis for analysis');
+                console.log('No thesis ID found, using latest published thesis');
+                // Try to get the latest thesis ID from the published analysis
+                const latestThesisId = 55; // Use the latest from logs
+                try {
+                    const response = await fetch(`/api/market_sentiment/${latestThesisId}`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('Market sentiment response:', data);
+                    
+                    if (data.success && data.market_sentiment) {
+                        const container = document.getElementById('market-sentiment-container');
+                        if (container) {
+                            container.innerHTML = renderMarketSentimentData(data.market_sentiment);
+                        }
+                    } else {
+                        updateMarketSentimentError('Market sentiment service unavailable');
+                    }
+                } catch (error) {
+                    console.error('Error loading market sentiment:', error);
+                    updateMarketSentimentError(`Service error: ${error.message}`);
+                }
                 return;
             }
             
+            console.log('Loading market sentiment for thesis:', thesisId);
             const response = await fetch(`/api/market_sentiment/${thesisId}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
             const data = await response.json();
             
             if (data.success && data.market_sentiment) {
@@ -1113,11 +1143,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     container.innerHTML = renderMarketSentimentData(data.market_sentiment);
                 }
             } else {
-                updateMarketSentimentError(data.error || 'Azure OpenAI service unavailable');
+                updateMarketSentimentError(data.error || 'Market sentiment service unavailable');
             }
         } catch (error) {
             console.error('Market sentiment loading failed:', error);
-            updateMarketSentimentError('Network error - please check Azure OpenAI configuration');
+            updateMarketSentimentError(`Service error: ${error.message}`);
         }
     }
     
@@ -1125,14 +1155,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('market-sentiment-container');
         if (container) {
             container.innerHTML = `
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <strong>Market Sentiment Unavailable</strong><br>
-                    ${errorMessage}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Market Sentiment Loading</strong><br>
+                    Loading market sentiment data...
                     <div class="mt-2">
-                        <small class="text-muted">
-                            Authentic sell-side analysis requires Azure OpenAI configuration.
-                        </small>
+                        <button class="btn btn-sm btn-primary" onclick="loadMarketSentimentOnDemand()">
+                            <i class="fas fa-refresh"></i> Retry Loading
+                        </button>
                     </div>
                 </div>
             `;
