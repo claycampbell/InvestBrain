@@ -568,17 +568,14 @@
             simulationChart.destroy();
         }
 
-        // Extract chart data from nested structure
-        const chartData = data.chart_data || data;
-        const performanceData = chartData.performance_data || data.performance_data || [];
-        const timeline = chartData.timeline || data.timeline || [];
+        // Extract chart data from simulation response
+        const performanceData = data.performance_data || {};
+        const timeline = performanceData.timeline || [];
         
         console.log('Chart data structure:', {
             hasChartData: !!data.chart_data,
-            performanceDataLength: performanceData.length,
             timelineLength: timeline.length,
-            chartConfig: data.chart_config,
-            hasMultiSeries: !!(performanceData.market_performance)
+            hasMultiSeries: !!(performanceData.performance && performanceData.benchmark)
         });
 
         // Prepare series data for ApexCharts in correct format
@@ -592,11 +589,11 @@
             return date.getTime();
         });
         
-        if (performanceData.market_performance && performanceData.thesis_performance) {
-            // Two-series visualization: Market vs Thesis
+        if (performanceData.performance && performanceData.benchmark) {
+            // Two-series visualization: Benchmark vs Thesis
             series.push({
-                name: 'Market Performance',
-                data: performanceData.market_performance.map((value, index) => [
+                name: 'Market Benchmark',
+                data: performanceData.benchmark.map((value, index) => [
                     timelineData[index],
                     value
                 ])
@@ -604,16 +601,16 @@
             
             series.push({
                 name: 'Thesis Performance', 
-                data: performanceData.thesis_performance.map((value, index) => [
+                data: performanceData.performance.map((value, index) => [
                     timelineData[index],
                     value
                 ])
             });
         } else {
             // Single series fallback
-            const singleData = Array.isArray(performanceData) ? performanceData : [];
+            const singleData = performanceData.performance || [];
             series.push({
-                name: data.chart_config?.primary_metric || 'Performance Index',
+                name: 'Performance Index',
                 data: singleData.map((value, index) => [
                     timelineData[index],
                     value
