@@ -12,7 +12,6 @@ class MarketSentimentService:
     """
     
     def __init__(self):
-        self.openai_service = AzureOpenAIService()
         self.logger = logging.getLogger(__name__)
     
     def generate_market_sentiment(self, thesis_text: str, core_analysis: Dict[str, Any]) -> Dict[str, Any]:
@@ -179,10 +178,8 @@ class MarketSentimentService:
             Focus on factual extraction from the thesis content.
             """
             
-            messages = [{"role": "user", "content": prompt}]
-            response = self.openai_service.generate_completion(messages, temperature=0.3)
-            
-            return self._parse_json_response(response, "company_context")
+            # Use fast mathematical model instead of AI
+            return self._extract_company_context_fast(thesis_text)
             
         except Exception as e:
             self.logger.error(f"Company context extraction failed: {str(e)}")
@@ -234,10 +231,8 @@ class MarketSentimentService:
             Ensure buy_rating + hold_rating + sell_rating = 100
             """
             
-            messages = [{"role": "user", "content": prompt}]
-            response = self.openai_service.generate_completion(messages, temperature=0.4)
-            
-            consensus_data = self._parse_json_response(response, "consensus_ratings")
+            # Use fast mathematical model instead of AI
+            consensus_data = self._generate_consensus_ratings_fast(thesis_text, core_analysis, company_info)
             
             # Validate and normalize ratings
             self._normalize_ratings(consensus_data)
