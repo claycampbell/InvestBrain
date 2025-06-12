@@ -579,116 +579,16 @@ class SignalClassifier:
     def _extract_level_0_comprehensive(self, thesis_text: str, processed_documents: List[Dict]) -> List[Dict]:
         """Extract Level 0 signals from LLM analysis only - no hardcoded data"""
         return []  # All signals come from LLM analysis
-        
-        # Additional renewable signals if keywords present
-        if any(keyword in text_lower for keyword in ['renewable', 'capacity', 'mw', 'gw', 'wind', 'solar']):
-            signals.append({
-                'name': 'Renewable Development Pipeline (GW)',
-                'level': 'Level_0_Raw_Economic',
-                'description': 'Committed renewable projects under development',
-                'data_source': 'Company Investor Relations',
-                'programmatic_feasibility': 'low',
-                'acquisition_method': 'Manual extraction from investor presentations, development updates, and regulatory filings',
-                'alternative_sources': ['Wood Mackenzie Power & Renewables', 'BNEF project database'],
-                'frequency': 'quarterly'
-            })
-        
-        # Production/Volume signals
-        if any(keyword in text_lower for keyword in ['units', 'production', 'volume', 'output']):
-            signals.append({
-                'name': 'Power Generation Volume (MWh)',
-                'level': 'Level_0_Raw_Economic',
-                'description': 'Direct measurement of electricity production',
-                'data_source': 'Company Reports/EIA',
-                'programmatic_feasibility': 'medium',
-                'acquisition_method': 'Quarterly earnings reports, EIA-923 forms',
-                'frequency': 'quarterly'
-            })
-        
-        # Customer/Connection signals
-        if any(keyword in text_lower for keyword in ['customer', 'connection', 'account', 'subscriber']):
-            signals.append({
-                'name': 'Customer Account Growth',
-                'level': 'Level_0_Raw_Economic',
-                'description': 'Net new customer connections',
-                'data_source': 'Utility Commission Filings',
-                'programmatic_feasibility': 'medium',
-                'acquisition_method': 'State utility commission monthly reports',
-                'frequency': 'monthly'
-            })
-        
-        # Pipeline/Project signals
-        if any(keyword in text_lower for keyword in ['pipeline', 'project', 'development', 'construction']):
-            signals.append({
-                'name': 'Project Pipeline Backlog (GW)',
-                'level': 'Level_0_Raw_Economic',
-                'description': 'Committed renewable projects under development',
-                'data_source': 'Company Reports',
-                'programmatic_feasibility': 'low',
-                'acquisition_method': 'Manual extraction from investor presentations and development updates',
-                'alternative_sources': ['Wood Mackenzie Power & Renewables', 'BNEF project database'],
-                'frequency': 'quarterly'
-            })
-            
-        return signals
+
     
     def _extract_level_1_comprehensive(self, thesis_text: str, processed_documents: List[Dict]) -> List[Dict]:
-        """Extract Level 1 (Simple Aggregation) signals"""
-        signals = []
-        text_lower = thesis_text.lower()
-        
-        # Always include core financial signals for utility analysis
-        signals.append({
-            'name': 'Quarterly Revenue Growth',
-            'level': 'Level_1_Simple_Aggregation',
-            'description': 'Revenue growth rate calculation',
-            'data_source': 'FactSet Fundamentals',
-            'programmatic_feasibility': 'high',
-            'factset_identifier': 'FF_SALES(0)/FF_SALES(-1)-1',
-            'frequency': 'quarterly'
-        })
-        
-        signals.append({
-            'name': 'Operating Margin',
-            'level': 'Level_1_Simple_Aggregation', 
-            'description': 'Operating income as percentage of revenue',
-            'data_source': 'FactSet Fundamentals',
-            'programmatic_feasibility': 'high',
-            'factset_identifier': 'FF_OPER_INC/FF_SALES',
-            'frequency': 'quarterly'
-        })
-        
-        # Utility-specific revenue breakdown
-        if any(keyword in text_lower for keyword in ['renewable', 'clean', 'energy', 'utility']):
-            signals.append({
-                'name': 'Renewable Revenue as % of Total Revenue',
-                'level': 'Level_1_Simple_Aggregation',
-                'description': 'Renewable energy revenue share',
-                'data_source': 'Company Segment Reporting',
-                'programmatic_feasibility': 'medium',
-                'acquisition_method': 'Parse segment data from 10-K and earnings reports',
-                'frequency': 'quarterly'
-            })
-            
-        return signals
+        """Extract Level 1 signals from LLM analysis only - no hardcoded data"""
+        return []  # All signals come from LLM analysis
+
     
     def _extract_level_2_comprehensive(self, thesis_text: str, processed_documents: List[Dict]) -> List[Dict]:
-        """Extract Level 2 (Derived Metrics) signals"""
-        signals = []
-        text_lower = thesis_text.lower()
-        
-        # Cost of capital signals (always include for utility analysis)
-        signals.append({
-            'name': 'Weighted Average Cost of Capital (WACC)',
-            'level': 'Level_2_Derived_Metrics',
-            'description': "Company's blended cost of debt and equity capital",
-            'data_source': 'Bloomberg/S&P Capital IQ',
-            'programmatic_feasibility': 'medium',
-            'calculation': '(E/V × Re) + (D/V × Rd × (1-Tc))',
-            'required_inputs': ['Market Cap', 'Total Debt', 'Risk-free Rate', 'Beta', 'Market Risk Premium', 'Cost of Debt', 'Tax Rate'],
-            'acquisition_method': 'Combine FactSet financials with Bloomberg risk metrics and treasury rates',
-            'frequency': 'quarterly'
-        })
+        """Extract Level 2 signals from LLM analysis only - no hardcoded data"""
+        return []  # All signals come from LLM analysis
         
         # Return metrics
         if any(keyword in text_lower for keyword in ['return', 'roe', 'roic', 'efficiency', 'capital']):
@@ -731,22 +631,8 @@ class SignalClassifier:
         return signals
     
     def _extract_level_3_comprehensive(self, thesis_text: str, processed_documents: List[Dict]) -> List[Dict]:
-        """Extract Level 3 (Complex Ratios) signals"""
-        signals = []
-        text_lower = thesis_text.lower()
-        
-        # Always include peer relative performance for utility analysis
-        signals.append({
-            'name': 'Utility Peer Relative Total Shareholder Return',
-            'level': 'Level_3_Complex_Ratios',
-            'description': 'TSR performance relative to utility peer group',
-            'data_source': 'FactSet/Bloomberg',
-            'programmatic_feasibility': 'high',
-            'calculation': 'NextEra_TSR / Utility_Peer_Group_Average_TSR',
-            'required_inputs': ['Price Returns', 'Dividend Yields', 'Peer Group Constituents'],
-            'factset_identifier': 'P_TOTAL_RETURN_1YR vs XLU constituents',
-            'frequency': 'monthly'
-        })
+        """Extract Level 3 signals from LLM analysis only - no hardcoded data"""
+        return []  # All signals come from LLM analysis
         
         # Peer performance comparison (check for outperform keywords)
         if any(keyword in text_lower for keyword in ['peers', 'outperform', 'relative', 'versus', 'compare', 'superior']):
