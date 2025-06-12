@@ -989,6 +989,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return renderMarketSentimentData(thesisData.ai_market_sentiment);
         } else {
             // Load market sentiment on demand
+            setTimeout(() => {
+                loadMarketSentimentOnDemand();
+            }, 500);
+            
             return `
                 <div class="market-sentiment" id="market-sentiment-container">
                     <div class="text-center py-4">
