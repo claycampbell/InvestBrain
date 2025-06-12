@@ -923,7 +923,7 @@ function extractCompaniesFromTheses() {
     allCompanies = Array.from(companies).sort();
 }
 
-function populateCompanyDropdown() {
+function populateCompanyDropdown(companies = null) {
     const companyFilter = document.getElementById('company-filter');
     
     // Clear existing options except the first one
@@ -931,8 +931,11 @@ function populateCompanyDropdown() {
         companyFilter.removeChild(companyFilter.lastChild);
     }
     
+    // Use provided companies or fallback to extracted companies
+    const companiesToUse = companies || allCompanies;
+    
     // Add company options
-    allCompanies.forEach(company => {
+    companiesToUse.forEach(company => {
         const option = document.createElement('option');
         option.value = company;
         option.textContent = company;
