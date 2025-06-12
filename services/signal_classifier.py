@@ -41,130 +41,24 @@ class SignalClassifier:
     """
     
     def __init__(self):
-        self.level_0_indicators = self._load_level_0_patterns()
-        self.level_1_indicators = self._load_level_1_patterns()
-        self.value_chain_keywords = self._load_value_chain_patterns()
-        self.predictive_keywords = self._load_predictive_patterns()
+        # Signal classifier now relies purely on LLM analysis without hardcoded patterns
+        pass
         
     def _load_level_0_patterns(self) -> Dict[str, List[str]]:
-        """Load patterns for identifying Level 0 (raw economic activity) signals"""
-        return {
-            'production_activity': [
-                'factory utilization', 'manufacturing output', 'production capacity',
-                'assembly line speed', 'shift patterns', 'overtime hours',
-                'raw material consumption', 'energy consumption per unit',
-                'machine uptime', 'production schedules', 'order backlogs'
-            ],
-            'construction_activity': [
-                'housing starts', 'building permits', 'construction permits',
-                'excavation permits', 'foundation pours', 'concrete deliveries',
-                'lumber deliveries', 'electrical installations', 'plumbing permits',
-                'occupancy certificates', 'site preparations'
-            ],
-            'employment_activity': [
-                'job postings', 'hiring rates', 'termination rates',
-                'overtime authorizations', 'temporary worker requests',
-                'contractor agreements', 'training enrollments',
-                'badge swipes', 'parking utilization', 'cafeteria usage'
-            ],
-            'supply_chain_activity': [
-                'shipping container volume', 'truck movements', 'rail car loadings',
-                'warehouse receipts', 'dock utilization', 'port traffic',
-                'inventory receipts', 'supplier deliveries', 'return shipments',
-                'cargo manifests', 'customs clearances'
-            ],
-            'retail_activity': [
-                'foot traffic', 'transaction counts', 'basket sizes',
-                'checkout times', 'inventory turns', 'stockouts',
-                'return rates', 'store hours', 'staff scheduling',
-                'promotional activity', 'price changes'
-            ],
-            'financial_activity': [
-                'loan applications', 'credit inquiries', 'account openings',
-                'transaction volumes', 'ATM usage', 'branch visits',
-                'wire transfers', 'check clearings', 'deposit flows',
-                'withdrawal patterns', 'payment processing volumes'
-            ],
-            'innovation_activity': [
-                'patent applications', 'R&D spending', 'prototype builds',
-                'clinical trials', 'regulatory filings', 'testing schedules',
-                'researcher hiring', 'lab equipment purchases', 'facility expansions',
-                'intellectual property registrations', 'licensing agreements'
-            ],
-            'resource_extraction': [
-                'drilling permits', 'extraction rates', 'ore grades',
-                'well completions', 'mining equipment hours', 'blast schedules',
-                'transportation loads', 'processing volumes', 'stockpile levels',
-                'equipment maintenance', 'worker safety incidents'
-            ]
-        }
+        """Removed hardcoded patterns - signals now come from LLM analysis only"""
+        return {}
     
     def _load_level_1_patterns(self) -> Dict[str, List[str]]:
-        """Load patterns for identifying Level 1 (simple aggregation) signals"""
-        return {
-            'daily_totals': [
-                'daily production', 'daily sales', 'daily shipments',
-                'daily transactions', 'daily visits', 'daily registrations'
-            ],
-            'weekly_aggregates': [
-                'weekly averages', 'weekly totals', 'weekly counts',
-                'weekly volumes', 'weekly rates', 'weekly utilization'
-            ],
-            'monthly_summaries': [
-                'monthly totals', 'monthly averages', 'monthly peaks',
-                'monthly minimums', 'monthly ranges', 'monthly distributions'
-            ],
-            'regional_aggregates': [
-                'regional totals', 'state-level data', 'county data',
-                'city-level metrics', 'district summaries', 'zone aggregates'
-            ],
-            'simple_ratios': [
-                'utilization rates', 'completion rates', 'success rates',
-                'conversion rates', 'efficiency ratios', 'productivity metrics'
-            ]
-        }
+        """Removed hardcoded patterns - signals now come from LLM analysis only"""
+        return {}
     
     def _load_value_chain_patterns(self) -> Dict[str, List[str]]:
-        """Load value chain position identifiers"""
-        return {
-            'upstream': [
-                'raw materials', 'commodities', 'mining', 'extraction',
-                'agriculture', 'forestry', 'fishing', 'primary production',
-                'gpu', 'chip', 'semiconductor', 'wafer', 'foundry', 'silicon',
-                'ai accelerator', 'processor', 'hardware', 'components',
-                'nvidia', 'tsmc', 'capacity utilization', 'shipments'
-            ],
-            'midstream': [
-                'processing', 'refining', 'manufacturing', 'assembly',
-                'transportation', 'logistics', 'distribution', 'warehousing',
-                'data center', 'capex', 'infrastructure', 'deployment',
-                'hyperscaler', 'azure', 'cloud', 'server', 'facility',
-                'installation', 'integration', 'system build'
-            ],
-            'downstream': [
-                'retail', 'consumer', 'end-user', 'final demand',
-                'services', 'consumption', 'customer-facing', 'point-of-sale',
-                'registration', 'adoption', 'usage', 'subscription',
-                'enterprise', 'deals', 'revenue', 'market share',
-                'autonomous vehicle', 'api calls', 'copilot', 'application'
-            ]
-        }
+        """Removed hardcoded patterns - value chain positions now determined by LLM analysis only"""
+        return {}
     
     def _load_predictive_patterns(self) -> Dict[str, List[str]]:
-        """Load patterns for assessing predictive power"""
-        return {
-            'high_predictive': [
-                'leading indicator', 'early warning', 'advance signal',
-                'forward-looking', 'predictive', 'forecasting'
-            ],
-            'medium_predictive': [
-                'coincident', 'concurrent', 'real-time', 'current'
-            ],
-            'low_predictive': [
-                'lagging', 'trailing', 'historical', 'backward-looking',
-                'confirmatory', 'retrospective'
-            ]
-        }
+        """Removed hardcoded patterns - predictive power now determined by LLM analysis only"""
+        return {}
     
     def extract_signals_from_ai_analysis(self, ai_analysis: Dict[str, Any], processed_documents: List[Dict], focus_primary: bool = True) -> Dict[str, Any]:
         """
