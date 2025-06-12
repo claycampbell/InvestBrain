@@ -319,8 +319,14 @@ document.addEventListener('DOMContentLoaded', function() {
         contentDiv.innerHTML = generateResultsHTML(data);
         resultsDiv.style.display = 'block';
         
-        // Store analysis data globally for publishing
+        // Store analysis data globally for publishing and market sentiment
         window.currentAnalysis = data;
+        window.currentAnalysisData = data;
+        
+        // Store thesis ID for market sentiment loading
+        if (data.thesis_id) {
+            window.currentThesisId = data.thesis_id;
+        }
         
         // Scroll to results
         resultsDiv.scrollIntoView({ behavior: 'smooth' });
@@ -1123,9 +1129,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Load AI-generated market sentiment on demand
-    async function loadMarketSentimentOnDemand() {
+    async function loadMarketSentimentOnDemand(providedThesisId = null) {
         try {
-            const thesisId = currentAnalysisData?.id || extractThesisIdFromURL();
+            let thesisId = providedThesisId || currentAnalysisData?.thesis_id || currentAnalysisData?.id || extractThesisIdFromURL();
+            
+            // Try to get thesis ID from the page context if still not found
+            if (!thesisId) {
+                const thesisIdElement = document.querySelector('[data-thesis-id]');
+                if (thesisIdElement) {
+                    thesisId = thesisIdElement.getAttribute('data-thesis-id');
+                }
+            }
             
             if (!thesisId) {
                 updateMarketSentimentError('Unable to identify thesis for analysis');
@@ -1793,8 +1807,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const marketSentimentContainer = document.getElementById('market-sentiment-container');
     if (marketSentimentContainer && marketSentimentContainer.innerHTML.includes('spinner-border')) {
         setTimeout(() => {
-            loadMarketSentimentOnDemand();
-        }, 500);
+            // Get thesis ID from globally stored data
+            let thesisId = window.currentThesisId || window.currentAnalysisData?.thesis_id;
+            console.log('Loading market sentiment for thesis ID:', thesisId);
+            loadMarketSentimentOnDemand(thesisId);
+        }, 1500); // Increased delay to ensure global data is set
     }
 });
 </script>
