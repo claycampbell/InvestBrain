@@ -59,8 +59,9 @@ class LLMSimulationService:
             timeline = self._generate_timeline_labels(time_horizon)
             
             return {
-                'chart_data': {
-                    'performance_data': performance_data,
+                'performance_data': {
+                    'performance': performance_data.get('performance', []),
+                    'benchmark': performance_data.get('benchmark', []),
                     'timeline': timeline
                 },
                 'events': events,
@@ -74,7 +75,7 @@ class LLMSimulationService:
                     'time_horizon': time_horizon,
                     'include_events': include_events,
                     'generated_at': datetime.utcnow().isoformat(),
-                    'data_source': 'Thesis-based Analysis'
+                    'data_source': 'Hybrid Analysis (Thesis + Azure OpenAI)'
                 }
             }
             
@@ -446,7 +447,7 @@ Return JSON format:
         """
         Generate basic scenario analysis when LLM fails
         """
-        thesis_performance = performance_data.get('thesis_performance', [100])
+        thesis_performance = performance_data.get('performance', performance_data.get('thesis_performance', [100]))
         final_return = ((thesis_performance[-1] / thesis_performance[0]) - 1) * 100 if len(thesis_performance) > 1 else 0
         
         # Generate analysis based on scenario and performance
