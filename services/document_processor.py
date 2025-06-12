@@ -1,7 +1,7 @@
 import os
 import logging
 import pandas as pd
-import PyPDF2
+from pypdf import PdfReader
 from openpyxl import load_workbook
 from services.azure_openai_service import AzureOpenAIService
 
@@ -41,7 +41,7 @@ class DocumentProcessor:
         """Extract text content from PDF files"""
         try:
             with open(file_path, 'rb') as file:
-                pdf_reader = PyPDF2.PdfReader(file)
+                pdf_reader = PdfReader(file)
                 text_content = ""
                 
                 for page in pdf_reader.pages:

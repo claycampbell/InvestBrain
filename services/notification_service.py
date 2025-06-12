@@ -1,275 +1,221 @@
-import os
 import logging
 import smtplib
-import requests
-from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List
+import requests
+from datetime import datetime
 from config import Config
 
 class NotificationService:
     """
-    Service for sending notifications via various channels
+    Service for sending notifications when signals are triggered
     """
     
     def __init__(self):
-        self.webhook_url = Config.NOTIFICATION_WEBHOOK_URL
-        self.smtp_server = Config.EMAIL_SMTP_SERVER
-        self.smtp_port = Config.EMAIL_SMTP_PORT
-        self.email_username = Config.EMAIL_USERNAME
-        self.email_password = Config.EMAIL_PASSWORD
-        
-        # Check which notification methods are available
-        self.webhook_enabled = bool(self.webhook_url)
-        self.email_enabled = bool(self.smtp_server and self.email_username and self.email_password)
-        
-        if not self.webhook_enabled and not self.email_enabled:
-            logging.warning("No notification methods configured")
+        self.config = Config()
+        self.enabled_channels = self._determine_enabled_channels()
     
-    def send_notification(self, notification_type: str, message: str, data: Optional[Dict[str, Any]] = None) -> bool:
-        """
-        Send notification using available methods
-        """
-        success = False
+    def _determine_enabled_channels(self) -> List[str]:
+        """Determine which notification channels are available"""
+        channels = []
         
-        # Try webhook first
-        if self.webhook_enabled:
-            try:
-                webhook_success = self._send_webhook_notification(notification_type, message, data)
-                if webhook_success:
-                    success = True
-                    logging.info(f"Webhook notification sent: {notification_type}")
-            except Exception as e:
-                logging.error(f"Failed to send webhook notification: {str(e)}")
+        # Check webhook availability
+        if self.config.NOTIFICATION_WEBHOOK_URL:
+            channels.append('webhook')
         
-        # Try email as backup
-        if self.email_enabled:
-            try:
-                email_success = self._send_email_notification(notification_type, message, data)
-                if email_success:
-                    success = True
-                    logging.info(f"Email notification sent: {notification_type}")
-            except Exception as e:
-                logging.error(f"Failed to send email notification: {str(e)}")
+        # Check email availability
+        if (self.config.EMAIL_SMTP_SERVER and 
+            self.config.EMAIL_USERNAME and 
+            self.config.EMAIL_PASSWORD):
+            channels.append('email')
         
-        # Log to console as fallback
-        if not success:
-            self._log_notification(notification_type, message, data)
-            logging.warning(f"Notification logged to console (no other methods available): {notification_type}")
-            success = True  # Consider console logging as successful
-        
-        return success
+        return channels
     
-    def _send_webhook_notification(self, notification_type: str, message: str, data: Optional[Dict[str, Any]] = None) -> bool:
+    def send_signal_notification(self, signal_data: Dict[str, Any], thesis_data: Dict[str, Any]) -> bool:
+        """
+        Send notification when a signal is triggered
+        """
+        try:
+            notification_sent = False
+            
+            # Prepare notification content
+            message_data = self._prepare_notification_message(signal_data, thesis_data)
+            
+            # Send via available channels
+            for channel in self.enabled_channels:
+                try:
+                    if channel == 'webhook':
+                        if self._send_webhook_notification(message_data):
+                            notification_sent = True
+                    elif channel == 'email':
+                        if self._send_email_notification(message_data):
+                            notification_sent = True
+                except Exception as e:
+                    logging.error(f"Failed to send notification via {channel}: {str(e)}")
+            
+            return notification_sent
+            
+        except Exception as e:
+            logging.error(f"Error sending signal notification: {str(e)}")
+            return False
+    
+    def _prepare_notification_message(self, signal_data: Dict[str, Any], thesis_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Prepare notification message content
+        """
+        return {
+            'title': f"Signal Triggered: {signal_data.get('signal_name', 'Unknown Signal')}",
+            'message': f"Signal '{signal_data.get('signal_name')}' has been triggered for thesis '{thesis_data.get('title', 'Unknown Thesis')}'",
+            'signal_name': signal_data.get('signal_name'),
+            'signal_type': signal_data.get('signal_type'),
+            'current_value': signal_data.get('current_value'),
+            'threshold_value': signal_data.get('threshold_value'),
+            'thesis_title': thesis_data.get('title'),
+            'thesis_id': thesis_data.get('id'),
+            'timestamp': datetime.utcnow().isoformat(),
+            'urgency': self._determine_urgency(signal_data)
+        }
+    
+    def _determine_urgency(self, signal_data: Dict[str, Any]) -> str:
+        """
+        Determine notification urgency based on signal characteristics
+        """
+        signal_type = signal_data.get('signal_type', '').lower()
+        
+        if signal_type in ['economic', 'sector']:
+            return 'high'
+        elif signal_type in ['company', 'technical']:
+            return 'medium'
+        else:
+            return 'low'
+    
+    def _send_webhook_notification(self, message_data: Dict[str, Any]) -> bool:
         """
         Send notification via webhook
         """
-        payload = {
-            'type': notification_type,
-            'message': message,
-            'timestamp': datetime.utcnow().isoformat(),
-            'data': data or {}
-        }
-        
         try:
-            response = requests.post(
-                self.webhook_url,
-                json=payload,
-                timeout=10,
-                headers={'Content-Type': 'application/json'}
-            )
-            
-            if response.status_code == 200:
-                return True
-            else:
-                logging.error(f"Webhook returned status {response.status_code}: {response.text}")
+            webhook_url = self.config.NOTIFICATION_WEBHOOK_URL
+            if not webhook_url:
                 return False
-                
+            
+            payload = {
+                'text': message_data['title'],
+                'attachments': [{
+                    'color': 'warning' if message_data['urgency'] == 'high' else 'good',
+                    'fields': [
+                        {
+                            'title': 'Signal',
+                            'value': message_data['signal_name'],
+                            'short': True
+                        },
+                        {
+                            'title': 'Thesis',
+                            'value': message_data['thesis_title'],
+                            'short': True
+                        },
+                        {
+                            'title': 'Current Value',
+                            'value': str(message_data.get('current_value', 'N/A')),
+                            'short': True
+                        },
+                        {
+                            'title': 'Threshold',
+                            'value': str(message_data.get('threshold_value', 'N/A')),
+                            'short': True
+                        }
+                    ],
+                    'footer': 'Thesis Intelligence System',
+                    'ts': message_data['timestamp']
+                }]
+            }
+            
+            response = requests.post(webhook_url, json=payload, timeout=10)
+            response.raise_for_status()
+            
+            logging.info(f"Webhook notification sent successfully")
+            return True
+            
         except Exception as e:
-            logging.error(f"Webhook request failed: {str(e)}")
+            logging.error(f"Failed to send webhook notification: {str(e)}")
             return False
     
-    def _send_email_notification(self, notification_type: str, message: str, data: Optional[Dict[str, Any]] = None) -> bool:
+    def _send_email_notification(self, message_data: Dict[str, Any]) -> bool:
         """
         Send notification via email
         """
         try:
+            if not all([self.config.EMAIL_SMTP_SERVER, 
+                       self.config.EMAIL_USERNAME, 
+                       self.config.EMAIL_PASSWORD]):
+                return False
+            
             # Create message
             msg = MIMEMultipart()
-            msg['From'] = self.email_username
-            msg['To'] = self.email_username  # Send to self for now
-            msg['Subject'] = f"Investment Thesis Alert: {notification_type}"
+            msg['From'] = self.config.EMAIL_USERNAME
+            msg['To'] = self.config.EMAIL_USERNAME  # Send to self for now
+            msg['Subject'] = message_data['title']
             
             # Create email body
-            body = self._create_email_body(notification_type, message, data)
-            msg.attach(MIMEText(body, 'html'))
+            body = f"""
+Signal Alert: {message_data['signal_name']}
+
+Thesis: {message_data['thesis_title']}
+Signal Type: {message_data['signal_type']}
+Current Value: {message_data.get('current_value', 'N/A')}
+Threshold Value: {message_data.get('threshold_value', 'N/A')}
+Urgency: {message_data['urgency']}
+Timestamp: {message_data['timestamp']}
+
+This is an automated notification from the Thesis Intelligence System.
+"""
+            
+            msg.attach(MIMEText(body, 'plain'))
             
             # Send email
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                server.starttls()
-                server.login(self.email_username, self.email_password)
-                server.send_message(msg)
+            server = smtplib.SMTP(self.config.EMAIL_SMTP_SERVER, self.config.EMAIL_SMTP_PORT)
+            server.starttls()
+            server.login(self.config.EMAIL_USERNAME, self.config.EMAIL_PASSWORD)
+            server.send_message(msg)
+            server.quit()
             
+            logging.info(f"Email notification sent successfully")
             return True
             
         except Exception as e:
-            logging.error(f"Email sending failed: {str(e)}")
+            logging.error(f"Failed to send email notification: {str(e)}")
             return False
     
-    def _create_email_body(self, notification_type: str, message: str, data: Optional[Dict[str, Any]] = None) -> str:
+    def test_notification_channels(self) -> Dict[str, bool]:
         """
-        Create HTML email body
-        """
-        html_body = f"""
-        <html>
-        <head>
-            <style>
-                body {{ font-family: Arial, sans-serif; margin: 20px; }}
-                .alert {{ background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin-bottom: 20px; }}
-                .info {{ background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 5px; margin-bottom: 20px; }}
-                .data {{ background-color: #f8f9fa; padding: 10px; border-radius: 3px; font-family: monospace; }}
-                h2 {{ color: #333; }}
-                .timestamp {{ color: #666; font-size: 0.9em; }}
-            </style>
-        </head>
-        <body>
-            <h2>Investment Thesis Intelligence System Alert</h2>
-            
-            <div class="{'alert' if 'alert' in notification_type else 'info'}">
-                <h3>Alert Type: {notification_type.replace('_', ' ').title()}</h3>
-                <p><strong>Message:</strong> {message}</p>
-                <p class="timestamp"><strong>Time:</strong> {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
-            </div>
-        """
-        
-        if data:
-            html_body += """
-            <h3>Additional Data:</h3>
-            <div class="data">
-            """
-            
-            for key, value in data.items():
-                html_body += f"<p><strong>{key.replace('_', ' ').title()}:</strong> {value}</p>"
-            
-            html_body += "</div>"
-        
-        html_body += """
-            <hr>
-            <p><em>This is an automated notification from the Investment Thesis Intelligence System.</em></p>
-        </body>
-        </html>
-        """
-        
-        return html_body
-    
-    def _log_notification(self, notification_type: str, message: str, data: Optional[Dict[str, Any]] = None) -> None:
-        """
-        Log notification to console as fallback
-        """
-        log_message = f"NOTIFICATION [{notification_type}]: {message}"
-        if data:
-            log_message += f" | Data: {data}"
-        
-        logging.info(log_message)
-        print(f"[{datetime.utcnow().isoformat()}] {log_message}")
-    
-    def send_price_alert(self, symbol: str, current_price: float, change_percent: float, threshold: float) -> bool:
-        """
-        Send a price change alert
-        """
-        message = f"Price Alert: {symbol} changed by {change_percent:.2f}% (current: ${current_price:.2f}), exceeding {threshold:.1f}% threshold"
-        
-        data = {
-            'symbol': symbol,
-            'current_price': current_price,
-            'change_percent': change_percent,
-            'threshold': threshold,
-            'alert_type': 'price_change'
-        }
-        
-        return self.send_notification('price_alert', message, data)
-    
-    def send_volume_alert(self, symbol: str, current_volume: int, threshold: int, threshold_type: str) -> bool:
-        """
-        Send a volume alert
-        """
-        message = f"Volume Alert: {symbol} volume {current_volume:,} is {threshold_type} threshold {threshold:,}"
-        
-        data = {
-            'symbol': symbol,
-            'current_volume': current_volume,
-            'threshold': threshold,
-            'threshold_type': threshold_type,
-            'alert_type': 'volume'
-        }
-        
-        return self.send_notification('volume_alert', message, data)
-    
-    def send_thesis_analysis_complete(self, thesis_title: str, thesis_id: int) -> bool:
-        """
-        Send notification when thesis analysis is complete
-        """
-        message = f"Thesis analysis completed: '{thesis_title}' (ID: {thesis_id})"
-        
-        data = {
-            'thesis_title': thesis_title,
-            'thesis_id': thesis_id,
-            'alert_type': 'analysis_complete'
-        }
-        
-        return self.send_notification('analysis_complete', message, data)
-    
-    def send_document_processed(self, filename: str, document_type: str, thesis_id: Optional[int] = None) -> bool:
-        """
-        Send notification when document processing is complete
-        """
-        message = f"Document processed: {filename} ({document_type})"
-        if thesis_id:
-            message += f" - linked to thesis ID {thesis_id}"
-        
-        data = {
-            'filename': filename,
-            'document_type': document_type,
-            'thesis_id': thesis_id,
-            'alert_type': 'document_processed'
-        }
-        
-        return self.send_notification('document_processed', message, data)
-    
-    def test_notification_methods(self) -> Dict[str, bool]:
-        """
-        Test all configured notification methods
+        Test all configured notification channels
         """
         results = {}
         
-        test_message = "Test notification from Investment Thesis Intelligence System"
-        test_data = {
-            'test': True,
-            'timestamp': datetime.utcnow().isoformat()
+        test_message = {
+            'title': 'Test Notification',
+            'message': 'Testing notification system',
+            'signal_name': 'Test Signal',
+            'signal_type': 'test',
+            'current_value': 100,
+            'threshold_value': 90,
+            'thesis_title': 'Test Thesis',
+            'thesis_id': 1,
+            'timestamp': datetime.utcnow().isoformat(),
+            'urgency': 'low'
         }
         
-        if self.webhook_enabled:
+        for channel in self.enabled_channels:
             try:
-                results['webhook'] = self._send_webhook_notification('test', test_message, test_data)
+                if channel == 'webhook':
+                    results[channel] = self._send_webhook_notification(test_message)
+                elif channel == 'email':
+                    results[channel] = self._send_email_notification(test_message)
+                else:
+                    results[channel] = False
             except Exception as e:
-                results['webhook'] = False
-                logging.error(f"Webhook test failed: {str(e)}")
-        else:
-            results['webhook'] = False
-        
-        if self.email_enabled:
-            try:
-                results['email'] = self._send_email_notification('test', test_message, test_data)
-            except Exception as e:
-                results['email'] = False
-                logging.error(f"Email test failed: {str(e)}")
-        else:
-            results['email'] = False
-        
-        # Console logging always works
-        results['console'] = True
-        self._log_notification('test', test_message, test_data)
+                logging.error(f"Error testing {channel}: {str(e)}")
+                results[channel] = False
         
         return results
     
@@ -278,9 +224,10 @@ class NotificationService:
         Get status of notification service
         """
         return {
-            'webhook_enabled': self.webhook_enabled,
-            'webhook_url': self.webhook_url if self.webhook_enabled else None,
-            'email_enabled': self.email_enabled,
-            'email_server': self.smtp_server if self.email_enabled else None,
-            'console_enabled': True
+            'enabled_channels': self.enabled_channels,
+            'webhook_configured': bool(self.config.NOTIFICATION_WEBHOOK_URL),
+            'email_configured': bool(self.config.EMAIL_SMTP_SERVER and 
+                                   self.config.EMAIL_USERNAME and 
+                                   self.config.EMAIL_PASSWORD),
+            'total_channels': len(self.enabled_channels)
         }
