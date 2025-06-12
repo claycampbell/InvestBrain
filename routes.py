@@ -683,12 +683,27 @@ def get_comprehensive_analytics():
 def analytics_dashboard():
     """Advanced analytics dashboard page"""
     try:
-        # Get user's recent theses
+        # Get user's recent theses and convert to serializable format
         recent_theses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).limit(20).all()
-        return render_template('analytics_dashboard.html', theses=recent_theses)
+        
+        # Convert to dictionaries for JSON serialization
+        theses_data = []
+        for thesis in recent_theses:
+            theses_data.append({
+                'id': thesis.id,
+                'title': thesis.title,
+                'core_claim': thesis.core_claim[:100] + '...' if thesis.core_claim and len(thesis.core_claim) > 100 else thesis.core_claim,
+                'created_at': thesis.created_at.isoformat() if thesis.created_at else None,
+                'mental_model': thesis.mental_model
+            })
+        
+        logging.info(f"Analytics dashboard loading with {len(theses_data)} theses")
+        return render_template('analytics_dashboard.html', theses=theses_data)
     except Exception as e:
         logging.error(f"Error loading analytics dashboard: {str(e)}")
-        return render_template('404.html'), 404
+        import traceback
+        traceback.print_exc()
+        return f"Analytics Dashboard Error: {str(e)}", 500
 
 @app.route('/publish_thesis', methods=['POST'])
 def publish_thesis():
