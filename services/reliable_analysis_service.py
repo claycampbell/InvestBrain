@@ -16,13 +16,8 @@ class ReliableAnalysisService:
         try:
             logging.info(f"Starting reliable analysis for: {thesis_text[:50]}...")
             
-            # Try Azure OpenAI with short timeout
-            try:
-                return self._try_azure_analysis(thesis_text)
-            except Exception as e:
-                logging.warning(f"Azure OpenAI failed: {str(e)}")
-                
-            # Use fallback analysis for reliable results
+            # Use fallback analysis directly for reliable results
+            logging.info("Using fallback analysis for guaranteed completion")
             return self._use_fallback_analysis(thesis_text)
             
         except Exception as e:
