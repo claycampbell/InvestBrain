@@ -52,7 +52,7 @@ class AzureOpenAIService:
                     response = self.client.chat.completions.create(
                         messages=messages,
                         model=self.deployment_name,
-                        timeout=15  # Shorter timeout for faster fallback
+                        timeout=90  # Increased timeout for o4-mini network issues
                     )
                 elif 'gpt-4o' in model_name:
                     # GPT-4o models support limited parameters

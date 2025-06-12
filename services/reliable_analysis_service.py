@@ -31,21 +31,7 @@ class ReliableAnalysisService:
     
     def _try_azure_analysis(self, thesis_text: str) -> Dict[str, Any]:
         """Attempt Azure OpenAI analysis with quick timeout"""
-        import signal
-        import time
-        
-        class TimeoutException(Exception):
-            pass
-        
-        def timeout_handler(signum, frame):
-            raise TimeoutException("Azure OpenAI timeout")
-        
-        # Set alarm for 10 seconds max
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(10)
-        
-        try:
-            system_prompt = """Analyze investment thesis. Respond with valid JSON:
+        system_prompt = """Analyze investment thesis. Respond with valid JSON:
 {
   "core_claim": "One sentence claim",
   "core_analysis": "Risk/reward analysis",
@@ -56,21 +42,15 @@ class ReliableAnalysisService:
   "metrics_to_track": [{"name": "Signal", "type": "Level_0_Raw_Activity", "description": "Description", "frequency": "monthly", "threshold": 5.0, "threshold_type": "above", "data_source": "FactSet", "value_chain_position": "midstream"}],
   "monitoring_plan": {"objective": "Monitor performance", "data_pulls": [{"category": "Financial", "metrics": ["Revenue"], "data_source": "FactSet", "frequency": "quarterly"}], "alert_logic": [{"frequency": "quarterly", "condition": "Revenue < target", "action": "Review"}], "decision_triggers": [{"condition": "Performance decline", "action": "sell"}], "review_schedule": "Monthly"}
 }"""
-            
-            user_prompt = f"Analyze: {thesis_text[:150]}..."
-            
-            response = self.azure_openai.generate_completion([
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ], max_tokens=1000, temperature=0.5)
-            
-            signal.alarm(0)  # Cancel alarm
-            return self._parse_response(response)
-            
-        except (TimeoutException, Exception) as e:
-            signal.alarm(0)  # Cancel alarm
-            logging.warning(f"Azure OpenAI failed or timed out: {str(e)}")
-            raise e
+        
+        user_prompt = f"Analyze: {thesis_text[:150]}..."
+        
+        response = self.azure_openai.generate_completion([
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ], max_tokens=1000, temperature=0.5)
+        
+        return self._parse_response(response)
     
     def _create_structured_analysis(self, thesis_text: str) -> Dict[str, Any]:
         """Create comprehensive structured analysis based on thesis content"""
