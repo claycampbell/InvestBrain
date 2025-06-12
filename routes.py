@@ -105,7 +105,15 @@ def allowed_file(filename):
 @app.route('/')
 def index():
     """Main analysis interface for investment thesis and signal extraction"""
-    return render_template('analysis.html')
+    # Get recent analyses and active signals for dashboard
+    recent_analyses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).limit(5).all()
+    active_signals = SignalMonitoring.query.filter_by(status='active').count()
+    total_analyses = ThesisAnalysis.query.count()
+    
+    return render_template('index.html', 
+                         recent_analyses=recent_analyses,
+                         active_signals=active_signals,
+                         total_analyses=total_analyses)
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
