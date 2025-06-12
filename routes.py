@@ -455,22 +455,13 @@ def get_price_change(thesis_id):
 @app.route('/api/thesis/<int:thesis_id>/market-sentiment')
 def generate_market_sentiment(thesis_id):
     """Generate AI-powered market sentiment for a thesis"""
-    try:
-        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
-        
-        # Market sentiment requires professional market data services
-        return jsonify({
-            'success': False,
-            'error': 'Market sentiment analysis requires professional market data APIs (FactSet, Bloomberg, Refinitiv). Please configure your institutional data provider credentials.',
-            'data_requirement': 'authentic_market_data',
-            'empty_state': True
-        }), 503
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': f'Unable to generate market sentiment: {str(e)}'
-        }), 500
+    # Market sentiment requires professional market data services
+    return jsonify({
+        'success': False,
+        'error': 'Market sentiment analysis requires professional market data APIs (FactSet, Bloomberg, Refinitiv). Please configure your institutional data provider credentials.',
+        'data_requirement': 'authentic_market_data',
+        'empty_state': True
+    }), 503
 
 @app.route('/api/analytics/performance/<int:thesis_id>')
 def get_thesis_performance_score(thesis_id):
