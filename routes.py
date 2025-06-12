@@ -104,27 +104,8 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    """Dashboard showing system overview and recent activity"""
-    try:
-        # Get recent analyses
-        recent_analyses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).limit(5).all()
-        
-        # Get active signals count
-        active_signals = SignalMonitoring.query.filter_by(status='active').count()
-        
-        # Get recent notifications
-        recent_notifications = NotificationLog.query.order_by(NotificationLog.sent_at.desc()).limit(5).all()
-        
-        return render_template('index.html', 
-                             recent_analyses=recent_analyses,
-                             active_signals=active_signals,
-                             recent_notifications=recent_notifications)
-    except Exception as e:
-        # If database access fails, show empty dashboard
-        return render_template('index.html', 
-                             recent_analyses=[],
-                             active_signals=0,
-                             recent_notifications=[])
+    """Main analysis interface for investment thesis and signal extraction"""
+    return render_template('analysis.html')
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -477,8 +458,23 @@ def generate_market_sentiment(thesis_id):
     try:
         thesis = ThesisAnalysis.query.get_or_404(thesis_id)
         
-        # Generate market sentiment using fast mathematical model
-        market_sentiment = generate_mathematical_sentiment(thesis)
+        # Import and use the market sentiment service
+        from services.market_sentiment_service import MarketSentimentService
+        sentiment_service = MarketSentimentService()
+        
+        # Prepare core analysis from stored thesis data
+        core_analysis = {
+            'core_claim': thesis.core_claim,
+            'core_analysis': thesis.core_analysis,
+            'assumptions': thesis.assumptions or [],
+            'causal_chain': thesis.causal_chain or []
+        }
+        
+        # Generate market sentiment
+        market_sentiment = sentiment_service.generate_market_sentiment(
+            thesis.original_thesis, 
+            core_analysis
+        )
         
         return jsonify({
             'success': True,
@@ -490,110 +486,6 @@ def generate_market_sentiment(thesis_id):
             'success': False,
             'error': f'Unable to generate market sentiment: {str(e)}'
         }), 500
-
-def generate_mathematical_sentiment(thesis):
-    """Generate realistic market sentiment using mathematical models"""
-    import random
-    from datetime import datetime
-    
-    # Analyze thesis characteristics for realistic sentiment
-    thesis_text = thesis.original_thesis.lower()
-    
-    # Determine sentiment bias based on thesis content
-    bullish_keywords = ['growth', 'expansion', 'innovation', 'opportunity', 'advantage', 'outperform']
-    bearish_keywords = ['risk', 'challenge', 'decline', 'pressure', 'concern', 'uncertainty']
-    
-    bullish_score = sum(1 for word in bullish_keywords if word in thesis_text)
-    bearish_score = sum(1 for word in bearish_keywords if word in thesis_text)
-    
-    # Calculate sentiment bias
-    if bullish_score > bearish_score:
-        sentiment_bias = 'bullish'
-        consensus_weights = [0.6, 0.3, 0.1]  # Buy, Hold, Sell
-    elif bearish_score > bullish_score:
-        sentiment_bias = 'bearish'
-        consensus_weights = [0.2, 0.4, 0.4]  # Buy, Hold, Sell
-    else:
-        sentiment_bias = 'neutral'
-        consensus_weights = [0.3, 0.5, 0.2]  # Buy, Hold, Sell
-    
-    # Generate realistic consensus
-    consensus_options = ['Buy', 'Hold', 'Sell']
-    analyst_consensus = random.choices(consensus_options, weights=consensus_weights)[0]
-    
-    # Generate price targets based on sentiment
-    base_price = random.randint(80, 300)
-    if sentiment_bias == 'bullish':
-        price_multiplier = random.uniform(1.15, 1.35)
-    elif sentiment_bias == 'bearish':
-        price_multiplier = random.uniform(0.85, 1.05)
-    else:
-        price_multiplier = random.uniform(1.00, 1.15)
-    
-    high_target = int(base_price * price_multiplier)
-    low_target = int(base_price * random.uniform(0.90, 1.00))
-    avg_target = int((high_target + low_target) / 2)
-    
-    # Generate institutional sentiment
-    institutional_options = ['Bullish', 'Neutral', 'Bearish']
-    if sentiment_bias == 'bullish':
-        institutional_sentiment = random.choices(institutional_options, weights=[0.6, 0.3, 0.1])[0]
-    elif sentiment_bias == 'bearish':
-        institutional_sentiment = random.choices(institutional_options, weights=[0.1, 0.3, 0.6])[0]
-    else:
-        institutional_sentiment = random.choices(institutional_options, weights=[0.25, 0.5, 0.25])[0]
-    
-    # Generate realistic risk factors based on thesis content
-    risk_factors = []
-    if 'technology' in thesis_text or 'tech' in thesis_text:
-        risk_factors.extend(['Regulatory scrutiny', 'Technology disruption risk'])
-    if 'energy' in thesis_text or 'renewable' in thesis_text:
-        risk_factors.extend(['Commodity price volatility', 'Policy regulatory changes'])
-    if 'healthcare' in thesis_text or 'pharma' in thesis_text:
-        risk_factors.extend(['Clinical trial outcomes', 'FDA approval timeline'])
-    
-    # Default risk factors if none specific identified
-    if not risk_factors:
-        risk_factors = ['Market volatility', 'Execution risk', 'Competitive pressures']
-    
-    # Generate analyst notes
-    analyst_notes = []
-    if analyst_consensus == 'Buy':
-        analyst_notes.append('Strong fundamentals support positive outlook')
-        analyst_notes.append('Management execution capability demonstrates confidence')
-    elif analyst_consensus == 'Hold':
-        analyst_notes.append('Balanced risk-reward profile warrants cautious approach')
-        analyst_notes.append('Monitor quarterly results for thesis validation')
-    else:
-        analyst_notes.append('Risk factors outweigh potential upside in near term')
-        analyst_notes.append('Consider position reduction until clarity improves')
-    
-    # Determine market positioning
-    positioning_options = ['Growth', 'Value', 'Momentum']
-    if 'growth' in thesis_text or 'expansion' in thesis_text:
-        market_positioning = 'Growth'
-    elif 'value' in thesis_text or 'undervalued' in thesis_text:
-        market_positioning = 'Value'
-    else:
-        market_positioning = random.choice(positioning_options)
-    
-    return {
-        'analyst_consensus': analyst_consensus,
-        'consensus_confidence': round(random.uniform(0.65, 0.90), 2),
-        'price_target_range': {
-            'low': low_target,
-            'high': high_target,
-            'average': avg_target
-        },
-        'institutional_sentiment': institutional_sentiment,
-        'risk_factors': risk_factors[:3],
-        'analyst_notes': analyst_notes[:2],
-        'market_positioning': market_positioning,
-        'sector_rotation_impact': random.choice(['Positive', 'Neutral', 'Negative']),
-        'confidence_score': round(random.uniform(0.70, 0.85), 2),
-        'generated_timestamp': datetime.utcnow().isoformat() + 'Z',
-        'data_source': 'Quantitative analysis model'
-    }
 
 @app.route('/api/analytics/performance/<int:thesis_id>')
 def get_thesis_performance_score(thesis_id):
