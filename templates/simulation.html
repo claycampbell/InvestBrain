@@ -259,21 +259,211 @@ document.addEventListener('DOMContentLoaded', function() {
         const resultsDiv = document.getElementById('simulationResults');
         const contentDiv = document.getElementById('resultsContent');
         
-        if (type === 'forecast') {
-            contentDiv.innerHTML = generateForecastResults(data);
+        if (data.error) {
+            contentDiv.innerHTML = generateErrorDisplay(data);
         } else {
-            contentDiv.innerHTML = generateEventResults(data);
+            contentDiv.innerHTML = generateLLMSimulationResults(data, type);
+            
+            // Render performance chart if data available
+            if (data.chart_data && data.chart_data.performance_data) {
+                renderPerformanceChart(data.chart_data, data.events || []);
+            }
         }
         
         resultsDiv.style.display = 'block';
-        
-        // Check for alert triggers
-        if (data.alert_triggers && data.alert_triggers.length > 0) {
-            displayAlertTriggers(data.alert_triggers);
-        }
-        
-        // Scroll to results
         resultsDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function generateLLMSimulationResults(data, type) {
+        const scenario = data.scenario_analysis || {};
+        const metadata = data.simulation_metadata || {};
+        const events = data.events || [];
+        
+        return `
+            <div class="row">
+                <!-- LLM Scenario Analysis -->
+                <div class="col-lg-8">
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-brain"></i> 
+                                LLM Scenario Analysis - ${metadata.scenario || 'Unknown'} Scenario
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong>Scenario Summary:</strong>
+                                <p class="mt-1">${scenario.scenario_summary || 'Analysis unavailable'}</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Performance Assessment:</strong>
+                                <p class="mt-1">${scenario.performance_assessment || 'Assessment unavailable'}</p>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-danger mb-2">Key Risks</h6>
+                                    <ul class="list-unstyled">
+                                        ${(scenario.key_risks || []).map(risk => `
+                                            <li class="mb-1">
+                                                <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                                                ${risk}
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-success mb-2">Key Opportunities</h6>
+                                    <ul class="list-unstyled">
+                                        ${(scenario.key_opportunities || []).map(opportunity => `
+                                            <li class="mb-1">
+                                                <i class="fas fa-lightbulb text-success me-2"></i>
+                                                ${opportunity}
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Performance Chart Container -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-chart-line"></i> 
+                                Performance Forecast (${metadata.time_horizon || 1} Years)
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="performanceChart" style="height: 400px;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Strategic Recommendations -->
+                <div class="col-lg-4">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-compass"></i> Strategic Recommendations
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                ${(scenario.strategic_recommendations || []).map(rec => `
+                                    <li class="mb-2">
+                                        <i class="fas fa-arrow-right text-primary me-2"></i>
+                                        ${rec}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-search"></i> Monitoring Priorities
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                ${(scenario.monitoring_priorities || []).map(priority => `
+                                    <li class="mb-2">
+                                        <i class="fas fa-eye text-info me-2"></i>
+                                        ${priority}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-gauge"></i> Analysis Metrics
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <strong>Conviction Level:</strong>
+                                <span class="badge bg-${getConvictionBadge(scenario.conviction_level)}">${scenario.conviction_level || 'Unknown'}</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Scenario:</strong>
+                                <span class="badge bg-info">${metadata.scenario || 'Unknown'}</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Volatility:</strong>
+                                <span class="badge bg-secondary">${metadata.volatility || 'Unknown'}</span>
+                            </div>
+                            <div class="small text-muted">
+                                <strong>Generated:</strong> ${new Date(metadata.generated_at).toLocaleString()}
+                            </div>
+                            <div class="small text-muted">
+                                <strong>Source:</strong> ${metadata.data_source || 'LLM Analysis'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            ${events.length > 0 ? generateEventTimeline(events) : ''}
+        `;
+    }
+    
+    function generateErrorDisplay(data) {
+        return `
+            <div class="alert alert-warning">
+                <h5 class="alert-heading">
+                    <i class="fas fa-exclamation-triangle"></i> ${data.message || 'Simulation Error'}
+                </h5>
+                <p>${data.description || 'An error occurred during simulation.'}</p>
+                ${data.action_needed ? `<hr><p class="mb-0"><strong>Action needed:</strong> ${data.action_needed}</p>` : ''}
+            </div>
+        `;
+    }
+    
+    function generateEventTimeline(events) {
+        return `
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-calendar-alt"></i> Market Events Timeline
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                ${events.map(event => `
+                                    <div class="timeline-item mb-3">
+                                        <div class="d-flex">
+                                            <div class="timeline-marker me-3">
+                                                <span class="badge bg-${getEventBadge(event.impact_type)} rounded-pill">
+                                                    Month ${event.month}
+                                                </span>
+                                            </div>
+                                            <div class="timeline-content flex-grow-1">
+                                                <h6 class="mb-1">${event.title}</h6>
+                                                <p class="mb-1">${event.description}</p>
+                                                <div class="small text-muted">
+                                                    <strong>Impact:</strong> ${event.magnitude || 'Moderate'} ${event.impact_type}
+                                                    ${event.signals_affected && event.signals_affected.length > 0 ? 
+                                                        `<br><strong>Signals Affected:</strong> ${event.signals_affected.join(', ')}` : ''}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     function generateForecastResults(data) {
@@ -457,6 +647,103 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         alertDiv.style.display = 'block';
+    }
+
+    function getConvictionBadge(conviction) {
+        if (!conviction) return 'secondary';
+        const level = conviction.toLowerCase();
+        if (level === 'high') return 'success';
+        if (level === 'medium') return 'warning';
+        if (level === 'low') return 'danger';
+        return 'secondary';
+    }
+
+    function getEventBadge(impactType) {
+        if (!impactType) return 'secondary';
+        const type = impactType.toLowerCase();
+        if (type === 'positive') return 'success';
+        if (type === 'negative') return 'danger';
+        return 'warning';
+    }
+
+    function renderPerformanceChart(chartData, events) {
+        const performanceData = chartData.performance_data || {};
+        const timeline = chartData.timeline || [];
+        
+        if (!performanceData.market_performance || !performanceData.thesis_performance) {
+            document.getElementById('performanceChart').innerHTML = 
+                '<div class="text-center py-4 text-muted">Performance data unavailable</div>';
+            return;
+        }
+
+        const options = {
+            chart: {
+                type: 'line',
+                height: 400,
+                toolbar: { show: true },
+                zoom: { enabled: true }
+            },
+            series: [
+                {
+                    name: 'Market Baseline',
+                    data: performanceData.market_performance,
+                    color: '#6c757d'
+                },
+                {
+                    name: 'Thesis Performance',
+                    data: performanceData.thesis_performance,
+                    color: '#0d6efd'
+                }
+            ],
+            xaxis: {
+                categories: timeline,
+                title: { text: 'Time Horizon' }
+            },
+            yaxis: {
+                title: { text: 'Performance Index' }
+            },
+            stroke: {
+                width: [2, 3],
+                curve: 'smooth'
+            },
+            markers: {
+                size: [0, 4],
+                hover: { size: 6 }
+            },
+            annotations: {
+                points: events.map(event => ({
+                    x: event.month - 1,
+                    y: event.impact_value || 100,
+                    marker: {
+                        size: 8,
+                        fillColor: event.impact_type === 'positive' ? '#28a745' : '#dc3545',
+                        strokeColor: '#fff',
+                        strokeWidth: 2
+                    },
+                    label: {
+                        text: event.title,
+                        style: {
+                            color: '#fff',
+                            background: event.impact_type === 'positive' ? '#28a745' : '#dc3545'
+                        }
+                    }
+                }))
+            },
+            legend: {
+                position: 'top'
+            },
+            grid: {
+                show: true,
+                borderColor: '#e9ecef'
+            },
+            tooltip: {
+                shared: true,
+                intersect: false
+            }
+        };
+
+        const chart = new ApexCharts(document.getElementById('performanceChart'), options);
+        chart.render();
     }
 
     function getConfidenceBadge(confidence) {

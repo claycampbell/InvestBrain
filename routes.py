@@ -919,18 +919,17 @@ def simulate_thesis(thesis_id):
         include_events = data.get('include_events', True)
         simulation_type = data.get('simulation_type', 'performance')
         
-        # Initialize simulation service
-        from services.simulation_service import SimulationService
-        sim_service = SimulationService()
+        # Initialize LLM simulation service
+        from services.llm_simulation_service import LLMSimulationService
+        sim_service = LLMSimulationService()
         
-        # Generate simulation
-        result = sim_service.generate_simulation(
+        # Generate LLM-driven simulation
+        result = sim_service.generate_thesis_simulation(
             thesis=thesis,
             time_horizon=time_horizon,
             scenario=scenario,
             volatility=volatility,
-            include_events=include_events,
-            simulation_type=simulation_type
+            include_events=include_events
         )
         
         # Check if simulation returned an error due to missing Azure OpenAI credentials
@@ -967,24 +966,26 @@ def run_simulation():
         # Get thesis data
         thesis = ThesisAnalysis.query.get_or_404(thesis_id)
         
-        # Import simulation service
-        from services.simulation_service import SimulationService
-        simulation_service = SimulationService()
+        # Import LLM simulation service
+        from services.llm_simulation_service import LLMSimulationService
+        simulation_service = LLMSimulationService()
         
         if simulation_type == 'forecast':
-            time_horizon = data.get('time_horizon')
-            scenario_type = data.get('scenario_type')
+            time_horizon = data.get('time_horizon', 1)
+            scenario_type = data.get('scenario_type', 'base')
+            volatility = data.get('volatility', 'moderate')
             
-            result = simulation_service.run_time_horizon_forecast(
-                thesis, time_horizon, scenario_type
+            result = simulation_service.generate_thesis_simulation(
+                thesis, time_horizon, scenario_type, volatility, include_events=True
             )
             
         elif simulation_type == 'event':
-            event_type = data.get('event_type')
-            event_severity = data.get('event_severity')
+            # For event simulation, use shorter time horizon focused on events
+            time_horizon = data.get('time_horizon', 1)
+            scenario_type = data.get('scenario_type', 'stress')
             
-            result = simulation_service.run_event_simulation(
-                thesis, event_type, event_severity
+            result = simulation_service.generate_thesis_simulation(
+                thesis, time_horizon, scenario_type, 'high', include_events=True
             )
             
         else:
