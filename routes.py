@@ -652,6 +652,77 @@ def get_comprehensive_analytics():
             'error': f'Dashboard generation failed: {str(e)}'
         }), 500
 
+@app.route('/api/analytics/segments')
+def get_thesis_segments():
+    """Get available segments and companies from thesis data"""
+    try:
+        from services.azure_openai_service import AzureOpenAIService
+        
+        # Get all theses
+        theses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).all()
+        
+        # Extract segments and companies using AI
+        openai_service = AzureOpenAIService()
+        
+        segments = set()
+        companies = set()
+        
+        for thesis in theses[:50]:  # Limit to recent theses for performance
+            if thesis.title and thesis.core_claim:
+                # Use AI to extract segment and company information
+                analysis_prompt = f"""
+                Analyze this investment thesis and extract:
+                1. Primary industry segment
+                2. Company names mentioned
+                
+                Thesis: {thesis.title}
+                Core Claim: {thesis.core_claim[:500]}
+                
+                Return JSON: {{
+                    "segment": "primary_industry_segment",
+                    "companies": ["company1", "company2"]
+                }}
+                """
+                
+                try:
+                    response = openai_service.generate_completion(
+                        [{"role": "user", "content": analysis_prompt}], 
+                        temperature=0.3
+                    )
+                    
+                    # Parse response
+                    import json
+                    start_idx = response.find('{')
+                    end_idx = response.rfind('}') + 1
+                    
+                    if start_idx != -1 and end_idx != -1:
+                        json_str = response[start_idx:end_idx]
+                        data = json.loads(json_str)
+                        
+                        if data.get('segment'):
+                            segments.add(data['segment'])
+                        
+                        if data.get('companies'):
+                            for company in data['companies']:
+                                if company and len(company) > 2:
+                                    companies.add(company)
+                                    
+                except Exception as e:
+                    logging.warning(f"Failed to analyze thesis {thesis.id}: {str(e)}")
+                    continue
+        
+        return jsonify({
+            'success': True,
+            'segments': sorted(list(segments)),
+            'companies': sorted(list(companies))
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Failed to extract segments: {str(e)}'
+        }), 500
+
 @app.route('/analytics')
 def analytics_dashboard():
     """Advanced analytics dashboard page"""

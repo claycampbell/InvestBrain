@@ -24,6 +24,77 @@
         </div>
     </div>
 
+    <!-- Filtering Controls -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <i class="fas fa-filter text-info"></i> Filters
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="segment-filter" class="form-label">Industry Segment</label>
+                    <select class="form-select" id="segment-filter" onchange="applyFilters()">
+                        <option value="">All Segments</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Financial">Financial Services</option>
+                        <option value="Energy">Energy</option>
+                        <option value="Consumer">Consumer Goods</option>
+                        <option value="Industrial">Industrial</option>
+                        <option value="Real Estate">Real Estate</option>
+                        <option value="Materials">Materials</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Communications">Communications</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="company-filter" class="form-label">Company</label>
+                    <select class="form-select" id="company-filter" onchange="applyFilters()">
+                        <option value="">All Companies</option>
+                        <!-- Companies will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="performance-filter" class="form-label">Performance Tier</label>
+                    <select class="form-select" id="performance-filter" onchange="applyFilters()">
+                        <option value="">All Performance</option>
+                        <option value="Excellent">Excellent (80+)</option>
+                        <option value="Strong">Strong (60-79)</option>
+                        <option value="Moderate">Moderate (40-59)</option>
+                        <option value="Weak">Weak (<40)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="date-filter" class="form-label">Time Period</label>
+                    <select class="form-select" id="date-filter" onchange="applyFilters()">
+                        <option value="">All Time</option>
+                        <option value="30">Last 30 Days</option>
+                        <option value="90">Last 90 Days</option>
+                        <option value="180">Last 6 Months</option>
+                        <option value="365">Last Year</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            Showing <span id="filtered-count">--</span> of <span id="total-count">--</span> theses
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="clearAllFilters()">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Overview Cards -->
     <div class="row mb-4" id="overview-cards">
         <div class="col-md-3">
@@ -244,9 +315,12 @@
 <script>
 let analyticsData = {};
 let thesesList = {{ theses | tojson }};
+let filteredThesesList = [];
+let allCompanies = [];
 
 // Initialize dashboard on page load
 document.addEventListener('DOMContentLoaded', function() {
+    initializeFiltering();
     initializeAnalyticsDashboard();
 });
 
@@ -760,6 +834,241 @@ function getVulnerabilityColor(level) {
     if (level === 'Low') return 'success';
     if (level === 'High') return 'danger';
     return 'warning';
+}
+
+// Filtering Functions
+function initializeFiltering() {
+    filteredThesesList = [...thesesList];
+    loadSegmentsAndCompanies();
+    updateFilterCounts();
+}
+
+async function loadSegmentsAndCompanies() {
+    try {
+        const response = await fetch('/api/analytics/segments');
+        const data = await response.json();
+        
+        if (data.success) {
+            populateSegmentDropdown(data.segments);
+            populateCompanyDropdown(data.companies);
+        } else {
+            // Fallback to local extraction
+            extractCompaniesFromTheses();
+            populateCompanyDropdown();
+        }
+    } catch (error) {
+        console.error('Failed to load segments and companies:', error);
+        // Fallback to local extraction
+        extractCompaniesFromTheses();
+        populateCompanyDropdown();
+    }
+}
+
+function populateSegmentDropdown(segments) {
+    const segmentFilter = document.getElementById('segment-filter');
+    
+    // Clear existing options except the first one
+    while (segmentFilter.children.length > 1) {
+        segmentFilter.removeChild(segmentFilter.lastChild);
+    }
+    
+    // Add AI-extracted segment options
+    segments.forEach(segment => {
+        const option = document.createElement('option');
+        option.value = segment;
+        option.textContent = segment;
+        segmentFilter.appendChild(option);
+    });
+}
+
+function extractCompaniesFromTheses() {
+    const companies = new Set();
+    
+    thesesList.forEach(thesis => {
+        // Extract company names from thesis titles and core claims
+        const text = `${thesis.title} ${thesis.core_claim || ''}`.toLowerCase();
+        
+        // Common company extraction patterns
+        const companyPatterns = [
+            /\b(apple|microsoft|google|amazon|meta|tesla|nvidia|intel|amd|ibm|oracle|salesforce)\b/g,
+            /\b(jpmorgan|goldman|morgan stanley|bank of america|wells fargo|citigroup)\b/g,
+            /\b(pfizer|johnson & johnson|merck|abbott|bristol myers|moderna|novartis)\b/g,
+            /\b(exxon|chevron|bp|shell|conocophillips|marathon)\b/g,
+            /\b(walmart|target|costco|home depot|lowes|mcdonalds|starbucks)\b/g,
+            /\b(boeing|caterpillar|general electric|3m|honeywell|lockheed martin)\b/g,
+            /\b(visa|mastercard|paypal|square|american express)\b/g,
+            /\b(netflix|disney|comcast|at&t|verizon|t-mobile)\b/g
+        ];
+        
+        companyPatterns.forEach(pattern => {
+            const matches = text.match(pattern);
+            if (matches) {
+                matches.forEach(match => {
+                    companies.add(match.charAt(0).toUpperCase() + match.slice(1));
+                });
+            }
+        });
+        
+        // Also check for capitalized words that might be company names
+        const capitalizedWords = text.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g);
+        if (capitalizedWords) {
+            capitalizedWords.forEach(word => {
+                if (word.length > 3 && !['The', 'And', 'For', 'With', 'This', 'That'].includes(word)) {
+                    companies.add(word);
+                }
+            });
+        }
+    });
+    
+    allCompanies = Array.from(companies).sort();
+}
+
+function populateCompanyDropdown() {
+    const companyFilter = document.getElementById('company-filter');
+    
+    // Clear existing options except the first one
+    while (companyFilter.children.length > 1) {
+        companyFilter.removeChild(companyFilter.lastChild);
+    }
+    
+    // Add company options
+    allCompanies.forEach(company => {
+        const option = document.createElement('option');
+        option.value = company;
+        option.textContent = company;
+        companyFilter.appendChild(option);
+    });
+}
+
+function applyFilters() {
+    const segmentFilter = document.getElementById('segment-filter').value;
+    const companyFilter = document.getElementById('company-filter').value;
+    const performanceFilter = document.getElementById('performance-filter').value;
+    const dateFilter = document.getElementById('date-filter').value;
+    
+    filteredThesesList = thesesList.filter(thesis => {
+        // Segment filter
+        if (segmentFilter && !matchesSegment(thesis, segmentFilter)) {
+            return false;
+        }
+        
+        // Company filter
+        if (companyFilter && !matchesCompany(thesis, companyFilter)) {
+            return false;
+        }
+        
+        // Performance filter
+        if (performanceFilter && !matchesPerformance(thesis, performanceFilter)) {
+            return false;
+        }
+        
+        // Date filter
+        if (dateFilter && !matchesDateRange(thesis, parseInt(dateFilter))) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    updateFilterCounts();
+    refreshAnalyticsWithFilters();
+}
+
+function matchesSegment(thesis, segment) {
+    const text = `${thesis.title} ${thesis.core_claim || ''}`.toLowerCase();
+    const segmentKeywords = {
+        'Technology': ['tech', 'software', 'ai', 'artificial intelligence', 'cloud', 'digital', 'data', 'cyber', 'semiconductor', 'chip'],
+        'Healthcare': ['health', 'medical', 'pharma', 'drug', 'biotech', 'hospital', 'clinic', 'therapy', 'medicine'],
+        'Financial': ['bank', 'finance', 'credit', 'loan', 'investment', 'insurance', 'payment', 'fintech'],
+        'Energy': ['energy', 'oil', 'gas', 'renewable', 'solar', 'wind', 'electric', 'battery', 'power'],
+        'Consumer': ['retail', 'consumer', 'brand', 'product', 'grocery', 'food', 'beverage', 'apparel'],
+        'Industrial': ['industrial', 'manufacturing', 'factory', 'machinery', 'equipment', 'construction'],
+        'Real Estate': ['real estate', 'property', 'reit', 'housing', 'commercial', 'residential'],
+        'Materials': ['materials', 'mining', 'metals', 'chemicals', 'steel', 'aluminum', 'copper'],
+        'Utilities': ['utility', 'utilities', 'water', 'electric', 'gas', 'waste', 'infrastructure'],
+        'Communications': ['telecom', 'communication', 'media', 'internet', 'wireless', 'cable', 'broadcast']
+    };
+    
+    const keywords = segmentKeywords[segment] || [];
+    return keywords.some(keyword => text.includes(keyword));
+}
+
+function matchesCompany(thesis, company) {
+    const text = `${thesis.title} ${thesis.core_claim || ''}`.toLowerCase();
+    return text.includes(company.toLowerCase());
+}
+
+function matchesPerformance(thesis, performanceTier) {
+    // Get performance score from analytics data if available
+    const score = analyticsData.performance_scores?.[thesis.id]?.overall_score || 0;
+    
+    switch (performanceTier) {
+        case 'Excellent': return score >= 80;
+        case 'Strong': return score >= 60 && score < 80;
+        case 'Moderate': return score >= 40 && score < 60;
+        case 'Weak': return score < 40;
+        default: return true;
+    }
+}
+
+function matchesDateRange(thesis, days) {
+    if (!thesis.created_at) return true;
+    
+    const thesisDate = new Date(thesis.created_at);
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    
+    return thesisDate >= cutoffDate;
+}
+
+function updateFilterCounts() {
+    document.getElementById('filtered-count').textContent = filteredThesesList.length;
+    document.getElementById('total-count').textContent = thesesList.length;
+}
+
+function clearAllFilters() {
+    document.getElementById('segment-filter').value = '';
+    document.getElementById('company-filter').value = '';
+    document.getElementById('performance-filter').value = '';
+    document.getElementById('date-filter').value = '';
+    
+    filteredThesesList = [...thesesList];
+    updateFilterCounts();
+    refreshAnalyticsWithFilters();
+}
+
+async function refreshAnalyticsWithFilters() {
+    try {
+        showAlert('Applying filters...', 'info');
+        
+        // Extract thesis IDs from filtered list
+        const thesisIds = filteredThesesList.map(t => t.id);
+        
+        if (thesisIds.length === 0) {
+            showAlert('No theses match the current filters', 'warning');
+            return;
+        }
+        
+        // Reload analytics with filtered thesis IDs
+        await loadComprehensiveAnalytics(thesisIds);
+        
+        // Reload individual components
+        await Promise.all([
+            loadPerformanceScoring(thesisIds),
+            loadPatternRecognition(thesisIds),
+            loadSignalPredictions(thesisIds),
+            loadSectorIntelligence(thesisIds)
+        ]);
+        
+        // Update overview cards
+        updateOverviewCards();
+        
+        showAlert(`Analytics updated for ${thesisIds.length} filtered theses`, 'success');
+        
+    } catch (error) {
+        console.error('Filtered analytics loading failed:', error);
+        showAlert('Failed to apply filters', 'danger');
+    }
 }
 
 async function refreshAllAnalytics() {
