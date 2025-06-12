@@ -22,12 +22,24 @@ class ReliableAnalysisService:
             except Exception as e:
                 logging.warning(f"Azure OpenAI failed: {str(e)}")
                 
-            # Use intelligent structured analysis
-            return self._create_structured_analysis(thesis_text)
+            # Use fallback analysis for reliable results
+            return self._use_fallback_analysis(thesis_text)
             
         except Exception as e:
             logging.error(f"Analysis service error: {str(e)}")
             raise
+    
+    def _use_fallback_analysis(self, thesis_text: str) -> Dict[str, Any]:
+        """Use comprehensive fallback analysis when Azure OpenAI is unavailable"""
+        try:
+            from services.fallback_analysis_service import FallbackAnalysisService
+            fallback_service = FallbackAnalysisService()
+            logging.info("Using fallback analysis service for reliable results")
+            return fallback_service.analyze_thesis(thesis_text)
+        except Exception as e:
+            logging.error(f"Fallback analysis failed: {str(e)}")
+            # Use structured analysis as final fallback
+            return self._create_structured_analysis(thesis_text)
     
     def _try_azure_analysis(self, thesis_text: str) -> Dict[str, Any]:
         """Attempt Azure OpenAI analysis with quick timeout"""
