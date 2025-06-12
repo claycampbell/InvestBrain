@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}New Analysis - Investment Thesis Intelligence System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-1">
+                        <i class="fas fa-plus text-primary"></i>
+                        New Investment Thesis Analysis
+                    </h1>
+                    <p class="text-muted mb-0">Analyze your investment thesis and extract actionable signals</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Form -->
+    <div class="row justify-content-center">
+        <div class="col-xl-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line"></i>
+                        Investment Thesis Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="analysisForm" action="{{ url_for('analyze') }}" method="POST" enctype="multipart/form-data">
+                        <div class="mb-4">
+                            <label for="thesis_text" class="form-label">
+                                <strong>Investment Thesis</strong>
+                                <span class="text-danger">*</span>
+                            </label>
+                            <textarea 
+                                class="form-control" 
+                                id="thesis_text" 
+                                name="thesis_text" 
+                                rows="8" 
+                                required
+                                placeholder="Enter your investment thesis here. Be specific about your claims, expected outcomes, and reasoning. The more detailed your thesis, the better the AI can extract actionable signals.&#10;&#10;Example: 'I believe XYZ Company will outperform the market over the next 12 months due to their expansion into emerging markets, new product launches, and improving operational efficiency. Key indicators to watch include quarterly revenue growth, market share in Asia, and manufacturing cost reductions...'"
+                            ></textarea>
+                            <div class="form-text">
+                                Provide a detailed investment thesis including your reasoning, expected outcomes, and key factors.
+                            </div>
+                        </div>
+
+                        <!-- Signal Focus Options -->
+                        <div class="mb-4">
+                            <label class="form-label"><strong>Analysis Focus</strong></label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="focus_primary_signals" name="focus_primary_signals">
+                                <label class="form-check-label" for="focus_primary_signals">
+                                    Focus on Primary Signals (Level 1-2)
+                                </label>
+                                <div class="form-text">
+                                    Prioritize the most actionable and direct signals for immediate monitoring.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Research Documents Upload -->
+                        <div class="mb-4">
+                            <label for="research_files" class="form-label">
+                                <strong>Supporting Research Documents</strong> 
+                                <span class="text-muted">(Optional)</span>
+                            </label>
+                            <input 
+                                class="form-control" 
+                                type="file" 
+                                id="research_files" 
+                                name="research_files" 
+                                multiple 
+                                accept=".pdf,.xlsx,.xls,.csv"
+                            >
+                            <div class="form-text">
+                                Upload supporting research documents (PDF, Excel, CSV). Maximum 16MB per file.
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="analyzeBtn">
+                                <i class="fas fa-brain"></i>
+                                Analyze Thesis & Extract Signals
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Progress (Hidden by default) -->
+    <div class="row justify-content-center mt-4" id="analysisProgress" style="display: none;">
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5>Analyzing Investment Thesis</h5>
+                    <p class="text-muted mb-0">AI is processing your thesis and extracting actionable signals...</p>
+                    <div class="progress mt-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Start Guide -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle"></i>
+                        Quick Start Guide
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <h6 class="text-primary">1. Write Your Thesis</h6>
+                            <p class="small mb-0">
+                                Clearly state your investment hypothesis, including expected outcomes, reasoning, and time horizon.
+                            </p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <h6 class="text-primary">2. Upload Research</h6>
+                            <p class="small mb-0">
+                                Add supporting documents like financial reports, market research, or analyst notes.
+                            </p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <h6 class="text-primary">3. Extract Signals</h6>
+                            <p class="small mb-0">
+                                AI will identify key metrics and events to monitor for thesis validation or invalidation.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('analysisForm').addEventListener('submit', function(e) {
+    // Show progress indicator
+    document.getElementById('analysisProgress').style.display = 'block';
+    document.getElementById('analyzeBtn').disabled = true;
+    
+    // Scroll to progress indicator
+    document.getElementById('analysisProgress').scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+    });
+});
+</script>
+{% endblock %}

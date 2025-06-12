@@ -21,18 +21,10 @@ class AzureOpenAIService:
                 logging.error("Azure OpenAI credentials not found in environment variables")
                 return
             
-            # Fix endpoint URL - extract base URL if full path provided
-            if '/openai/deployments/' in endpoint:
-                base_endpoint = endpoint.split('/openai/deployments/')[0]
-            else:
-                base_endpoint = endpoint.rstrip('/')
-                
-            logging.info(f"Using Azure endpoint: {base_endpoint}")
-            
             self.client = AzureOpenAI(
                 api_key=api_key,
                 api_version=api_version,
-                azure_endpoint=base_endpoint
+                azure_endpoint=endpoint
             )
             
             logging.info("Azure OpenAI client initialized successfully")
@@ -60,7 +52,7 @@ class AzureOpenAIService:
                     response = self.client.chat.completions.create(
                         messages=messages,
                         model=self.deployment_name,
-                        timeout=8  # Very short timeout to fail fast
+                        timeout=90  # Increased timeout for o4-mini network issues
                     )
                 elif 'gpt-4o' in model_name:
                     # GPT-4o models support limited parameters
@@ -133,10 +125,6 @@ class AzureOpenAIService:
                     continue
                 else:
                     logging.error(f"Error generating completion after {attempt + 1} attempts: {error_message}")
-                    # Check if this is a thesis analysis request that can use fallback
-                    if self._is_thesis_analysis_request(messages):
-                        logging.info("Using fallback analysis due to Azure OpenAI connectivity issues")
-                        return self._generate_fallback_analysis(messages)
                     raise
         
         # If all retries failed
@@ -206,24 +194,21 @@ Provide complete JSON response with all required fields."""
                     raise Exception("Could not extract valid JSON from response")
                     
         except Exception as e:
-            logging.warning(f"Azure OpenAI analysis failed, using fallback: {str(e)}")
-            # Use comprehensive fallback analysis
-            fallback_result = self._generate_fallback_analysis(messages)
-            try:
-                import json
-                return json.loads(fallback_result)
-            except json.JSONDecodeError:
-                logging.error("Fallback analysis JSON parsing failed")
-                return {
-                    "core_claim": "Investment opportunity with growth potential",
-                    "core_analysis": "Moderate risk-reward profile with sector-specific opportunities",
-                    "causal_chain": [{"chain_link": 1, "event": "Market growth", "explanation": "Favorable conditions support investment thesis"}],
-                    "assumptions": ["Market conditions remain favorable", "Execution meets expectations"],
-                    "mental_model": "Growth",
-                    "counter_thesis_scenarios": [{"scenario": "Market decline", "description": "Economic downturn affects performance", "trigger_conditions": ["Recession"], "data_signals": ["GDP decline"]}],
-                    "metrics_to_track": [{"name": "Revenue Growth", "type": "Level_1_Simple_Aggregation", "description": "Quarterly revenue growth", "frequency": "quarterly", "threshold": 10.0, "threshold_type": "above", "data_source": "Company Reports", "value_chain_position": "financial"}],
-                    "monitoring_plan": {"objective": "Monitor performance", "data_pulls": [{"category": "Financial", "metrics": ["Revenue"], "data_source": "Reports", "frequency": "quarterly"}], "alert_logic": [{"frequency": "quarterly", "condition": "Growth < 10%", "action": "Review"}], "decision_triggers": [{"condition": "Decline", "action": "Exit"}], "review_schedule": "Quarterly"}
+            logging.error(f"Error analyzing thesis: {str(e)}")
+            # Return a basic structure if analysis fails
+            return {
+                "core_claim": "Analysis failed - please try again",
+                "causal_chain": [],
+                "assumptions": [],
+                "mental_model": "unknown",
+                "counter_thesis": [],
+                "metrics_to_track": [],
+                "monitoring_plan": {
+                    "review_frequency": "monthly",
+                    "key_indicators": [],
+                    "alert_conditions": []
                 }
+            }
     
     def generate_thesis_from_data(self, data_summary):
         """Generate a thesis statement from research data"""
@@ -247,59 +232,6 @@ Provide complete JSON response with all required fields."""
         
         return self.generate_completion(messages, temperature=0.5)
     
-    def _is_thesis_analysis_request(self, messages):
-        """Check if this is a thesis analysis request that can use fallback"""
-        if not messages:
-            return False
-        
-        # Check if any message contains thesis analysis keywords
-        for message in messages:
-            content = message.get('content', '').lower()
-            if any(keyword in content for keyword in ['analyze investment', 'thesis', 'investment claim', 'core_claim']):
-                return True
-        return False
-    
-    def _generate_fallback_analysis(self, messages):
-        """Generate thesis analysis using fallback service when AI is unavailable"""
-        try:
-            from services.fallback_analysis_service import FallbackAnalysisService
-            
-            # Extract thesis text from messages
-            thesis_text = ""
-            for message in messages:
-                if message.get('role') == 'user':
-                    content = message.get('content', '')
-                    if 'analyze:' in content.lower():
-                        thesis_text = content.split(':', 1)[1].strip()
-                    else:
-                        thesis_text = content
-                    break
-            
-            if not thesis_text:
-                thesis_text = "Investment opportunity with growth potential"
-            
-            # Generate analysis using fallback service
-            fallback_service = FallbackAnalysisService()
-            analysis_result = fallback_service.analyze_thesis(thesis_text)
-            
-            # Convert to JSON format expected by the system
-            import json
-            return json.dumps(analysis_result)
-            
-        except Exception as e:
-            logging.error(f"Fallback analysis failed: {str(e)}")
-            # Return minimal viable analysis
-            return json.dumps({
-                "core_claim": "Investment opportunity with growth potential",
-                "core_analysis": "Moderate risk-reward profile with sector-specific opportunities",
-                "causal_chain": [{"chain_link": 1, "event": "Market growth", "explanation": "Favorable conditions support investment thesis"}],
-                "assumptions": ["Market conditions remain favorable", "Execution meets expectations"],
-                "mental_model": "Growth",
-                "counter_thesis_scenarios": [{"scenario": "Market decline", "description": "Economic downturn affects performance", "trigger_conditions": ["Recession"], "data_signals": ["GDP decline"]}],
-                "metrics_to_track": [{"name": "Revenue Growth", "type": "Level_1_Simple_Aggregation", "description": "Quarterly revenue growth", "frequency": "quarterly", "threshold": 10.0, "threshold_type": "above", "data_source": "Company Reports", "value_chain_position": "financial"}],
-                "monitoring_plan": {"objective": "Monitor performance", "data_pulls": [{"category": "Financial", "metrics": ["Revenue"], "data_source": "Reports", "frequency": "quarterly"}], "alert_logic": [{"frequency": "quarterly", "condition": "Growth < 10%", "action": "Review"}], "decision_triggers": [{"condition": "Decline", "action": "Exit"}], "review_schedule": "Quarterly"}
-            })
-
     def is_available(self):
         """Check if the Azure OpenAI service is available"""
         return self.client is not None
