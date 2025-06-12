@@ -12,11 +12,22 @@ class ReliableAnalysisService:
         self.azure_openai = AzureOpenAIService()
     
     def analyze_thesis(self, thesis_text: str) -> Dict[str, Any]:
-        """Analyze investment thesis with guaranteed completion"""
+        """Analyze investment thesis with Azure OpenAI first, fallback if needed"""
         try:
             logging.info(f"Starting reliable analysis for: {thesis_text[:50]}...")
             
-            # Use fallback analysis directly for reliable results
+            # Try Azure OpenAI first since it's properly configured
+            if self.azure_openai.is_available():
+                try:
+                    logging.info("Attempting Azure OpenAI analysis")
+                    result = self._try_azure_analysis(thesis_text)
+                    if result and 'core_claim' in result:
+                        logging.info("Azure OpenAI analysis completed successfully")
+                        return result
+                except Exception as e:
+                    logging.warning(f"Azure OpenAI failed: {str(e)}, using fallback")
+            
+            # Use fallback only if Azure fails
             logging.info("Using fallback analysis for guaranteed completion")
             return self._use_fallback_analysis(thesis_text)
             
