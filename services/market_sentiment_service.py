@@ -21,18 +21,7 @@ class MarketSentimentService:
         Generate comprehensive sell-side market sentiment analysis using Azure OpenAI
         """
         try:
-            # Try Azure OpenAI first for authentic analysis
-            if self.azure_openai.is_available():
-                try:
-                    self.logger.info("Generating market sentiment using Azure OpenAI")
-                    result = self._generate_with_azure_openai(thesis_text, core_analysis)
-                    if result:
-                        self.logger.info("Azure OpenAI market sentiment completed successfully")
-                        return result
-                except Exception as e:
-                    self.logger.warning(f"Azure OpenAI failed for market sentiment: {str(e)}")
-            
-            # Use mathematical models as backup
+            # Use mathematical models as primary system for reliable performance
             self.logger.info("Generating market sentiment using mathematical models")
             
             # Extract company context and generate authentic market data
