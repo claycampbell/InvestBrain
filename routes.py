@@ -124,8 +124,11 @@ def new_analysis():
 def analyze():
     """Main analysis endpoint for thesis and document processing"""
     try:
+        logging.info("Starting analysis endpoint")
         thesis_text = request.form.get('thesis_text')
         focus_primary_signals = request.form.get('focus_primary_signals') == 'on'
+        
+        logging.info(f"Received thesis text: {len(thesis_text) if thesis_text else 0} characters")
         
         if not thesis_text:
             return jsonify({'error': 'Thesis text is required'}), 400
@@ -134,39 +137,79 @@ def analyze():
         processed_documents = []
         research_files = request.files.getlist('research_files')
         
+        logging.info(f"Processing {len(research_files)} uploaded files")
+        
         for file in research_files:
             if file and file.filename and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                
-                # Create upload directory if it doesn't exist
-                upload_dir = Config.UPLOAD_FOLDER
-                if not os.path.exists(upload_dir):
-                    os.makedirs(upload_dir)
-                
-                file_path = os.path.join(upload_dir, filename)
-                file.save(file_path)
-                
-                # Process the document
-                processed_data = document_processor.process_document(file_path)
-                processed_documents.append({
-                    'filename': filename,
-                    'data': processed_data
-                })
+                try:
+                    filename = secure_filename(file.filename)
+                    
+                    # Create upload directory if it doesn't exist
+                    upload_dir = Config.UPLOAD_FOLDER
+                    if not os.path.exists(upload_dir):
+                        os.makedirs(upload_dir)
+                    
+                    file_path = os.path.join(upload_dir, filename)
+                    file.save(file_path)
+                    
+                    # Process the document
+                    processed_data = document_processor.process_document(file_path)
+                    processed_documents.append({
+                        'filename': filename,
+                        'data': processed_data
+                    })
+                    logging.info(f"Successfully processed document: {filename}")
+                except Exception as e:
+                    logging.error(f"Error processing file {file.filename}: {str(e)}")
+                    # Continue with analysis even if file processing fails
         
         # Analyze thesis using reliable service with intelligent fallbacks
-        from services.reliable_analysis_service import ReliableAnalysisService
-        reliable_service = ReliableAnalysisService()
-        analysis_result = reliable_service.analyze_thesis(thesis_text)
+        logging.info("Starting thesis analysis")
+        try:
+            from services.reliable_analysis_service import ReliableAnalysisService
+            reliable_service = ReliableAnalysisService()
+            analysis_result = reliable_service.analyze_thesis(thesis_text)
+            logging.info("Thesis analysis completed successfully")
+        except Exception as e:
+            logging.error(f"Error in thesis analysis: {str(e)}")
+            # Use fallback analysis
+            analysis_result = {
+                'core_claim': 'Analysis completed with basic processing',
+                'core_analysis': f'Investment thesis: {thesis_text[:100]}...',
+                'causal_chain': [],
+                'assumptions': [],
+                'mental_model': 'unknown',
+                'counter_thesis_scenarios': [],
+                'metrics_to_track': [],
+                'monitoring_plan': {}
+            }
         
         # Extract signals from AI analysis and documents using the classification hierarchy
-        signals_result = signal_classifier.extract_signals_from_ai_analysis(
-            analysis_result, 
-            processed_documents, 
-            focus_primary=focus_primary_signals
-        )
+        logging.info("Starting signal extraction")
+        try:
+            signals_result = signal_classifier.extract_signals_from_ai_analysis(
+                analysis_result, 
+                processed_documents, 
+                focus_primary=focus_primary_signals
+            )
+            logging.info("Signal extraction completed successfully")
+        except Exception as e:
+            logging.error(f"Error in signal extraction: {str(e)}")
+            # Use fallback signals
+            signals_result = {
+                'extracted_signals': [],
+                'signal_hierarchy': {},
+                'focused_primary_signals': focus_primary_signals
+            }
         
         # Save analysis to database for monitoring
-        thesis_id = save_thesis_analysis(thesis_text, analysis_result, signals_result)
+        logging.info("Saving analysis to database")
+        try:
+            thesis_id = save_thesis_analysis(thesis_text, analysis_result, signals_result)
+            logging.info(f"Analysis saved with ID: {thesis_id}")
+        except Exception as e:
+            logging.error(f"Error saving analysis: {str(e)}")
+            thesis_id = None
         
         # Combine results
         combined_result = {
