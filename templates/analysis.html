@@ -1090,69 +1090,54 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
     
-    function generateAIMarketSentiment(thesisData) {
-        // Generate realistic market sentiment based on thesis strength and sector
-        const coreClaimStrength = thesisData.core_claim ? thesisData.core_claim.length : 0;
-        const assumptionsCount = thesisData.assumptions ? thesisData.assumptions.length : 0;
-        
-        // Base sentiment on thesis quality indicators
-        let buyRating, holdRating, sellRating;
-        let avgPriceTarget, upsidePotential;
-        let trendDirection, keyConcerns;
-        
-        if (coreClaimStrength > 200 && assumptionsCount >= 3) {
-            // Strong thesis
-            buyRating = Math.floor(Math.random() * 20) + 70; // 70-90%
-            sellRating = Math.floor(Math.random() * 8) + 2;  // 2-10%
-            holdRating = 100 - buyRating - sellRating;
+    // Load AI-generated market sentiment on demand
+    async function loadMarketSentimentOnDemand() {
+        try {
+            const thesisId = currentAnalysisData?.id || extractThesisIdFromURL();
             
-            avgPriceTarget = `$${Math.floor(Math.random() * 300) + 1100}`;
-            upsidePotential = `+${Math.floor(Math.random() * 20) + 10}% upside`;
-            trendDirection = 'improving';
-            keyConcerns = [
-                'Valuation premiums at cycle peaks',
-                'Regulatory headwinds in key markets',
-                'Competition from emerging players'
-            ];
-        } else if (coreClaimStrength > 100) {
-            // Moderate thesis
-            buyRating = Math.floor(Math.random() * 25) + 45; // 45-70%
-            sellRating = Math.floor(Math.random() * 15) + 5; // 5-20%
-            holdRating = 100 - buyRating - sellRating;
+            if (!thesisId) {
+                updateMarketSentimentError('Unable to identify thesis for analysis');
+                return;
+            }
             
-            avgPriceTarget = `$${Math.floor(Math.random() * 200) + 900}`;
-            upsidePotential = `+${Math.floor(Math.random() * 15) + 5}% upside`;
-            trendDirection = 'stable';
-            keyConcerns = [
-                'Execution risk on key initiatives',
-                'Market share pressure from competitors',
-                'Macro economic uncertainties'
-            ];
-        } else {
-            // Weak thesis
-            buyRating = Math.floor(Math.random() * 20) + 25; // 25-45%
-            sellRating = Math.floor(Math.random() * 20) + 15; // 15-35%
-            holdRating = 100 - buyRating - sellRating;
+            const response = await fetch(`/api/market_sentiment/${thesisId}`);
+            const data = await response.json();
             
-            avgPriceTarget = `$${Math.floor(Math.random() * 150) + 750}`;
-            upsidePotential = `+${Math.floor(Math.random() * 10) + 2}% upside`;
-            trendDirection = 'declining';
-            keyConcerns = [
-                'Fundamental business model challenges',
-                'Deteriorating competitive positioning',
-                'Management execution concerns'
-            ];
+            if (data.success && data.market_sentiment) {
+                const container = document.getElementById('market-sentiment-container');
+                if (container) {
+                    container.innerHTML = renderMarketSentimentData(data.market_sentiment);
+                }
+            } else {
+                updateMarketSentimentError(data.error || 'Azure OpenAI service unavailable');
+            }
+        } catch (error) {
+            console.error('Market sentiment loading failed:', error);
+            updateMarketSentimentError('Network error - please check Azure OpenAI configuration');
         }
-        
-        return {
-            buy_rating: buyRating,
-            hold_rating: holdRating,
-            sell_rating: sellRating,
-            avg_price_target: avgPriceTarget,
-            upside_potential: upsidePotential,
-            trend_direction: trendDirection,
-            key_concerns: keyConcerns
-        };
+    }
+    
+    function updateMarketSentimentError(errorMessage) {
+        const container = document.getElementById('market-sentiment-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Market Sentiment Unavailable</strong><br>
+                    ${errorMessage}
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            Authentic sell-side analysis requires Azure OpenAI configuration.
+                        </small>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    function extractThesisIdFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('id') || urlParams.get('thesis_id') || null;
     }
     
     function generateEnhancedCounterThesis(counterScenarios) {
