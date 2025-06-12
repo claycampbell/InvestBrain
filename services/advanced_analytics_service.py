@@ -365,7 +365,7 @@ class AdvancedAnalyticsService:
             - Shared risk factors
             - Similar signal types
             
-            Return JSON: {{"themes": [{"theme": "name", "frequency": "count", "avg_performance": "score", "description": "details"}]}}
+            Return JSON: {{"themes": [{{"theme": "name", "frequency": "count", "avg_performance": "score", "description": "details"}}]}}
             """
             
             response = self.openai_service.generate_completion([{"role": "user", "content": themes_prompt}], temperature=0.4)
