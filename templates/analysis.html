@@ -617,11 +617,17 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    function generateActualSignalsDisplay(signalsByLevel) {
-        if (!signalsByLevel) return '<p class="text-muted">No signals detected</p>';
+    function generateActualSignalsDisplay(signalData) {
+        // Handle both old and new signal data structures
+        let allSignals = [];
         
-        // Flatten all signals from all levels
-        const allSignals = Object.values(signalsByLevel).flat();
+        if (signalData && signalData.raw_signals) {
+            // New structure from cleaned signal classifier
+            allSignals = signalData.raw_signals;
+        } else if (signalData && typeof signalData === 'object') {
+            // Old structure with signals_by_level
+            allSignals = Object.values(signalData).flat();
+        }
         
         if (allSignals.length === 0) return '<p class="text-muted">No signals detected</p>';
         
@@ -633,33 +639,29 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="flex-grow-1">
                                 <div class="small d-flex align-items-center">
-                                    <strong>${signal.name}</strong>
+                                    <strong>${signal.name || 'Signal Name'}</strong>
                                     <i class="fas fa-chevron-down signal-expand-icon ms-2" id="expand-icon-${index}" style="font-size: 10px; transition: transform 0.3s ease;"></i>
                                 </div>
-                                <div class="small text-muted">${signal.description || ''}</div>
-                                ${signal.factset_identifier ? `
+                                <div class="small text-muted">${signal.description || 'AI-generated signal from thesis analysis'}</div>
+                                ${signal.data_source ? `
                                     <div class="small text-info mt-1">
-                                        <i class="fas fa-database"></i> ${signal.factset_identifier}
-                                    </div>
-                                ` : ''}
-                                ${signal.acquisition_method ? `
-                                    <div class="small text-warning mt-1">
-                                        <i class="fas fa-tools"></i> ${signal.acquisition_method}
+                                        <i class="fas fa-database"></i> ${signal.data_source}
                                     </div>
                                 ` : ''}
                             </div>
                             <div class="text-end">
                                 <span class="badge bg-secondary small">${signal.data_source || 'FactSet'}</span>
-                                ${signal.frequency ? `<div class="small text-muted">${signal.frequency}</div>` : ''}
+                                ${signal.collection_frequency ? `<div class="small text-muted">${signal.collection_frequency}</div>` : ''}
                             </div>
                         </div>
-                        ${signal.programmatic_feasibility ? `
-                            <div class="small mt-1">
-                                <span class="badge ${signal.programmatic_feasibility === 'high' ? 'bg-success' : signal.programmatic_feasibility === 'medium' ? 'bg-warning text-dark' : 'bg-danger'} text-white">
-                                    ${signal.programmatic_feasibility} feasibility
-                                </span>
-                            </div>
-                        ` : ''}
+                        <div class="small mt-1">
+                            <span class="badge bg-info text-white">
+                                API programmatic
+                            </span>
+                            <span class="badge bg-warning text-dark ms-1">
+                                medium complexity
+                            </span>
+                        </div>
                         
                         <!-- Expandable Context Section -->
                         <div class="signal-context mt-3" id="signal-context-${index}" style="display: none; border-top: 1px solid #eee; padding-top: 15px;">
