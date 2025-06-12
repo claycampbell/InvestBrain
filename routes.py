@@ -464,7 +464,7 @@ def generate_market_sentiment(thesis_id):
             'error': 'Market sentiment analysis requires professional market data APIs (FactSet, Bloomberg, Refinitiv). Please configure your institutional data provider credentials.',
             'data_requirement': 'authentic_market_data',
             'empty_state': True
-        })
+        }), 503
         
     except Exception as e:
         return jsonify({
