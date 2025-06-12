@@ -67,13 +67,14 @@ class LLMSimulationService:
                 'scenario_analysis': scenario_analysis,
                 'simulation_metadata': {
                     'thesis_id': thesis.id,
-                    'thesis_title': thesis.title,
+                    'title': thesis.title or 'Investment Thesis',
+                    'thesis_title': thesis.title or 'Investment Thesis',
                     'scenario': scenario,
                     'volatility': volatility,
                     'time_horizon': time_horizon,
                     'include_events': include_events,
                     'generated_at': datetime.utcnow().isoformat(),
-                    'data_source': 'Azure OpenAI LLM'
+                    'data_source': 'Thesis-based Analysis'
                 }
             }
             
@@ -89,11 +90,13 @@ class LLMSimulationService:
     def _generate_llm_performance_forecast_safe(self, thesis, time_horizon: int, 
                                               scenario: str, volatility: str) -> Dict[str, Any]:
         """
-        Generate performance forecast prioritizing reliability over LLM calls
+        Generate performance forecast with timeout protection
         """
-        # Use thesis-based simulation directly to ensure reliable execution
-        logging.info("Using thesis-based simulation for reliable performance")
-        return self._generate_thesis_based_simulation(thesis, time_horizon, scenario, volatility)
+        try:
+            return self._generate_llm_performance_forecast(thesis, time_horizon, scenario, volatility)
+        except Exception as e:
+            logging.warning(f"Performance forecast failed, using thesis-based simulation: {str(e)}")
+            return self._generate_thesis_based_simulation(thesis, time_horizon, scenario, volatility)
     
     def _generate_llm_market_events_safe(self, thesis, time_horizon: int, scenario: str, 
                                        performance_data: Dict) -> List[Dict[str, Any]]:
@@ -109,11 +112,13 @@ class LLMSimulationService:
     def _generate_llm_scenario_analysis_safe(self, thesis, scenario: str, time_horizon: int,
                                            performance_data: Dict, events: List[Dict]) -> Dict[str, Any]:
         """
-        Generate scenario analysis prioritizing reliability
+        Generate scenario analysis with timeout protection
         """
-        # Use fallback analysis directly to ensure reliable execution
-        logging.info("Using thesis-based scenario analysis for reliable execution")
-        return self._generate_fallback_scenario_analysis(thesis, scenario, time_horizon, performance_data)
+        try:
+            return self._generate_llm_scenario_analysis(thesis, scenario, time_horizon, performance_data, events)
+        except Exception as e:
+            logging.warning(f"Scenario analysis failed: {str(e)}")
+            return self._generate_fallback_scenario_analysis(thesis, scenario, time_horizon, performance_data)
 
     def _generate_llm_performance_forecast(self, thesis, time_horizon: int, 
                                          scenario: str, volatility: str) -> Dict[str, List[float]]:
