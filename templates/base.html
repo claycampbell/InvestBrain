@@ -131,6 +131,12 @@
                             <i class="fas fa-chart-line"></i> Monitoring
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'analytics_dashboard' %}active{% endif %}" 
+                           href="{{ url_for('analytics_dashboard') }}">
+                            <i class="fas fa-brain"></i> Analytics
+                        </a>
+                    </li>
                 </ul>
                 
                 <ul class="navbar-nav">

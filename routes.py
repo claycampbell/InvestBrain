@@ -540,6 +540,156 @@ def generate_market_sentiment(thesis_id):
             'error': f'Unable to generate market sentiment: {str(e)}'
         }), 500
 
+@app.route('/api/analytics/performance/<int:thesis_id>')
+def get_thesis_performance_score(thesis_id):
+    """Get real-time performance scoring for a thesis"""
+    try:
+        from services.advanced_analytics_service import AdvancedAnalyticsService
+        analytics_service = AdvancedAnalyticsService()
+        
+        performance_data = analytics_service.calculate_thesis_performance_score(thesis_id)
+        
+        if 'error' in performance_data:
+            return jsonify({
+                'success': False,
+                'error': performance_data['error']
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'performance_data': performance_data
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Performance analysis failed: {str(e)}'
+        }), 500
+
+@app.route('/api/analytics/patterns')
+def get_cross_thesis_patterns():
+    """Detect patterns across multiple theses"""
+    try:
+        thesis_ids = request.args.getlist('thesis_ids', type=int)
+        
+        from services.advanced_analytics_service import AdvancedAnalyticsService
+        analytics_service = AdvancedAnalyticsService()
+        
+        patterns_data = analytics_service.detect_cross_thesis_patterns(thesis_ids if thesis_ids else None)
+        
+        if 'error' in patterns_data:
+            return jsonify({
+                'success': False,
+                'error': patterns_data['error']
+            }), 400
+        
+        return jsonify({
+            'success': True,
+            'patterns_data': patterns_data
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Pattern detection failed: {str(e)}'
+        }), 500
+
+@app.route('/api/analytics/signal_predictions/<int:thesis_id>')
+def get_signal_predictions(thesis_id):
+    """Get predictive analysis for thesis signals"""
+    try:
+        from services.advanced_analytics_service import AdvancedAnalyticsService
+        analytics_service = AdvancedAnalyticsService()
+        
+        predictions_data = analytics_service.predict_signal_strength(thesis_id)
+        
+        if 'error' in predictions_data:
+            return jsonify({
+                'success': False,
+                'error': predictions_data['error']
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'predictions_data': predictions_data
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Signal prediction failed: {str(e)}'
+        }), 500
+
+@app.route('/api/analytics/sector_intelligence/<int:thesis_id>')
+def get_sector_intelligence(thesis_id):
+    """Get sector rotation intelligence for a thesis"""
+    try:
+        from services.advanced_analytics_service import AdvancedAnalyticsService
+        analytics_service = AdvancedAnalyticsService()
+        
+        sector_data = analytics_service.analyze_sector_rotation_intelligence(thesis_id)
+        
+        if 'error' in sector_data:
+            return jsonify({
+                'success': False,
+                'error': sector_data['error']
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'sector_data': sector_data
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Sector intelligence analysis failed: {str(e)}'
+        }), 500
+
+@app.route('/api/analytics/dashboard')
+def get_comprehensive_analytics():
+    """Get comprehensive analytics dashboard"""
+    try:
+        thesis_ids = request.args.getlist('thesis_ids', type=int)
+        
+        if not thesis_ids:
+            # Get recent theses if none specified
+            recent_theses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).limit(10).all()
+            thesis_ids = [t.id for t in recent_theses]
+        
+        from services.advanced_analytics_service import AdvancedAnalyticsService
+        analytics_service = AdvancedAnalyticsService()
+        
+        dashboard_data = analytics_service.generate_comprehensive_analytics_dashboard(thesis_ids)
+        
+        if 'error' in dashboard_data:
+            return jsonify({
+                'success': False,
+                'error': dashboard_data['error']
+            }), 400
+        
+        return jsonify({
+            'success': True,
+            'dashboard_data': dashboard_data
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Dashboard generation failed: {str(e)}'
+        }), 500
+
+@app.route('/analytics')
+def analytics_dashboard():
+    """Advanced analytics dashboard page"""
+    try:
+        # Get user's recent theses
+        recent_theses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).limit(20).all()
+        return render_template('analytics_dashboard.html', theses=recent_theses)
+    except Exception as e:
+        logging.error(f"Error loading analytics dashboard: {str(e)}")
+        return render_template('404.html'), 404
+
 @app.route('/publish_thesis', methods=['POST'])
 def publish_thesis():
     """Publish a completed thesis analysis for monitoring and simulation"""

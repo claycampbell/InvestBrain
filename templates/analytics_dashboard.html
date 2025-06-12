@@ -1,0 +1,820 @@
+{% extends "base.html" %}
+
+{% block title %}Advanced Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Dashboard Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">Advanced Analytics Dashboard</h2>
+                    <p class="text-muted mb-0">AI-powered thesis intelligence and performance insights</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="refreshAllAnalytics()">
+                        <i class="fas fa-sync-alt"></i> Refresh Analytics
+                    </button>
+                    <button class="btn btn-primary" onclick="exportAnalytics()">
+                        <i class="fas fa-download"></i> Export Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row mb-4" id="overview-cards">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="total-theses">{{ theses|length }}</h4>
+                            <p class="mb-0">Total Theses</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="avg-performance">--</h4>
+                            <p class="mb-0">Avg Performance</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-trophy fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="high-conviction">--</h4>
+                            <p class="mb-0">High Conviction</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-star fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="patterns-detected">--</h4>
+                            <p class="mb-0">Patterns Detected</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-brain fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Analytics Grid -->
+    <div class="row">
+        <!-- Performance Scoring Panel -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar text-primary"></i> 
+                        Thesis Performance Scoring
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="performance-scoring-content">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="mt-2 text-muted">Calculating performance scores...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cross-Thesis Patterns Panel -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-project-diagram text-success"></i> 
+                        Cross-Thesis Pattern Recognition
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="pattern-recognition-content">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="mt-2 text-muted">Analyzing success patterns...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signal Predictions Panel -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-crystal-ball text-info"></i> 
+                        Predictive Signal Strength
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="signal-predictions-content">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="mt-2 text-muted">Predicting signal triggers...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sector Intelligence Panel -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-industry text-warning"></i> 
+                        Sector Rotation Intelligence
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="sector-intelligence-content">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-warning" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="mt-2 text-muted">Analyzing sector momentum...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Analysis Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-microscope text-dark"></i> 
+                        Detailed Intelligence Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="detailed-analysis-content">
+                        <!-- Tabs for different analysis views -->
+                        <ul class="nav nav-tabs" id="analysisTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="insights-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#insights" type="button" role="tab">
+                                    <i class="fas fa-lightbulb"></i> Key Insights
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="correlations-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#correlations" type="button" role="tab">
+                                    <i class="fas fa-link"></i> Correlations
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="recommendations-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#recommendations" type="button" role="tab">
+                                    <i class="fas fa-recommend"></i> Recommendations
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content mt-3" id="analysisTabContent">
+                            <div class="tab-pane fade show active" id="insights" role="tabpanel">
+                                <div id="insights-content">
+                                    <p class="text-muted">Loading comprehensive insights...</p>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="correlations" role="tabpanel">
+                                <div id="correlations-content">
+                                    <p class="text-muted">Analyzing thesis correlations...</p>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="recommendations" role="tabpanel">
+                                <div id="recommendations-content">
+                                    <p class="text-muted">Generating strategic recommendations...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Chart Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<script>
+let analyticsData = {};
+let thesesList = {{ theses | tojson }};
+
+// Initialize dashboard on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAnalyticsDashboard();
+});
+
+async function initializeAnalyticsDashboard() {
+    try {
+        showAlert('Loading advanced analytics...', 'info');
+        
+        // Extract thesis IDs
+        const thesisIds = thesesList.map(t => t.id);
+        
+        // Load comprehensive analytics
+        await loadComprehensiveAnalytics(thesisIds);
+        
+        // Load individual components
+        await Promise.all([
+            loadPerformanceScoring(thesisIds),
+            loadPatternRecognition(thesisIds),
+            loadSignalPredictions(thesisIds),
+            loadSectorIntelligence(thesisIds)
+        ]);
+        
+        // Update overview cards
+        updateOverviewCards();
+        
+        // Load detailed analysis
+        loadDetailedAnalysis();
+        
+        showAlert('Analytics dashboard loaded successfully', 'success');
+        
+    } catch (error) {
+        console.error('Dashboard initialization failed:', error);
+        showAlert('Failed to load analytics dashboard', 'danger');
+    }
+}
+
+async function loadComprehensiveAnalytics(thesisIds) {
+    try {
+        const params = new URLSearchParams();
+        thesisIds.forEach(id => params.append('thesis_ids', id));
+        
+        const response = await fetch(`/api/analytics/dashboard?${params}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            analyticsData = data.dashboard_data;
+        } else {
+            throw new Error(data.error || 'Failed to load analytics data');
+        }
+    } catch (error) {
+        console.error('Comprehensive analytics loading failed:', error);
+        throw error;
+    }
+}
+
+async function loadPerformanceScoring(thesisIds) {
+    try {
+        const performanceContainer = document.getElementById('performance-scoring-content');
+        
+        if (!analyticsData.performance_scores) {
+            performanceContainer.innerHTML = '<p class="text-muted">No performance data available</p>';
+            return;
+        }
+        
+        // Generate performance scoring visualization
+        const performanceHTML = generatePerformanceScoringHTML(analyticsData.performance_scores);
+        performanceContainer.innerHTML = performanceHTML;
+        
+        // Create performance chart
+        createPerformanceChart(analyticsData.performance_scores);
+        
+    } catch (error) {
+        console.error('Performance scoring loading failed:', error);
+        document.getElementById('performance-scoring-content').innerHTML = 
+            '<div class="alert alert-warning">Performance scoring unavailable</div>';
+    }
+}
+
+async function loadPatternRecognition(thesisIds) {
+    try {
+        const patternContainer = document.getElementById('pattern-recognition-content');
+        
+        if (!analyticsData.cross_thesis_patterns) {
+            patternContainer.innerHTML = '<p class="text-muted">No pattern data available</p>';
+            return;
+        }
+        
+        const patternsHTML = generatePatternRecognitionHTML(analyticsData.cross_thesis_patterns);
+        patternContainer.innerHTML = patternsHTML;
+        
+    } catch (error) {
+        console.error('Pattern recognition loading failed:', error);
+        document.getElementById('pattern-recognition-content').innerHTML = 
+            '<div class="alert alert-warning">Pattern recognition unavailable</div>';
+    }
+}
+
+async function loadSignalPredictions(thesisIds) {
+    try {
+        const predictionsContainer = document.getElementById('signal-predictions-content');
+        
+        if (!analyticsData.signal_predictions) {
+            predictionsContainer.innerHTML = '<p class="text-muted">No prediction data available</p>';
+            return;
+        }
+        
+        const predictionsHTML = generateSignalPredictionsHTML(analyticsData.signal_predictions);
+        predictionsContainer.innerHTML = predictionsHTML;
+        
+    } catch (error) {
+        console.error('Signal predictions loading failed:', error);
+        document.getElementById('signal-predictions-content').innerHTML = 
+            '<div class="alert alert-warning">Signal predictions unavailable</div>';
+    }
+}
+
+async function loadSectorIntelligence(thesisIds) {
+    try {
+        const sectorContainer = document.getElementById('sector-intelligence-content');
+        
+        if (!analyticsData.sector_intelligence) {
+            sectorContainer.innerHTML = '<p class="text-muted">No sector data available</p>';
+            return;
+        }
+        
+        const sectorHTML = generateSectorIntelligenceHTML(analyticsData.sector_intelligence);
+        sectorContainer.innerHTML = sectorHTML;
+        
+    } catch (error) {
+        console.error('Sector intelligence loading failed:', error);
+        document.getElementById('sector-intelligence-content').innerHTML = 
+            '<div class="alert alert-warning">Sector intelligence unavailable</div>';
+    }
+}
+
+function generatePerformanceScoringHTML(performanceScores) {
+    const scores = Object.values(performanceScores).filter(score => !score.error);
+    
+    if (scores.length === 0) {
+        return '<p class="text-muted">No performance scores available</p>';
+    }
+    
+    const topPerformers = scores
+        .sort((a, b) => b.overall_score - a.overall_score)
+        .slice(0, 5);
+    
+    return `
+        <div class="performance-scoring">
+            <div class="mb-3">
+                <h6 class="text-primary">Top Performing Theses</h6>
+            </div>
+            
+            ${topPerformers.map((score, index) => `
+                <div class="performance-item mb-3 p-3 border rounded">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary me-2">#${index + 1}</span>
+                            <strong>Thesis ${score.thesis_id}</strong>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-${getScoreColor(score.overall_score)} me-2">
+                                ${score.overall_score}/100
+                            </span>
+                            <span class="badge bg-outline-secondary">
+                                ${score.performance_tier}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Signal Confirmation</small>
+                            <div class="progress mb-1" style="height: 4px;">
+                                <div class="progress-bar bg-success" 
+                                     style="width: ${score.components.signal_confirmation_rate}%"></div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Market Validation</small>
+                            <div class="progress mb-1" style="height: 4px;">
+                                <div class="progress-bar bg-info" 
+                                     style="width: ${score.components.market_validation_score}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            Confidence: ${Math.round(score.confidence_level * 100)}% | 
+                            Updated: ${new Date(score.last_updated).toLocaleDateString()}
+                        </small>
+                    </div>
+                </div>
+            `).join('')}
+            
+            <div class="mt-3">
+                <canvas id="performance-chart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    `;
+}
+
+function generatePatternRecognitionHTML(patternsData) {
+    const successPatterns = patternsData.success_patterns || [];
+    const failurePatterns = patternsData.failure_patterns || [];
+    const themes = patternsData.recurring_themes || [];
+    
+    return `
+        <div class="pattern-recognition">
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="text-success">Success Patterns</h6>
+                    <span class="badge bg-success">${successPatterns.length} detected</span>
+                </div>
+            </div>
+            
+            ${successPatterns.slice(0, 3).map(pattern => `
+                <div class="pattern-item mb-2 p-2 border-start border-success border-3 bg-light">
+                    <strong class="small">${pattern.pattern}</strong>
+                    <div class="small text-muted">${pattern.impact}</div>
+                    <div class="small text-success">Frequency: ${pattern.frequency}</div>
+                </div>
+            `).join('')}
+            
+            <div class="mb-3 mt-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="text-danger">Failure Patterns</h6>
+                    <span class="badge bg-danger">${failurePatterns.length} detected</span>
+                </div>
+            </div>
+            
+            ${failurePatterns.slice(0, 3).map(pattern => `
+                <div class="pattern-item mb-2 p-2 border-start border-danger border-3 bg-light">
+                    <strong class="small">${pattern.pattern}</strong>
+                    <div class="small text-muted">${pattern.risk}</div>
+                    <div class="small text-danger">Frequency: ${pattern.frequency}</div>
+                </div>
+            `).join('')}
+            
+            ${themes.length > 0 ? `
+                <div class="mb-3 mt-4">
+                    <h6 class="text-info">Recurring Themes</h6>
+                    ${themes.slice(0, 3).map(theme => `
+                        <div class="theme-item mb-2 p-2 border rounded bg-info bg-opacity-10">
+                            <strong class="small">${theme.theme}</strong>
+                            <div class="small text-muted">${theme.description}</div>
+                            <div class="d-flex justify-content-between align-items-center mt-1">
+                                <span class="small text-info">Avg Performance: ${theme.avg_performance}</span>
+                                <span class="badge bg-info">${theme.frequency} occurrences</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            
+            <div class="mt-3 p-2 bg-light rounded">
+                <small class="text-muted">
+                    <i class="fas fa-robot"></i> 
+                    Patterns generated from ${patternsData.total_theses_analyzed} theses with 
+                    ${Math.round(patternsData.confidence_score * 100)}% confidence
+                </small>
+            </div>
+        </div>
+    `;
+}
+
+function generateSignalPredictionsHTML(predictionsData) {
+    let html = '<div class="signal-predictions">';
+    
+    Object.entries(predictionsData).forEach(([thesisId, predictions]) => {
+        if (predictions.error) return;
+        
+        const topSignals = predictions.signal_predictions?.slice(0, 3) || [];
+        
+        html += `
+            <div class="thesis-predictions mb-4">
+                <div class="mb-2">
+                    <strong>Thesis ${thesisId}</strong>
+                    ${predictions.next_trigger_estimate ? `
+                        <span class="badge bg-warning ms-2">
+                            Next trigger: ${predictions.next_trigger_estimate.estimated_days} days
+                        </span>
+                    ` : ''}
+                </div>
+                
+                ${topSignals.map(signal => `
+                    <div class="signal-prediction mb-2 p-2 border rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="flex-grow-1">
+                                <strong class="small">${signal.signal_name}</strong>
+                                <div class="small text-muted">${signal.signal_type}</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="badge bg-${getProbabilityColor(signal.trigger_probability)}">
+                                    ${Math.round(signal.trigger_probability * 100)}%
+                                </div>
+                                <div class="small text-muted">${signal.estimated_days_to_trigger}d</div>
+                            </div>
+                        </div>
+                        <div class="progress mt-1" style="height: 3px;">
+                            <div class="progress-bar bg-${getProbabilityColor(signal.trigger_probability)}" 
+                                 style="width: ${signal.trigger_probability * 100}%"></div>
+                        </div>
+                    </div>
+                `).join('')}
+                
+                ${predictions.predictive_insights?.length > 0 ? `
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-lightbulb"></i> 
+                            ${predictions.predictive_insights[0]}
+                        </small>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+function generateSectorIntelligenceHTML(sectorData) {
+    let html = '<div class="sector-intelligence">';
+    
+    Object.entries(sectorData).forEach(([thesisId, intelligence]) => {
+        if (intelligence.error) return;
+        
+        const sectorInfo = intelligence.sector_info || {};
+        const momentum = intelligence.sector_momentum || {};
+        const vulnerability = intelligence.vulnerability_assessment || {};
+        
+        html += `
+            <div class="sector-analysis mb-4">
+                <div class="mb-2">
+                    <strong>Thesis ${thesisId}</strong>
+                    <span class="badge bg-secondary ms-2">${sectorInfo.primary_sector || 'Unknown'}</span>
+                </div>
+                
+                <div class="row">
+                    <div class="col-6">
+                        <div class="small mb-1"><strong>Sector Momentum</strong></div>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-${getMomentumColor(momentum.momentum_direction)}">
+                                ${momentum.momentum_direction || 'neutral'}
+                            </span>
+                            <div class="progress ms-2 flex-grow-1" style="height: 6px;">
+                                <div class="progress-bar bg-${getMomentumColor(momentum.momentum_direction)}" 
+                                     style="width: ${(momentum.momentum_strength || 0.5) * 100}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="small mb-1"><strong>Vulnerability</strong></div>
+                        <span class="badge bg-${getVulnerabilityColor(vulnerability.vulnerability_level)}">
+                            ${vulnerability.vulnerability_level || 'Medium'}
+                        </span>
+                        <span class="small text-muted ms-2">
+                            ${Math.round((vulnerability.risk_score || 0.5) * 100)}% risk
+                        </span>
+                    </div>
+                </div>
+                
+                ${momentum.key_drivers?.length > 0 ? `
+                    <div class="mt-2">
+                        <div class="small text-muted">Key Drivers:</div>
+                        <div class="small">${momentum.key_drivers.slice(0, 2).join(', ')}</div>
+                    </div>
+                ` : ''}
+                
+                ${intelligence.recommended_actions?.length > 0 ? `
+                    <div class="mt-2">
+                        <div class="small text-success">
+                            <i class="fas fa-lightbulb"></i> 
+                            ${intelligence.recommended_actions[0]}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+function updateOverviewCards() {
+    try {
+        // Update average performance
+        const performanceScores = Object.values(analyticsData.performance_scores || {})
+            .filter(score => !score.error);
+        
+        if (performanceScores.length > 0) {
+            const avgScore = performanceScores.reduce((sum, score) => sum + score.overall_score, 0) / performanceScores.length;
+            document.getElementById('avg-performance').textContent = Math.round(avgScore);
+            
+            const highConvictionCount = performanceScores.filter(score => score.performance_tier === 'High Conviction').length;
+            document.getElementById('high-conviction').textContent = highConvictionCount;
+        }
+        
+        // Update patterns detected
+        const patterns = analyticsData.cross_thesis_patterns;
+        if (patterns) {
+            const totalPatterns = (patterns.success_patterns?.length || 0) + (patterns.failure_patterns?.length || 0);
+            document.getElementById('patterns-detected').textContent = totalPatterns;
+        }
+        
+    } catch (error) {
+        console.error('Overview cards update failed:', error);
+    }
+}
+
+function loadDetailedAnalysis() {
+    try {
+        // Load insights
+        const insights = analyticsData.summary_insights || [];
+        const insightsContent = document.getElementById('insights-content');
+        
+        if (insights.length > 0) {
+            insightsContent.innerHTML = `
+                <div class="insights-list">
+                    ${insights.map(insight => `
+                        <div class="insight-item mb-3 p-3 border-start border-primary border-3 bg-light">
+                            <i class="fas fa-lightbulb text-primary me-2"></i>
+                            ${insight}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            insightsContent.innerHTML = '<p class="text-muted">No insights available</p>';
+        }
+        
+        // Load correlations (placeholder for now)
+        document.getElementById('correlations-content').innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                Correlation analysis will be displayed here when sufficient data is available.
+            </div>
+        `;
+        
+        // Load recommendations (placeholder for now)
+        document.getElementById('recommendations-content').innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-recommend"></i>
+                Strategic recommendations will be generated based on pattern analysis.
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Detailed analysis loading failed:', error);
+    }
+}
+
+function createPerformanceChart(performanceScores) {
+    try {
+        const ctx = document.getElementById('performance-chart');
+        if (!ctx) return;
+        
+        const scores = Object.values(performanceScores).filter(score => !score.error);
+        const labels = scores.map(score => `Thesis ${score.thesis_id}`);
+        const data = scores.map(score => score.overall_score);
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Performance Score',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Performance chart creation failed:', error);
+    }
+}
+
+// Utility functions
+function getScoreColor(score) {
+    if (score >= 80) return 'success';
+    if (score >= 60) return 'info';
+    if (score >= 40) return 'warning';
+    return 'danger';
+}
+
+function getProbabilityColor(probability) {
+    if (probability >= 0.7) return 'success';
+    if (probability >= 0.5) return 'warning';
+    return 'danger';
+}
+
+function getMomentumColor(direction) {
+    if (direction === 'positive') return 'success';
+    if (direction === 'negative') return 'danger';
+    return 'warning';
+}
+
+function getVulnerabilityColor(level) {
+    if (level === 'Low') return 'success';
+    if (level === 'High') return 'danger';
+    return 'warning';
+}
+
+async function refreshAllAnalytics() {
+    try {
+        showAlert('Refreshing analytics...', 'info');
+        await initializeAnalyticsDashboard();
+    } catch (error) {
+        showAlert('Failed to refresh analytics', 'danger');
+    }
+}
+
+function exportAnalytics() {
+    try {
+        const exportData = {
+            timestamp: new Date().toISOString(),
+            analytics_data: analyticsData,
+            summary: {
+                total_theses: thesesList.length,
+                analysis_date: new Date().toLocaleDateString()
+            }
+        };
+        
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `analytics-report-${new Date().getTime()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showAlert('Analytics report exported successfully', 'success');
+    } catch (error) {
+        showAlert('Failed to export analytics report', 'danger');
+    }
+}
+
+function showAlert(message, type) {
+    // Simple alert implementation
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}
