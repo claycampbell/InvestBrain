@@ -475,16 +475,39 @@ def get_price_change(thesis_id):
             'error': str(e)
         }), 500
 
+@app.route('/api/market_sentiment/<int:thesis_id>')
+def get_market_sentiment(thesis_id):
+    """Get AI-generated market sentiment for a thesis"""
+    try:
+        thesis = ThesisAnalysis.query.get(thesis_id)
+        if not thesis:
+            return jsonify({
+                'success': False,
+                'error': 'Thesis not found'
+            }), 404
+        
+        # Generate market sentiment using Azure OpenAI
+        from services.market_sentiment_service import MarketSentimentService
+        sentiment_service = MarketSentimentService()
+        
+        market_sentiment = sentiment_service.generate_market_sentiment(thesis.original_thesis, thesis.core_claim)
+        
+        return jsonify({
+            'success': True,
+            'market_sentiment': market_sentiment
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Market sentiment generation failed: {str(e)}'
+        }), 500
+
 @app.route('/api/thesis/<int:thesis_id>/market-sentiment')
 def generate_market_sentiment(thesis_id):
-    """Generate AI-powered market sentiment for a thesis"""
-    # Market sentiment requires professional market data services
-    return jsonify({
-        'success': False,
-        'error': 'Market sentiment analysis requires professional market data APIs (FactSet, Bloomberg, Refinitiv). Please configure your institutional data provider credentials.',
-        'data_requirement': 'authentic_market_data',
-        'empty_state': True
-    }), 503
+    """Generate AI-powered market sentiment for a thesis (legacy route)"""
+    # Redirect to the new market sentiment endpoint
+    return get_market_sentiment(thesis_id)
 
 @app.route('/api/analytics/performance/<int:thesis_id>')
 def get_thesis_performance_score(thesis_id):

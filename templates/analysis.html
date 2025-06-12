@@ -1788,6 +1788,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }, 1000); // Wait for dynamic content to load
+    
+    // Trigger market sentiment loading if spinner is present
+    const marketSentimentContainer = document.getElementById('market-sentiment-container');
+    if (marketSentimentContainer && marketSentimentContainer.innerHTML.includes('spinner-border')) {
+        setTimeout(() => {
+            loadMarketSentimentOnDemand();
+        }, 500);
+    }
 });
 </script>
 {% endblock %}
