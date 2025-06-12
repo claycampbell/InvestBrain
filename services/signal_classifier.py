@@ -329,26 +329,8 @@ class SignalClassifier:
         signals = []
         text_lower = text.lower()
         
-        for category, patterns in self.level_0_indicators.items():
-            for pattern in patterns:
-                if pattern.lower() in text_lower:
-                    # Extract context around the signal
-                    context = self._extract_signal_context(text, pattern)
-                    
-                    signal = Signal(
-                        name=pattern.title(),
-                        level=SignalLevel.LEVEL_0,
-                        description=f"Raw economic activity: {pattern}",
-                        data_source="Document analysis",
-                        value_chain_position=self._determine_value_chain_position(pattern),
-                        predictive_power=self._assess_predictive_power(pattern, context),
-                        market_attention="low",  # Level 0 signals typically have low market attention
-                        lead_lag_indicator="leading",  # Level 0 signals are typically leading
-                        raw_data_points=[pattern],
-                        collection_frequency=self._estimate_collection_frequency(pattern),
-                        reliability_score=self._calculate_reliability_score(pattern, context)
-                    )
-                    signals.append(signal)
+        # Hardcoded pattern matching removed - signals now come exclusively from LLM analysis
+        pass
         
         return signals
     
@@ -357,26 +339,8 @@ class SignalClassifier:
         signals = []
         text_lower = text.lower()
         
-        for category, patterns in self.level_1_indicators.items():
-            for pattern in patterns:
-                if pattern.lower() in text_lower:
-                    context = self._extract_signal_context(text, pattern)
-                    
-                    signal = Signal(
-                        name=pattern.title(),
-                        level=SignalLevel.LEVEL_1,
-                        description=f"Simple aggregation: {pattern}",
-                        data_source="Document analysis",
-                        value_chain_position=self._determine_value_chain_position(pattern),
-                        predictive_power=self._assess_predictive_power(pattern, context),
-                        market_attention="low",
-                        lead_lag_indicator="leading",
-                        raw_data_points=[pattern],
-                        derivation_method="Simple aggregation or basic mathematical operation",
-                        collection_frequency=self._estimate_collection_frequency(pattern),
-                        reliability_score=self._calculate_reliability_score(pattern, context)
-                    )
-                    signals.append(signal)
+        # Hardcoded pattern matching removed - signals now come exclusively from LLM analysis
+        pass
         
         return signals
     
@@ -429,27 +393,15 @@ class SignalClassifier:
         """Determine the value chain position of a signal"""
         signal_lower = signal.lower()
         
-        for position, keywords in self.value_chain_keywords.items():
-            if any(keyword in signal_lower for keyword in keywords):
-                return position
-        
+        # Hardcoded patterns removed - value chain position comes from LLM analysis
         return "unknown"
     
     def _assess_predictive_power(self, signal: str, context: str) -> str:
         """Assess the predictive power of a signal"""
         combined_text = (signal + " " + context).lower()
         
-        for power_level, keywords in self.predictive_keywords.items():
-            if any(keyword in combined_text for keyword in keywords):
-                return power_level.replace('_predictive', '')
-        
-        # Default assessment based on signal characteristics
-        if any(word in signal.lower() for word in ['permit', 'application', 'order', 'booking']):
-            return "high"
-        elif any(word in signal.lower() for word in ['production', 'manufacturing', 'activity']):
-            return "medium"
-        else:
-            return "low"
+        # Hardcoded patterns removed - predictive power comes from LLM analysis
+        return "medium"  # Default value, LLM will provide actual assessment
     
     def _estimate_collection_frequency(self, signal: str) -> str:
         """Estimate how frequently a signal can be collected"""
@@ -625,20 +577,8 @@ class SignalClassifier:
         }
     
     def _extract_level_0_comprehensive(self, thesis_text: str, processed_documents: List[Dict]) -> List[Dict]:
-        """Extract Level 0 (Raw Economic Activity) signals with acquisition guidance"""
-        signals = []
-        text_lower = thesis_text.lower()
-        
-        # Always include core Level 0 signals for energy/utility analysis
-        signals.append({
-            'name': 'Quarterly Renewables Capacity Additions (MW)',
-            'level': 'Level_0_Raw_Economic',
-            'description': 'New renewable capacity (MW) added each quarter',
-            'data_source': 'Company Filings/EIA Data',
-            'programmatic_feasibility': 'medium',
-            'acquisition_method': 'Parse quarterly earnings reports, 10-K filings, EIA Electric Power Monthly',
-            'frequency': 'quarterly'
-        })
+        """Extract Level 0 signals from LLM analysis only - no hardcoded data"""
+        return []  # All signals come from LLM analysis
         
         # Additional renewable signals if keywords present
         if any(keyword in text_lower for keyword in ['renewable', 'capacity', 'mw', 'gw', 'wind', 'solar']):
