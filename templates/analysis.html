@@ -1022,18 +1022,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function generateMarketSentiment(thesisData) {
-        // Use AI-generated market sentiment from server-side Azure OpenAI analysis
-        if (thesisData.ai_market_sentiment) {
-            return renderMarketSentimentData(thesisData.ai_market_sentiment);
-        } else {
-            // Load market sentiment on demand
+        // Use integrated market sentiment from the main thesis analysis
+        if (thesisData.market_sentiment) {
             return `
                 <div class="market-sentiment" id="market-sentiment-container">
-                    <div class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <div class="small mt-2 text-muted">Generating AI market sentiment...</div>
+                    ${renderMarketSentimentData(thesisData.market_sentiment)}
+                </div>
+            `;
+        } else {
+            return `
+                <div class="market-sentiment" id="market-sentiment-container">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Market Sentiment Analysis</strong><br>
+                        Market sentiment data is generated as part of the main thesis analysis.
                     </div>
                 </div>
             `;
@@ -1803,16 +1805,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, 1000); // Wait for dynamic content to load
     
-    // Trigger market sentiment loading if spinner is present
-    const marketSentimentContainer = document.getElementById('market-sentiment-container');
-    if (marketSentimentContainer && marketSentimentContainer.innerHTML.includes('spinner-border')) {
-        setTimeout(() => {
-            // Get thesis ID from globally stored data
-            let thesisId = window.currentThesisId || window.currentAnalysisData?.thesis_id;
-            console.log('Loading market sentiment for thesis ID:', thesisId);
-            loadMarketSentimentOnDemand(thesisId);
-        }, 1500); // Increased delay to ensure global data is set
-    }
+    // Market sentiment is now integrated into main analysis - no separate loading needed
 });
 </script>
 {% endblock %}
