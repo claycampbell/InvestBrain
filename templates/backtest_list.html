@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% set active_page = "backtest" %}
+
+{% block title %}Thesis Backtesting{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-chart-area text-primary"></i> Thesis Backtesting
+                    </h2>
+                    <p class="text-muted mb-0">Validate investment theses against historical market scenarios</p>
+                </div>
+                <div>
+                    <a href="/" class="btn btn-outline-secondary">
+                        <i class="fas fa-plus"></i> New Analysis
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thesis List -->
+    <div class="row">
+        <div class="col-12">
+            {% if theses %}
+                <div class="row">
+                    {% for thesis in theses %}
+                    <div class="col-lg-6 col-xl-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">{{ thesis.title[:60] }}{% if thesis.title|length > 60 %}...{% endif %}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text text-muted small mb-3">
+                                    {{ thesis.core_claim[:150] if thesis.core_claim else "No description available" }}
+                                    {% if thesis.core_claim and thesis.core_claim|length > 150 %}...{% endif %}
+                                </p>
+                                
+                                <div class="row text-center mb-3">
+                                    <div class="col-6">
+                                        <div class="small text-muted">Signals</div>
+                                        <div class="h5 text-primary">{{ thesis.signal_count }}</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="small text-muted">Created</div>
+                                        <div class="h6">{{ thesis.created_at }}</div>
+                                    </div>
+                                </div>
+                                
+                                {% if thesis.mental_model %}
+                                <p class="small">
+                                    <strong>Model:</strong> {{ thesis.mental_model[:50] }}
+                                    {% if thesis.mental_model|length > 50 %}...{% endif %}
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                <div class="d-flex gap-2">
+                                    <a href="/thesis/{{ thesis.id }}/backtest" class="btn btn-primary btn-sm flex-fill">
+                                        <i class="fas fa-chart-area"></i> Run Backtest
+                                    </a>
+                                    <a href="/thesis/{{ thesis.id }}/monitor" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-chart-line"></i> Monitor
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-chart-area fa-3x text-muted mb-3"></i>
+                        <h5>No Thesis Analyses Available</h5>
+                        <p class="text-muted">Create your first investment thesis analysis to start backtesting</p>
+                        <a href="/" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create Analysis
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Info Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">About Backtesting</h5>
+                    <p class="card-text">
+                        Backtesting validates your investment thesis by simulating its performance across different market scenarios:
+                    </p>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6><i class="fas fa-chart-line text-success"></i> Market Scenarios</h6>
+                            <p class="small">Test against bull, bear, and sideways markets with realistic returns and volatility</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6><i class="fas fa-shield-alt text-warning"></i> Stress Testing</h6>
+                            <p class="small">Evaluate resilience during historical crises like 2008 crash and COVID-19 pandemic</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6><i class="fas fa-lightbulb text-info"></i> Recommendations</h6>
+                            <p class="small">Receive actionable insights for risk management and position sizing</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

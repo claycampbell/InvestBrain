@@ -759,6 +759,28 @@ def run_thesis_backtest(thesis_id):
             'error': f'Backtesting failed: {str(e)}'
         }), 500
 
+@app.route('/backtest')
+def backtest_list():
+    """List all theses available for backtesting"""
+    try:
+        theses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).all()
+        
+        thesis_list = []
+        for thesis in theses:
+            signals = SignalMonitoring.query.filter_by(thesis_analysis_id=thesis.id).all()
+            thesis_list.append({
+                'id': thesis.id,
+                'title': thesis.title,
+                'core_claim': thesis.core_claim,
+                'created_at': thesis.created_at.strftime('%B %d, %Y') if thesis.created_at else 'Unknown',
+                'signal_count': len(signals),
+                'mental_model': thesis.mental_model
+            })
+        
+        return render_template('backtest_list.html', theses=thesis_list)
+    except Exception as e:
+        return f"Error loading backtesting list: {str(e)}", 500
+
 @app.route('/thesis/<int:thesis_id>/backtest')
 def thesis_backtest_page(thesis_id):
     """Backtesting interface page for a specific thesis"""
