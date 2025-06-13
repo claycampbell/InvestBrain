@@ -972,9 +972,9 @@ def run_simulation():
         # Get thesis data
         thesis = ThesisAnalysis.query.get_or_404(thesis_id)
         
-        # Import LLM simulation service
-        from services.llm_simulation_service import LLMSimulationService
-        simulation_service = LLMSimulationService()
+        # Import fast simulation service for immediate response
+        from services.fast_simulation_service import FastSimulationService
+        simulation_service = FastSimulationService()
         
         if simulation_type == 'forecast':
             time_horizon = data.get('time_horizon', 1)
