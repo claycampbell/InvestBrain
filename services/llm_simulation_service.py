@@ -47,8 +47,8 @@ class LLMSimulationService:
                 )
             
             # Generate authentic scenario analysis using Azure OpenAI
-            scenario_analysis = self._generate_scenario_analysis(
-                thesis, scenario, time_horizon, performance_data
+            scenario_analysis = self._generate_llm_scenario_analysis(
+                thesis, scenario, time_horizon, performance_data, events
             )
             
             # Create timeline
