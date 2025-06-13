@@ -641,7 +641,7 @@
                             background: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
                             fontSize: '11px'
                         },
-                        text: event.title.length > 20 ? event.title.substring(0, 20) + '...' : event.title,
+                        text: (event.title || event.description || 'Event').length > 20 ? (event.title || event.description || 'Event').substring(0, 20) + '...' : (event.title || event.description || 'Event'),
                         orientation: 'horizontal'
                     }
                 });
@@ -963,7 +963,7 @@
         }
         
         // Event-specific actions based on title keywords
-        const title = event.title.toLowerCase();
+        const title = (event.title || event.description || '').toLowerCase();
         if (title.includes('earnings') || title.includes('revenue')) {
             actions.push('Compare guidance vs street expectations');
         } else if (title.includes('margin') || title.includes('cost')) {

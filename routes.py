@@ -903,6 +903,12 @@ def simulation_page(thesis_id):
         logging.error(f"Error loading simulation page: {str(e)}")
         return render_template('404.html'), 404
 
+@app.route('/test-simulation')
+def test_simulation_page():
+    """Test page for simulation frontend debugging"""
+    with open('test_simulation_frontend.html', 'r') as f:
+        return f.read()
+
 @app.route('/api/thesis/<int:thesis_id>/simulate', methods=['POST'])
 def simulate_thesis(thesis_id):
     """Generate realistic thesis performance simulation"""
