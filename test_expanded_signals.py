@@ -89,11 +89,12 @@ def test_expanded_signal_system():
     print("\nSignal Distribution by Level:")
     
     level_descriptions = {
-        'Raw Economic Activity': 'Level 0 - Direct measurements: housing starts, permit applications, factory utilization',
-        'Simple Aggregation': 'Level 1 - Basic combinations: monthly spending totals, inventory levels',
-        'Derived Metrics': 'Level 2 - Calculated ratios: growth rates, market share changes',
-        'Complex Ratios': 'Level 3 - Multi-variable calculations: valuation multiples, peer comparisons',
-        'Market Sentiment': 'Level 4 - Behavioral indicators: analyst sentiment, options flow'
+        'Internal Research Data': 'Level 0 - Structured financial queries and thesis validation',
+        'Raw Economic Activity': 'Level 1 - Direct measurements: housing starts, permit applications, factory utilization',
+        'Simple Aggregation': 'Level 2 - Basic combinations: monthly spending totals, inventory levels',
+        'Derived Metrics': 'Level 3 - Calculated ratios: growth rates, market share changes',
+        'Complex Ratios': 'Level 4 - Multi-variable calculations: valuation multiples, peer comparisons',
+        'Market Sentiment': 'Level 5 - Behavioral indicators: analyst sentiment, options flow'
     }
     
     for level, description in level_descriptions.items():

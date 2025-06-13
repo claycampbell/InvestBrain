@@ -143,11 +143,12 @@ Respond with valid JSON array:
             system_prompt = """You are an expert at identifying comprehensive investment signals across all 5 derivation levels. Extract 12-15 signals covering the complete analytical framework.
 
 Signal Level Classification (extract signals from ALL levels):
-- Level 0 (Raw Economic Activity): Housing starts, permit applications, factory utilization
-- Level 1 (Simple Aggregation): Monthly spending totals, inventory levels
-- Level 2 (Derived Metrics): Growth rates, market share changes
-- Level 3 (Complex Ratios): Valuation multiples, peer comparisons
-- Level 4 (Market Sentiment): Analyst sentiment, options flow
+- Level 0 (Internal Research Data): Structured financial queries, thesis validation
+- Level 1 (Raw Economic Activity): Housing starts, permit applications, factory utilization
+- Level 2 (Simple Aggregation): Monthly spending totals, inventory levels
+- Level 3 (Derived Metrics): Growth rates, market share changes
+- Level 4 (Complex Ratios): Valuation multiples, peer comparisons
+- Level 5 (Market Sentiment): Analyst sentiment, options flow
 
 Programmatic Feasibility Guide:
 - HIGH: Available via FactSet/Xpressfeed APIs (Levels 0-2)
