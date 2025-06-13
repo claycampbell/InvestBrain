@@ -280,26 +280,25 @@ def document_list():
 
 @app.route('/monitoring')
 def monitoring_dashboard():
-    """Monitoring dashboard with cached data for fast loading"""
+    """Monitoring dashboard with direct database queries"""
     try:
-        # Use monitoring cache for optimized performance
-        from services.monitoring_cache import monitoring_cache
-        dashboard_data = monitoring_cache.get_dashboard_data()
+        # Get thesis analyses with minimal queries
+        thesis_analyses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).limit(20).all()
         
-        # Extract cached data
-        thesis_analyses = dashboard_data.get('thesis_analyses', [])
-        stats = dashboard_data.get('stats', {})
-        status_distribution = dashboard_data.get('status_distribution', {})
-        active_signals = dashboard_data.get('active_signals', [])
-        recent_notifications = dashboard_data.get('recent_notifications', [])
+        # Get basic signal counts
+        active_signals_count = SignalMonitoring.query.filter_by(status='active').count()
         
-        # Use cached statistics to avoid database timeouts
-        stats = dashboard_data.get('stats', {
+        # Create minimal stats
+        stats = {
             'total_published': len(thesis_analyses),
-            'active_signals': len(active_signals),
+            'active_signals': active_signals_count,
             'triggered_signals': 0,
-            'recent_notifications': len(recent_notifications)
-        })
+            'recent_notifications': 0
+        }
+        
+        # Use empty arrays for now to avoid complex queries
+        active_signals = []
+        recent_notifications = []
         
         return render_template('monitoring.html', 
                              thesis_analyses=thesis_analyses,
@@ -307,9 +306,10 @@ def monitoring_dashboard():
                              recent_notifications=recent_notifications,
                              stats=stats)
     except Exception as e:
+        logging.error(f"Monitoring dashboard error: {str(e)}")
         return f"Error loading monitoring dashboard: {str(e)}", 500
 
-@app.route('/thesis/<int:id>/monitor')
+@app.route('/monitor/<int:id>')
 def monitor_thesis(id):
     """View monitoring status for a specific published thesis"""
     try:
