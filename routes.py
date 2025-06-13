@@ -919,9 +919,9 @@ def simulate_thesis(thesis_id):
         include_events = data.get('include_events', True)
         simulation_type = data.get('simulation_type', 'performance')
         
-        # Initialize LLM simulation service
-        from services.llm_simulation_service import LLMSimulationService
-        sim_service = LLMSimulationService()
+        # Initialize ML-enhanced simulation service
+        from services.ml_simulation_service import MLSimulationService
+        sim_service = MLSimulationService()
         
         # Generate LLM-driven simulation
         result = sim_service.generate_thesis_simulation(
@@ -966,9 +966,9 @@ def run_simulation():
         # Get thesis data
         thesis = ThesisAnalysis.query.get_or_404(thesis_id)
         
-        # Import LLM simulation service
-        from services.llm_simulation_service import LLMSimulationService
-        simulation_service = LLMSimulationService()
+        # Import ML-enhanced simulation service
+        from services.ml_simulation_service import MLSimulationService
+        simulation_service = MLSimulationService()
         
         if simulation_type == 'forecast':
             time_horizon = data.get('time_horizon', 1)
