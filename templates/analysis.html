@@ -2254,20 +2254,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     <!-- Header -->
                     <div class="text-center mb-4" style="position: relative; z-index: 2;">
                         <div class="setup-icon" style="
-                            width: 80px;
-                            height: 80px;
-                            background: linear-gradient(135deg, var(--bs-info), var(--bs-primary));
-                            border-radius: 50%;
+                            width: 100px;
+                            height: 100px;
                             margin: 0 auto 20px;
                             display: flex;
                             align-items: center;
                             justify-content: center;
                             animation: setupPulse 1.5s ease-in-out infinite;
+                            position: relative;
                         ">
-                            <i class="fas fa-satellite-dish text-white" style="font-size: 2rem;"></i>
+                            <img src="/static/neural-network.gif" alt="Neural Network Processing" style="
+                                width: 80px;
+                                height: 80px;
+                                filter: brightness(1.2) hue-rotate(10deg);
+                                opacity: 0.9;
+                            ">
+                            <div style="
+                                position: absolute;
+                                top: 0;
+                                left: 0;
+                                width: 100%;
+                                height: 100%;
+                                background: radial-gradient(circle, rgba(13, 202, 240, 0.2), transparent);
+                                border-radius: 50%;
+                                animation: neuralGlow 2s ease-in-out infinite alternate;
+                            "></div>
                         </div>
-                        <h3 class="text-white mb-2">Setting Up Monitoring</h3>
-                        <p class="text-muted mb-0">Establishing data connections for ${companyName}</p>
+                        <h3 class="text-white mb-2">AI Intelligence Network</h3>
+                        <p class="text-muted mb-0">Connecting neural pathways for ${companyName} monitoring</p>
                     </div>
                     
                     <!-- Progress Steps -->
@@ -2287,8 +2301,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-check text-white"></i>
                             </div>
                             <div class="flex-grow-1">
-                                <div class="text-white">Connecting to FactSet API</div>
-                                <div class="text-muted small">Establishing real-time data feeds</div>
+                                <div class="text-white">Neural Network Initialization</div>
+                                <div class="text-muted small">Establishing FactSet data pathways</div>
                             </div>
                         </div>
                         
@@ -2307,8 +2321,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-check text-white"></i>
                             </div>
                             <div class="flex-grow-1">
-                                <div class="text-white">Configuring Signal Tracking</div>
-                                <div class="text-muted small">${signals.length} signals identified for monitoring</div>
+                                <div class="text-white">Training Signal Recognition</div>
+                                <div class="text-muted small">${signals.length} neural patterns identified</div>
                             </div>
                         </div>
                         
@@ -2327,8 +2341,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-check text-white"></i>
                             </div>
                             <div class="flex-grow-1">
-                                <div class="text-white">Setting Up Metric Collection</div>
-                                <div class="text-muted small">${metricsToTrack.length || 'Multiple'} key metrics configured</div>
+                                <div class="text-white">Optimizing Learning Algorithms</div>
+                                <div class="text-muted small">${metricsToTrack.length || 'Multiple'} data dimensions mapped</div>
                             </div>
                         </div>
                         
@@ -2347,8 +2361,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-check text-white"></i>
                             </div>
                             <div class="flex-grow-1">
-                                <div class="text-white">Initializing Alert System</div>
-                                <div class="text-muted small">Real-time notifications configured</div>
+                                <div class="text-white">Calibrating Intelligence Sensors</div>
+                                <div class="text-muted small">Real-time neural alerts configured</div>
                             </div>
                         </div>
                         
@@ -2366,8 +2380,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-rocket text-white"></i>
                             </div>
                             <div class="flex-grow-1">
-                                <div class="text-white">Activating Monitoring Dashboard</div>
-                                <div class="text-muted small">Thesis monitoring is now live</div>
+                                <div class="text-white">Activating Intelligence Dashboard</div>
+                                <div class="text-muted small">Neural monitoring network is live</div>
                             </div>
                         </div>
                     </div>
@@ -2411,6 +2425,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         @keyframes setupPulse {
                             0%, 100% { transform: scale(1); }
                             50% { transform: scale(1.05); }
+                        }
+                        
+                        @keyframes neuralGlow {
+                            0% { 
+                                opacity: 0.3; 
+                                transform: scale(1);
+                            }
+                            100% { 
+                                opacity: 0.6; 
+                                transform: scale(1.1);
+                            }
                         }
                         
                         @keyframes stepComplete {
