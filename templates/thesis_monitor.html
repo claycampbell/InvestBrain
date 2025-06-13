@@ -457,8 +457,8 @@
             const data = {
                 thesis: {
                     id: {{ thesis.id }},
-                    title: "{{ thesis.title }}",
-                    core_claim: "{{ thesis.core_claim or '' }}",
+                    title: {{ thesis.title|tojson }},
+                    core_claim: {{ (thesis.core_claim or '')|tojson }},
                     created_at: "{{ thesis.created_at }}"
                 },
                 signals: {{ signals_json|tojson }},
