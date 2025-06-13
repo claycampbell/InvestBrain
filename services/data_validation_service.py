@@ -39,7 +39,7 @@ class DataValidationService:
         """Set the JWT token for API authentication"""
         self.jwt_token = token
         
-    def generate_natural_query(self, signal_description: str, signal_name: str, query_structure: Dict[str, Any]) -> str:
+    def generate_natural_query(self, signal_description: str, signal_name: str, query_structure: Dict[str, Any], company_name: str = "") -> str:
         """
         Convert signal description to natural language query for the external API
         """
@@ -48,11 +48,26 @@ class DataValidationService:
             # Clean and format the description for API consumption
             query = signal_description.strip()
             
-            # Add context from entities if available
+            # Ensure company name is included in the query
+            if company_name and company_name.lower() not in query.lower():
+                # Insert company name naturally into the query
+                if "companies" in query.lower():
+                    query = query.replace("companies", company_name).replace("Companies", company_name)
+                elif "company" in query.lower():
+                    query = query.replace("company", company_name).replace("Company", company_name)
+                else:
+                    # Add company name at the beginning or end based on query structure
+                    if query.startswith(("Analyze", "Compare", "Identify", "Validate")):
+                        query = f"{query} for {company_name}"
+                    else:
+                        query = f"{company_name}: {query}"
+            
+            # Add context from entities if still needed
             entities = query_structure.get('entities', [])
-            if entities and not any(entity.lower() in query.lower() for entity in entities):
-                entity_context = ", ".join(entities[:2])
-                query = f"{query} for {entity_context}"
+            if entities and company_name and not any(entity.lower() in query.lower() for entity in entities):
+                entity_context = ", ".join([e for e in entities if e.lower() != company_name.lower()][:2])
+                if entity_context:
+                    query = f"{query} (context: {entity_context})"
             
             return query
         
@@ -63,28 +78,27 @@ class DataValidationService:
         metrics = query_structure.get('metrics', [])
         limit = query_structure.get('limit', 5)
         
+        # Use company name if provided, otherwise fall back to entities
+        entity_name = company_name if company_name else (entities[0] if entities else "target entities")
+        
         # Build natural language query based on structure
         if 'holder' in str(relationships).lower() or 'holding' in str(relationships).lower():
-            entity_name = entities[0] if entities else "the company"
             if 'fund' in str(relationships).lower():
                 return f"Which AMF-eligible funds hold {entity_name}?"
             else:
                 return f"List the top {limit} manager holders of {entity_name}"
         
         elif 'revenue' in str(metrics).lower():
-            entity_name = entities[0] if entities else "companies"
             return f"Show revenue analysis for {entity_name} with growth metrics"
             
         elif 'market_cap' in str(metrics).lower():
-            entity_name = entities[0] if entities else "companies"
             return f"Compare market cap and valuation metrics for {entity_name}"
             
         else:
-            entity_name = entities[0] if entities else "target entities"
             metrics_str = ", ".join(metrics[:3]) if metrics else "key metrics"
             return f"Analyze {metrics_str} for {entity_name}"
     
-    def initiate_validation(self, query_structure: Dict[str, Any], signal_name: str, signal_description: str = "") -> ValidationRequest:
+    def initiate_validation(self, query_structure: Dict[str, Any], signal_name: str, signal_description: str = "", company_name: str = "") -> ValidationRequest:
         """
         Initiate validation request with external API
         """
@@ -93,7 +107,7 @@ class DataValidationService:
             chat_id = f"thesis_validation_{uuid.uuid4().hex[:8]}"
             
             # Convert signal description to natural language query
-            natural_query = self.generate_natural_query(signal_description, signal_name, query_structure)
+            natural_query = self.generate_natural_query(signal_description, signal_name, query_structure, company_name)
             
             # Prepare API request
             headers = {

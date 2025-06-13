@@ -1900,13 +1900,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const signalCard = button.closest('.signal-card');
         const signalDescription = signalCard ? signalCard.querySelector('.signal-description')?.textContent?.trim() || '' : '';
         
+        // Extract company name from the thesis analysis
+        const companyName = extractCompanyNameFromAnalysis();
+        
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validating...';
         
         statusDiv.style.display = 'block';
         statusDiv.innerHTML = `
             <div class="alert alert-info mb-0">
-                <i class="fas fa-clock"></i> Initiating validation request for "${signalName}"...
+                <i class="fas fa-clock"></i> Initiating validation request for "${signalName}"${companyName ? ` (${companyName})` : ''}...
             </div>
         `;
         
@@ -1928,6 +1931,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     query_structure: queryStructure,
                     signal_name: signalName,
                     signal_description: signalDescription,
+                    company_name: companyName,
                     jwt_token: jwtToken
                 })
             });
@@ -2128,6 +2132,69 @@ document.addEventListener('DOMContentLoaded', function() {
                 "limit": 5
             };
         }
+    }
+    
+    function extractCompanyNameFromAnalysis() {
+        // Try to extract company name from various sources in the analysis
+        
+        // 1. Check if there's a stored analysis with company info
+        if (window.currentAnalysis && window.currentAnalysis.company_name) {
+            return window.currentAnalysis.company_name;
+        }
+        
+        // 2. Extract from the thesis title or core claim
+        const titleElement = document.querySelector('.thesis-title, h1, h2');
+        if (titleElement) {
+            const title = titleElement.textContent;
+            const companyName = extractCompanyFromText(title);
+            if (companyName) return companyName;
+        }
+        
+        // 3. Extract from core claim text
+        const coreClaimElement = document.querySelector('.core-claim, [data-field="core_claim"]');
+        if (coreClaimElement) {
+            const coreClaim = coreClaimElement.textContent;
+            const companyName = extractCompanyFromText(coreClaim);
+            if (companyName) return companyName;
+        }
+        
+        // 4. Look for company name in analysis data
+        if (window.currentAnalysisData) {
+            const analysisText = JSON.stringify(window.currentAnalysisData);
+            const companyName = extractCompanyFromText(analysisText);
+            if (companyName) return companyName;
+        }
+        
+        return '';
+    }
+    
+    function extractCompanyFromText(text) {
+        if (!text) return '';
+        
+        // Common company patterns to look for
+        const companyPatterns = [
+            /\b(NVIDIA|Apple|Microsoft|Google|Amazon|Meta|Tesla|Novo Nordisk|Pfizer|Johnson & Johnson|Berkshire Hathaway|Walmart|JPMorgan Chase|Visa|Mastercard|Intel|AMD|Oracle|Salesforce|Adobe|Netflix|Uber|PayPal|Spotify|Zoom|Twitter|LinkedIn|Square|Shopify|Palantir|Snowflake|CrowdStrike|ServiceNow|Workday|Atlassian|Dropbox|DocuSign|MongoDB|Twilio|Cloudflare|Palo Alto Networks|Fortinet|Okta|Datadog|Splunk|HubSpot|Zendesk|Zscaler|CyberArk|SentinelOne|FireEye|Symantec|McAfee|Cisco|Juniper|Arista|Pure Storage|NetApp|Nutanix|VMware|Dell|HPE|IBM|Samsung|Sony|LG|Panasonic|Canon|HP|Xerox|3M|Honeywell|General Electric|Caterpillar|Boeing|Lockheed Martin|Raytheon|Northrop Grumman|General Dynamics|L3Harris|BAE Systems|Airbus|Thales|Leonardo|Saab|Rheinmetall|KAI|Mitsubishi Heavy Industries|Kawasaki Heavy Industries|IHI|Subaru|Mazda|Nissan|Honda|Toyota|Hyundai|Kia|Genesis|Volvo|BMW|Mercedes|Audi|Porsche|Lamborghini|Ferrari|Maserati|Bentley|Rolls Royce|Jaguar|Land Rover|Mini|Peugeot|Citroën|Renault|Fiat|Alfa Romeo|Lancia|Škoda|SEAT|Volkswagen|Ford|Chevrolet|Cadillac|Buick|GMC|Chrysler|Dodge|Jeep|Ram|Lincoln|Acura|Infiniti|Lexus|Genesis|Scion|Maybach|McLaren|Bugatti|Koenigsegg|Pagani|Spyker|Lotus|Caterham|Morgan|TVR|Noble|Ginetta|Radical|Ariel|BAC|Caparo|Ultima|Westfield|Donkervoort|KTM|Ducati|Harley Davidson|Indian|Victory|Triumph|Norton|BSA|Royal Enfield|Kawasaki|Yamaha|Suzuki|Honda|Aprilia|MV Agusta|Moto Guzzi|Benelli|Husqvarna|Beta|Gas Gas|Sherco|Montesa|Scorpa|Ossa|Bultaco|SWM|TM Racing|Fantic|Vertigo|Electric Motion|Alta|Zero|Energica|Lightning|Brammo|Mission|MotoCzysz|Mugen|Saroléa|Damon|Curtiss|Tarform|Cake|Sur Ron|Segway|NIU|Gogoro|Yadea|Aima|Sunra|Lvyuan|Tailg|Birdie|Lima|Phoenix|Hongdu|Luyuan|Xinri|Aucma|Byvin|Emma|Evely|Giant|Merida|Trek|Specialized|Cannondale|Santa Cruz|Yeti|Pivot|Niner|Ibis|Evil|Transition|Commencal|YT|Canyon|Rose|Cube|Focus|Ghost|Bulls|Haibike|Riese & Müller|Gazelle|VanMoof|Cowboy|Super73|Rad Power|Juiced|Aventon|Lectric|Ride1Up|Ariel Rider|Magnum|Surface 604|Biktrix|Voltbike|FLX|Luna Cycle|M2S|Pedego|iGO|Raleigh|Diamondback|Mongoose|Schwinn|Huffy|Kent|Genesis|Roadmaster|Next|Magna|Pacific|Dorel|Accell|Pon|Cycleurope|Hero|Tube Investments|Atlas|Avon|BSA|Hercules|Firefox|Montra|Kross|Btwin|Riverside|Rockrider|Triban|Van Rysel|Elops|Hoprider|Tilt|Oxelo|Domyos|Newfeel|Quechua|Forclaz|Simond|Wedze|Tribord|Nabaiji|Kipsta|Tarmak|Atorka|Caperlan|Solognac|Geologic|Fouganza|Olaian|Itiwit|Inesis|Artengo|Kuantum|Perfly|Kimjaly|Nyamba|Domyos|Kalenji|Evadict|Kapteren|Corength|Cross Training|Freeletics|Adidas|Nike|Puma|Reebok|Under Armour|New Balance|Asics|Brooks|Hoka|Altra|Salomon|Merrell|Columbia|Patagonia|The North Face|Arcteryx|Mammut|Marmot|Outdoor Research|Black Diamond|Petzl|Camp|Grivel|Edelrid|Beal|Sterling|Edelweiss|Tendon|Singing Rock|Ocun|Red Chili|La Sportiva|Scarpa|Meindl|Lowa|Zamberlan|Asolo|Tecnica|Dolomite|Hanwag|Salewa|Mammut|Millet|Vaude|Jack Wolfskin|Fjällräven|Haglöfs|Peak Performance|Norrøna|Bergans|Klättermusen|Lundhags|Houdini|Rab|Montane|Berghaus|Karrimor|Lowe Alpine|Sherpa|Mountain Equipment|PHD|Cumulus|Western Mountaineering|Feathered Friends|Montbell|Nanga|Isuka|Sea to Summit|Big Agnes|MSR|Therm-a-Rest|NEMO|Exped|Klymit|REI|Patagonia|Black Diamond|Petzl|Camp|Grivel|Edelrid|Beal|Sterling|Edelweiss|Tendon|Singing Rock|Ocun|Red Chili|La Sportiva|Scarpa|Meindl|Lowa|Zamberlan|Asolo|Tecnica|Dolomite|Hanwag|Salewa|Mammut|Millet|Vaude|Jack Wolfskin|Fjällräven|Haglöfs|Peak Performance|Norrøna|Bergans|Klättermusen|Lundhags|Houdini|Rab|Montane|Berghaus|Karrimor|Lowe Alpine|Sherpa|Mountain Equipment|PHD|Cumulus|Western Mountaineering|Feathered Friends|Montbell|Nanga|Isuka|Sea to Summit|Big Agnes|MSR|Therm-a-Rest|NEMO|Exped|Klymit)\b/gi
+        ];
+        
+        for (const pattern of companyPatterns) {
+            const matches = text.match(pattern);
+            if (matches && matches.length > 0) {
+                // Return the most frequently mentioned company
+                const companyCounts = {};
+                matches.forEach(company => {
+                    const normalizedCompany = company.charAt(0).toUpperCase() + company.slice(1).toLowerCase();
+                    companyCounts[normalizedCompany] = (companyCounts[normalizedCompany] || 0) + 1;
+                });
+                
+                const mostMentioned = Object.keys(companyCounts).reduce((a, b) => 
+                    companyCounts[a] > companyCounts[b] ? a : b
+                );
+                
+                return mostMentioned;
+            }
+        }
+        
+        return '';
     }
 });
 </script>
