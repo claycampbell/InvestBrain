@@ -688,7 +688,7 @@
                 width: [2, 3]
             },
             title: {
-                text: data.chart_config.title || 'Thesis Performance Simulation',
+                text: (data.chart_config && data.chart_config.title) || data.simulation_metadata?.title || 'Thesis Performance Simulation',
                 align: 'left',
                 style: {
                     fontSize: '16px',
@@ -710,7 +710,7 @@
             },
             yaxis: {
                 title: {
-                    text: data.chart_config.y_axis_label || 'Cumulative Performance (%)'
+                    text: (data.chart_config && data.chart_config.y_axis_label) || 'Cumulative Performance (%)'
                 }
             },
             legend: {
