@@ -447,10 +447,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 </span>
                                             </div>
                                             <div class="timeline-content flex-grow-1">
-                                                <h6 class="mb-1">${event.title}</h6>
-                                                <p class="mb-1">${event.description}</p>
+                                                <h6 class="mb-1">${event.title || 'Market Event'}</h6>
+                                                <p class="mb-1">${event.description || 'Market event details'}</p>
                                                 <div class="small text-muted">
-                                                    <strong>Impact:</strong> ${event.magnitude || 'Moderate'} ${event.impact_type}
+                                                    <strong>Impact:</strong> ${event.magnitude || 'Moderate'} ${event.impact_type || 'neutral'}
                                                     ${event.signals_affected && event.signals_affected.length > 0 ? 
                                                         `<br><strong>Signals Affected:</strong> ${event.signals_affected.join(', ')}` : ''}
                                                 </div>
