@@ -71,7 +71,7 @@
                                     <input class="form-check-input" type="checkbox" id="focus-primary-signals" name="focus_primary_signals" checked>
                                     <label class="form-check-label" for="focus-primary-signals">
                                         <strong>Focus on Primary (Level 0-1) Signals</strong>
-                                        <small class="d-block text-muted">Prioritize direct measurements and basic aggregations</small>
+                                        <small class="d-block text-muted">Prioritize internal research data and raw economic activity</small>
                                     </label>
                                 </div>
                             </div>
@@ -148,7 +148,7 @@
                         
                         <div class="alert alert-info small">
                             <i class="fas fa-lightbulb"></i>
-                            <strong>Focus Strategy:</strong> Prioritize Level 0-1 signals (raw economic activity and simple aggregations) for early market detection and unique insights.
+                            <strong>Focus Strategy:</strong> Prioritize Level 0-1 signals (internal research data and raw economic activity) for early market detection and unique insights.
                         </div>
                     </div>
                 </div>
@@ -162,7 +162,7 @@
                     <div class="card-body">
                         <ul class="small mb-0">
                             <li>Primary signal identification</li>
-                            <li>Signal classification (5 levels: Raw Economic → Market Sentiment)</li>
+                            <li>Signal classification (6 levels: Internal Research → Market Sentiment)</li>
                             <li>Lead/lag relationships</li>
                             <li>Value chain mapping</li>
                             <li>Early warning indicators</li>
@@ -552,6 +552,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!signalsByLevel) return '<p class="text-muted">No signals classified</p>';
         
         const levelBadges = {
+            'Internal Research Data': 'bg-primary',
             'Raw Economic Activity': 'bg-success',
             'Simple Aggregation': 'bg-info',
             'Derived Metrics': 'bg-warning text-dark',
@@ -560,14 +561,16 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         const levelDisplayNames = {
-            'Raw Economic Activity': 'Level 0 - Raw Economic Activity',
-            'Simple Aggregation': 'Level 1 - Simple Aggregation',
-            'Derived Metrics': 'Level 2 - Derived Metrics',
-            'Complex Ratios': 'Level 3 - Complex Ratios',
-            'Market Sentiment': 'Level 4 - Market Sentiment'
+            'Internal Research Data': 'Level 0 - Internal Research Data',
+            'Raw Economic Activity': 'Level 1 - Raw Economic Activity',
+            'Simple Aggregation': 'Level 2 - Simple Aggregation',
+            'Derived Metrics': 'Level 3 - Derived Metrics',
+            'Complex Ratios': 'Level 4 - Complex Ratios',
+            'Market Sentiment': 'Level 5 - Market Sentiment'
         };
         
         const levelDescriptions = {
+            'Internal Research Data': 'Structured financial queries and thesis validation',
             'Raw Economic Activity': 'Direct measurements: housing starts, permit applications, factory utilization',
             'Simple Aggregation': 'Basic combinations: monthly spending totals, inventory levels',
             'Derived Metrics': 'Calculated ratios: growth rates, market share changes',
@@ -736,6 +739,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!signalsByLevel) return '<p class="text-muted">No signal discovery journey available</p>';
         
         const levelOrder = [
+            'Internal Research Data',
             'Raw Economic Activity',
             'Simple Aggregation', 
             'Derived Metrics',
@@ -744,33 +748,39 @@ document.addEventListener('DOMContentLoaded', function() {
         ];
         
         const levelInfo = {
+            'Internal Research Data': { 
+                icon: 'fas fa-database', 
+                name: 'Level 0 - Internal Research Data', 
+                description: 'Structured financial queries and thesis validation',
+                color: 'primary'
+            },
             'Raw Economic Activity': { 
                 icon: 'fas fa-industry', 
-                name: 'Level 0 - Raw Economic Activity', 
+                name: 'Level 1 - Raw Economic Activity', 
                 description: 'Direct measurements: housing starts, permit applications, factory utilization',
                 color: 'success'
             },
             'Simple Aggregation': { 
                 icon: 'fas fa-calculator', 
-                name: 'Level 1 - Simple Aggregation', 
+                name: 'Level 2 - Simple Aggregation', 
                 description: 'Basic combinations: monthly spending totals, inventory levels',
                 color: 'info'
             },
             'Derived Metrics': { 
                 icon: 'fas fa-chart-line', 
-                name: 'Level 2 - Derived Metrics', 
+                name: 'Level 3 - Derived Metrics', 
                 description: 'Calculated ratios: growth rates, market share changes',
                 color: 'warning'
             },
             'Complex Ratios': { 
                 icon: 'fas fa-cogs', 
-                name: 'Level 3 - Complex Ratios', 
+                name: 'Level 4 - Complex Ratios', 
                 description: 'Multi-variable calculations: valuation multiples, peer comparisons',
                 color: 'secondary'
             },
             'Market Sentiment': { 
                 icon: 'fas fa-brain', 
-                name: 'Level 4 - Market Sentiment', 
+                name: 'Level 5 - Market Sentiment', 
                 description: 'Behavioral indicators: analyst sentiment, options flow',
                 color: 'danger'
             }

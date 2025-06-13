@@ -42,7 +42,7 @@ class InternalResearchService:
     
     def generate_research_signals(self, thesis_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        Generate Level 0 Raw Economic Activity signals from thesis analysis
+        Generate Level 0 Internal Research Data signals from thesis analysis
         """
         try:
             # Extract thesis components

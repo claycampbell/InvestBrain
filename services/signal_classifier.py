@@ -12,11 +12,12 @@ from enum import Enum
 
 class SignalLevel(Enum):
     """Signal classification levels based on processing complexity"""
-    LEVEL_0 = "Raw Economic Activity"         # Direct measurements: housing starts, permit applications, factory utilization
-    LEVEL_1 = "Simple Aggregation"           # Basic combinations: monthly spending totals, inventory levels
-    LEVEL_2 = "Derived Metrics"              # Calculated ratios: growth rates, market share changes
-    LEVEL_3 = "Complex Ratios"               # Multi-variable calculations: valuation multiples, peer comparisons
-    LEVEL_4 = "Market Sentiment"             # Behavioral indicators: analyst sentiment, options flow
+    LEVEL_0 = "Internal Research Data"       # Structured financial queries and thesis validation
+    LEVEL_1 = "Raw Economic Activity"        # Direct measurements: housing starts, permit applications, factory utilization
+    LEVEL_2 = "Simple Aggregation"           # Basic combinations: monthly spending totals, inventory levels
+    LEVEL_3 = "Derived Metrics"              # Calculated ratios: growth rates, market share changes
+    LEVEL_4 = "Complex Ratios"               # Multi-variable calculations: valuation multiples, peer comparisons
+    LEVEL_5 = "Market Sentiment"             # Behavioral indicators: analyst sentiment, options flow
 
 @dataclass
 class Signal:
@@ -105,7 +106,7 @@ class SignalClassifier:
             document_signals = self._extract_signals_from_documents(processed_documents, focus_primary)
             all_signals.extend(document_signals)
             
-            # If focusing on primary signals, prioritize Level 0-1 (Raw Economic Activity + Simple Aggregation)
+            # If focusing on primary signals, prioritize Level 0-1 (Internal Research Data + Raw Economic Activity)
             if focus_primary:
                 primary_signals = [s for s in all_signals if s.level in [SignalLevel.LEVEL_0, SignalLevel.LEVEL_1, SignalLevel.LEVEL_2]]
                 all_signals = primary_signals + [s for s in all_signals if s not in primary_signals]
@@ -174,18 +175,20 @@ class SignalClassifier:
             return {'error': str(e)}
     
     def _parse_signal_level(self, level_str: str) -> SignalLevel:
-        """Parse signal level string from AI analysis - Updated for 5-level hierarchy"""
+        """Parse signal level string from AI analysis - Updated for 6-level hierarchy"""
         level_mapping = {
-            'Raw Economic Activity': SignalLevel.LEVEL_0,
-            'Simple Aggregation': SignalLevel.LEVEL_1,
-            'Derived Metrics': SignalLevel.LEVEL_2,
-            'Complex Ratios': SignalLevel.LEVEL_3,
-            'Market Sentiment': SignalLevel.LEVEL_4,
-            'Level_0_Raw_Economic': SignalLevel.LEVEL_0,
-            'Level_1_Simple_Aggregation': SignalLevel.LEVEL_1,
-            'Level_2_Derived_Metrics': SignalLevel.LEVEL_2,
-            'Level_3_Complex_Ratios': SignalLevel.LEVEL_3,
-            'Level_4_Market_Sentiment': SignalLevel.LEVEL_4
+            'Internal Research Data': SignalLevel.LEVEL_0,
+            'Raw Economic Activity': SignalLevel.LEVEL_1,
+            'Simple Aggregation': SignalLevel.LEVEL_2,
+            'Derived Metrics': SignalLevel.LEVEL_3,
+            'Complex Ratios': SignalLevel.LEVEL_4,
+            'Market Sentiment': SignalLevel.LEVEL_5,
+            'Level_0_Internal_Research': SignalLevel.LEVEL_0,
+            'Level_1_Raw_Economic': SignalLevel.LEVEL_1,
+            'Level_2_Simple_Aggregation': SignalLevel.LEVEL_2,
+            'Level_3_Derived_Metrics': SignalLevel.LEVEL_3,
+            'Level_4_Complex_Ratios': SignalLevel.LEVEL_4,
+            'Level_5_Market_Sentiment': SignalLevel.LEVEL_5
         }
         return level_mapping.get(level_str, SignalLevel.LEVEL_2)
     
