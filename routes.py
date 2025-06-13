@@ -9,6 +9,7 @@ from services.document_processor import DocumentProcessor
 from services.signal_classifier import SignalClassifier
 from services.notification_service import NotificationService
 from services.query_parser_service import QueryParserService
+from services.data_validation_service import DataValidationService
 from config import Config
 
 # Initialize services
@@ -17,6 +18,7 @@ document_processor = DocumentProcessor()
 signal_classifier = SignalClassifier()
 notification_service = NotificationService()
 query_parser = QueryParserService()
+data_validator = DataValidationService()
 
 def save_thesis_analysis(thesis_text, analysis_result, signals_result):
     """Save completed analysis to database for monitoring"""
@@ -997,6 +999,64 @@ def run_simulation():
         
     except Exception as e:
         logging.error(f"Error running simulation: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/validate-signal', methods=['POST'])
+def validate_signal():
+    """Initiate data validation for a Level 0 signal"""
+    try:
+        data = request.get_json()
+        query_structure = data.get('query_structure')
+        signal_name = data.get('signal_name')
+        jwt_token = data.get('jwt_token')
+        
+        if not query_structure or not signal_name:
+            return jsonify({'error': 'Missing query_structure or signal_name'}), 400
+        
+        # Set JWT token if provided
+        if jwt_token:
+            data_validator.set_auth_token(jwt_token)
+        
+        # Initiate validation request
+        validation_request = data_validator.initiate_validation(query_structure, signal_name)
+        
+        return jsonify({
+            'request_id': validation_request.request_id,
+            'chat_id': validation_request.chat_id,
+            'callback_url': validation_request.callback_url,
+            'status': validation_request.status,
+            'signal_name': validation_request.signal_name,
+            'created_at': validation_request.created_at.isoformat() if validation_request.created_at else None
+        })
+        
+    except Exception as e:
+        logging.error(f"Error initiating signal validation: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/validation-status/<request_id>', methods=['GET'])
+def get_validation_status(request_id):
+    """Get the status of a validation request"""
+    try:
+        validation_request = data_validator.get_validation_result(request_id)
+        
+        if not validation_request:
+            return jsonify({'error': 'Validation request not found'}), 404
+        
+        response = {
+            'request_id': validation_request.request_id,
+            'status': validation_request.status,
+            'signal_name': validation_request.signal_name,
+            'created_at': validation_request.created_at.isoformat() if validation_request.created_at else None,
+            'completed_at': validation_request.completed_at.isoformat() if validation_request.completed_at else None
+        }
+        
+        if validation_request.result:
+            response['result'] = validation_request.result
+            
+        return jsonify(response)
+        
+    except Exception as e:
+        logging.error(f"Error getting validation status: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/test-query-parser', methods=['POST'])

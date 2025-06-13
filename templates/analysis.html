@@ -596,10 +596,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <small class="text-muted d-block mb-2">${levelDescriptions[level] || ''}</small>
                 <div class="signal-list">
-                    ${signals.map(signal => `<span class="badge bg-light text-dark me-1 mb-1">${signal}</span>`).join('')}
+                    ${level === 'Internal Research Data' ? 
+                        generateLevel0SignalsWithValidation(signals) :
+                        signals.map(signal => `<span class="badge bg-light text-dark me-1 mb-1">${signal}</span>`).join('')
+                    }
                 </div>
             </div>
         `).join('');
+    }
+    
+    function generateLevel0SignalsWithValidation(signals) {
+        if (!Array.isArray(signals)) {
+            return '<p class="text-muted">No Level 0 signals available</p>';
+        }
+        
+        return signals.map((signal, index) => {
+            const signalId = `signal-${index}`;
+            return `
+                <div class="signal-card mb-3 p-3 border rounded bg-light">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-primary mb-1">${signal}</div>
+                            <div class="small text-muted mb-2">
+                                <i class="fas fa-database"></i> Structured financial query
+                                <span class="badge bg-primary ms-2">Level 0</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <button class="btn btn-sm btn-outline-primary validate-data-btn" 
+                                    data-signal-name="${signal}" 
+                                    data-signal-id="${signalId}"
+                                    onclick="initiateValidation('${signal}', '${signalId}')">
+                                <i class="fas fa-check-circle"></i> Validate Data
+                            </button>
+                        </div>
+                    </div>
+                    <div id="${signalId}-status" class="validation-status mt-2" style="display: none;"></div>
+                    <div id="${signalId}-result" class="validation-result mt-3" style="display: none;"></div>
+                </div>
+            `;
+        }).join('');
     }
     
     function generateMentalModelsSection(mentalModels, primaryModel) {
