@@ -8,6 +8,7 @@ from services.thesis_analyzer import ThesisAnalyzer
 from services.document_processor import DocumentProcessor
 from services.signal_classifier import SignalClassifier
 from services.notification_service import NotificationService
+from services.query_parser_service import QueryParserService
 from config import Config
 
 # Initialize services
@@ -15,6 +16,7 @@ thesis_analyzer = ThesisAnalyzer()
 document_processor = DocumentProcessor()
 signal_classifier = SignalClassifier()
 notification_service = NotificationService()
+query_parser = QueryParserService()
 
 def save_thesis_analysis(thesis_text, analysis_result, signals_result):
     """Save completed analysis to database for monitoring"""
@@ -995,6 +997,44 @@ def run_simulation():
         
     except Exception as e:
         logging.error(f"Error running simulation: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/test-query-parser', methods=['POST'])
+def test_query_parser():
+    """Test endpoint for Level 0 query parsing functionality"""
+    try:
+        data = request.get_json()
+        
+        # Example structured query from Level 0 signal
+        test_query = data.get('query_structure', {
+            "entities": ["Microsoft"],
+            "relationships": ["manager_holding"],
+            "filters": [
+                {"field": "market_cap", "operator": ">", "value": 100000000000}
+            ],
+            "metrics": ["market_cap", "share_count"],
+            "sort_by": {"field": "market_cap", "order": "desc"},
+            "limit": 5,
+            "unsupported_filters": [
+                {"field": "dps_cagr_5_yr", "reason": "Not joinable with manager_holding in current data pipeline"}
+            ]
+        })
+        
+        signal_name = data.get('signal_name', 'Top Manager Holdings Analysis')
+        
+        # Execute query using parser service
+        result = query_parser.parse_and_execute_query(test_query, signal_name)
+        
+        # Convert to dictionary for JSON response
+        return jsonify({
+            'chat_id': result.chat_id,
+            'request_id': result.request_id,
+            'disclaimer_messages': result.disclaimer_messages,
+            'widgets': result.widgets
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in query parser test: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.errorhandler(404)
