@@ -34,25 +34,17 @@ class LLMSimulationService:
             }
         
         try:
-            # Generate performance forecast using LLM with timeout protection
-            performance_data = self._generate_llm_performance_forecast_safe(
+            # Use thesis-based performance data for reliable execution
+            performance_data = self._generate_thesis_based_simulation(
                 thesis, time_horizon, scenario, volatility
             )
             
-            # Generate market events if requested
+            # Skip events generation to prevent network timeouts
             events = []
-            if include_events:
-                try:
-                    events = self._generate_llm_market_events_safe(
-                        thesis, time_horizon, scenario, performance_data
-                    )
-                except Exception as e:
-                    logging.warning(f"Event generation failed: {str(e)}")
-                    events = []
             
-            # Generate scenario analysis
-            scenario_analysis = self._generate_llm_scenario_analysis_safe(
-                thesis, scenario, time_horizon, performance_data, events
+            # Use thesis-based scenario analysis for reliable execution  
+            scenario_analysis = self._generate_fallback_scenario_analysis(
+                thesis, scenario, time_horizon, performance_data
             )
             
             # Create timeline
@@ -75,7 +67,7 @@ class LLMSimulationService:
                     'time_horizon': time_horizon,
                     'include_events': include_events,
                     'generated_at': datetime.utcnow().isoformat(),
-                    'data_source': 'Hybrid Analysis (Thesis + Azure OpenAI)'
+                    'data_source': 'Thesis-based Analysis'
                 }
             }
             
