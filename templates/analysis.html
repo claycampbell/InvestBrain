@@ -1879,6 +1879,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const statusDiv = document.getElementById(`${signalId}-status`);
         const resultDiv = document.getElementById(`${signalId}-result`);
         
+        // Get the signal description from the DOM
+        const signalCard = button.closest('.signal-card');
+        const signalDescription = signalCard ? signalCard.querySelector('.signal-description')?.textContent?.trim() || '' : '';
+        
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validating...';
         
@@ -1906,6 +1910,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({
                     query_structure: queryStructure,
                     signal_name: signalName,
+                    signal_description: signalDescription,
                     jwt_token: jwtToken
                 })
             });

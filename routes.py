@@ -1008,6 +1008,7 @@ def validate_signal():
         data = request.get_json()
         query_structure = data.get('query_structure')
         signal_name = data.get('signal_name')
+        signal_description = data.get('signal_description', '')
         jwt_token = data.get('jwt_token')
         
         if not query_structure or not signal_name:
@@ -1017,8 +1018,8 @@ def validate_signal():
         if jwt_token:
             data_validator.set_auth_token(jwt_token)
         
-        # Initiate validation request
-        validation_request = data_validator.initiate_validation(query_structure, signal_name)
+        # Initiate validation request with signal description
+        validation_request = data_validator.initiate_validation(query_structure, signal_name, signal_description)
         
         return jsonify({
             'request_id': validation_request.request_id,

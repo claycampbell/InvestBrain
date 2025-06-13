@@ -39,10 +39,24 @@ class DataValidationService:
         """Set the JWT token for API authentication"""
         self.jwt_token = token
         
-    def generate_natural_query(self, query_structure: Dict[str, Any], signal_name: str) -> str:
+    def generate_natural_query(self, signal_description: str, signal_name: str, query_structure: Dict[str, Any]) -> str:
         """
-        Convert structured query to natural language for the external API
+        Convert signal description to natural language query for the external API
         """
+        # Use the actual signal description as the primary source
+        if signal_description and len(signal_description.strip()) > 10:
+            # Clean and format the description for API consumption
+            query = signal_description.strip()
+            
+            # Add context from entities if available
+            entities = query_structure.get('entities', [])
+            if entities and not any(entity.lower() in query.lower() for entity in entities):
+                entity_context = ", ".join(entities[:2])
+                query = f"{query} for {entity_context}"
+            
+            return query
+        
+        # Fallback to structured generation only if no description available
         entities = query_structure.get('entities', [])
         relationships = query_structure.get('relationships', [])
         filters = query_structure.get('filters', [])
@@ -70,7 +84,7 @@ class DataValidationService:
             metrics_str = ", ".join(metrics[:3]) if metrics else "key metrics"
             return f"Analyze {metrics_str} for {entity_name}"
     
-    def initiate_validation(self, query_structure: Dict[str, Any], signal_name: str) -> ValidationRequest:
+    def initiate_validation(self, query_structure: Dict[str, Any], signal_name: str, signal_description: str = "") -> ValidationRequest:
         """
         Initiate validation request with external API
         """
@@ -78,8 +92,8 @@ class DataValidationService:
             # Generate unique identifiers
             chat_id = f"thesis_validation_{uuid.uuid4().hex[:8]}"
             
-            # Convert structured query to natural language
-            natural_query = self.generate_natural_query(query_structure, signal_name)
+            # Convert signal description to natural language query
+            natural_query = self.generate_natural_query(signal_description, signal_name, query_structure)
             
             # Prepare API request
             headers = {
