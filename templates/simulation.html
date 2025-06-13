@@ -447,7 +447,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 </span>
                                             </div>
                                             <div class="timeline-content flex-grow-1">
-                                                <h6 class="mb-1">${event.title || event.description || 'Market Event'}</h6>
+                                                <h6 class="mb-1">${event.title}</h6>
                                                 <p class="mb-1">${event.description}</p>
                                                 <div class="small text-muted">
                                                     <strong>Impact:</strong> ${event.magnitude || 'Moderate'} ${event.impact_type}
@@ -721,7 +721,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         strokeWidth: 2
                     },
                     label: {
-                        text: event.title || event.description || 'Market Event',
+                        text: event.title,
                         style: {
                             color: '#fff',
                             background: event.impact_type === 'positive' ? '#28a745' : '#dc3545'

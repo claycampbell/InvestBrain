@@ -457,8 +457,8 @@
             const data = {
                 thesis: {
                     id: {{ thesis.id }},
-                    title: {{ thesis.title|tojson }},
-                    core_claim: {{ (thesis.core_claim or '')|tojson }},
+                    title: "{{ thesis.title }}",
+                    core_claim: "{{ thesis.core_claim or '' }}",
                     created_at: "{{ thesis.created_at }}"
                 },
                 signals: {{ signals_json|tojson }},
@@ -568,14 +568,17 @@
             simulationChart.destroy();
         }
 
-        // Extract chart data from simulation response
-        const performanceData = data.performance_data || {};
-        const timeline = performanceData.timeline || [];
+        // Extract chart data from nested structure
+        const chartData = data.chart_data || data;
+        const performanceData = chartData.performance_data || data.performance_data || [];
+        const timeline = chartData.timeline || data.timeline || [];
         
         console.log('Chart data structure:', {
             hasChartData: !!data.chart_data,
+            performanceDataLength: performanceData.length,
             timelineLength: timeline.length,
-            hasMultiSeries: !!(performanceData.performance && performanceData.benchmark)
+            chartConfig: data.chart_config,
+            hasMultiSeries: !!(performanceData.market_performance)
         });
 
         // Prepare series data for ApexCharts in correct format
@@ -589,11 +592,11 @@
             return date.getTime();
         });
         
-        if (performanceData.performance && performanceData.benchmark) {
-            // Two-series visualization: Benchmark vs Thesis
+        if (performanceData.market_performance && performanceData.thesis_performance) {
+            // Two-series visualization: Market vs Thesis
             series.push({
-                name: 'Market Benchmark',
-                data: performanceData.benchmark.map((value, index) => [
+                name: 'Market Performance',
+                data: performanceData.market_performance.map((value, index) => [
                     timelineData[index],
                     value
                 ])
@@ -601,16 +604,16 @@
             
             series.push({
                 name: 'Thesis Performance', 
-                data: performanceData.performance.map((value, index) => [
+                data: performanceData.thesis_performance.map((value, index) => [
                     timelineData[index],
                     value
                 ])
             });
         } else {
             // Single series fallback
-            const singleData = performanceData.performance || [];
+            const singleData = Array.isArray(performanceData) ? performanceData : [];
             series.push({
-                name: 'Performance Index',
+                name: data.chart_config?.primary_metric || 'Performance Index',
                 data: singleData.map((value, index) => [
                     timelineData[index],
                     value
@@ -625,44 +628,26 @@
         
         console.log('Event data received:', data.events);
         
-        // Simplified event processing - no complex property access
-        if (Array.isArray(data.events) && data.events.length > 0) {
-            data.events.forEach((eventData, index) => {
-                try {
-                    // Create safe event object with guaranteed properties
-                    const safeEvent = {
-                        title: String(eventData?.title || eventData?.description || 'Market Event'),
-                        description: String(eventData?.description || eventData?.title || 'Event details'),
-                        date: String(eventData?.date || 'Recent'),
-                        impact_type: String(eventData?.impact_type || 'neutral'),
-                        month: Number(eventData?.month || 0),
-                        signals_affected: Array.isArray(eventData?.signals_affected) ? eventData.signals_affected : []
-                    };
-                    
-                    const monthIndex = safeEvent.month > 0 ? Math.min(safeEvent.month - 1, timeline.length - 1) : 
-                                     Math.floor(index * timeline.length / data.events.length);
-                    const validIndex = Math.max(0, Math.min(monthIndex, timeline.length - 1));
-                    
-                    const borderColor = safeEvent.impact_type === 'positive' ? '#10b981' : '#ef4444';
-                    const displayText = safeEvent.title.length > 20 ? safeEvent.title.substring(0, 20) + '...' : safeEvent.title;
-                    
-                    annotations.xaxis.push({
-                        x: timelineData[validIndex],
-                        borderColor: borderColor,
-                        label: {
-                            borderColor: borderColor,
-                            style: {
-                                color: '#fff',
-                                background: borderColor,
-                                fontSize: '11px'
-                            },
-                            text: displayText,
-                            orientation: 'horizontal'
-                        }
-                    });
-                } catch (error) {
-                    console.warn('Skipping invalid event data:', error);
-                }
+        if (data.events && data.events.length > 0) {
+            data.events.forEach((event, index) => {
+                const monthIndex = event.month ? Math.min(event.month - 1, timeline.length - 1) : 
+                                 Math.floor(index * timeline.length / data.events.length);
+                const validIndex = Math.max(0, Math.min(monthIndex, timeline.length - 1));
+                
+                annotations.xaxis.push({
+                    x: timelineData[validIndex],
+                    borderColor: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
+                    label: {
+                        borderColor: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
+                        style: {
+                            color: '#fff',
+                            background: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
+                            fontSize: '11px'
+                        },
+                        text: event.title.length > 20 ? event.title.substring(0, 20) + '...' : event.title,
+                        orientation: 'horizontal'
+                    }
+                });
             });
         }
 
@@ -688,7 +673,7 @@
                 width: [2, 3]
             },
             title: {
-                text: (data.chart_config && data.chart_config.title) || data.simulation_metadata?.title || 'Thesis Performance Simulation',
+                text: data.chart_config.title || 'Thesis Performance Simulation',
                 align: 'left',
                 style: {
                     fontSize: '16px',
@@ -710,7 +695,7 @@
             },
             yaxis: {
                 title: {
-                    text: (data.chart_config && data.chart_config.y_axis_label) || 'Cumulative Performance (%)'
+                    text: data.chart_config.y_axis_label || 'Cumulative Performance (%)'
                 }
             },
             legend: {
@@ -761,68 +746,52 @@
         const eventList = document.getElementById('eventList');
         eventList.innerHTML = '';
 
-        if (!Array.isArray(events)) return;
-
-        events.forEach((eventData, index) => {
-            try {
-                // Create safe event object to prevent any property access errors
-                const safeEvent = {
-                    title: String(eventData?.title || eventData?.description || 'Market Event'),
-                    description: String(eventData?.description || eventData?.title || 'Event details'),
-                    date: String(eventData?.date || 'Recent'),
-                    impact_type: String(eventData?.impact_type || 'neutral'),
-                    signals_affected: Array.isArray(eventData?.signals_affected) ? eventData.signals_affected : [],
-                    notification_triggered: Boolean(eventData?.notification_triggered)
-                };
-
-                const eventCard = document.createElement('div');
-                eventCard.className = 'card mb-3 border-left-warning';
-                
-                const impactClass = safeEvent.impact_type === 'positive' ? 'success' : 
-                                   safeEvent.impact_type === 'negative' ? 'danger' : 'warning';
+        events.forEach((event, index) => {
+            const eventCard = document.createElement('div');
+            eventCard.className = 'card mb-3 border-left-warning';
             
-                eventCard.innerHTML = `
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h6 class="card-title">${safeEvent.title}</h6>
-                                <p class="card-text small">${safeEvent.description}</p>
-                                <small class="text-muted">
-                                    <i class="fas fa-calendar"></i> ${safeEvent.date}
-                                </small>
-                            </div>
-                            <div class="text-end">
-                                <span class="badge bg-${impactClass}">${safeEvent.impact_type}</span>
-                                ${safeEvent.notification_triggered ? 
-                                    '<br><small class="text-info"><i class="fas fa-bell"></i> Alert Triggered</small>' : ''
-                                }
-                            </div>
+            const impactClass = event.impact_type === 'positive' ? 'success' : 
+                               event.impact_type === 'negative' ? 'danger' : 'warning';
+            
+            eventCard.innerHTML = `
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-title">${event.title}</h6>
+                            <p class="card-text small">${event.description}</p>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar"></i> ${event.date}
+                            </small>
                         </div>
-                        ${safeEvent.signals_affected.length > 0 ? 
-                            `<div class="mt-2">
-                                <small class="text-muted">Affected Signals:</small>
-                                <div class="mt-1">
-                                    ${safeEvent.signals_affected.map(signal => 
-                                        `<span class="badge bg-secondary me-1">${String(signal)}</span>`
-                                    ).join('')}
-                                </div>
-                            </div>` : ''
-                        }
-                        <div class="mt-3 border-top pt-2">
-                            <small class="text-muted"><strong>Recommended Actions:</strong></small>
-                            <div class="mt-1">
-                                ${generateRecommendedActions(safeEvent).map(action => 
-                                    `<div class="small mb-1"><i class="fas fa-arrow-right text-primary me-1"></i> ${String(action)}</div>`
-                                ).join('')}
-                            </div>
+                        <div class="text-end">
+                            <span class="badge bg-${impactClass}">${event.impact_type}</span>
+                            ${event.notification_triggered ? 
+                                '<br><small class="text-info"><i class="fas fa-bell"></i> Alert Triggered</small>' : ''
+                            }
                         </div>
                     </div>
-                `;
-                
-                eventList.appendChild(eventCard);
-            } catch (error) {
-                console.warn('Skipping invalid event in timeline:', error);
-            }
+                    ${event.signals_affected ? 
+                        `<div class="mt-2">
+                            <small class="text-muted">Affected Signals:</small>
+                            <div class="mt-1">
+                                ${event.signals_affected.map(signal => 
+                                    `<span class="badge bg-secondary me-1">${signal}</span>`
+                                ).join('')}
+                            </div>
+                        </div>` : ''
+                    }
+                    <div class="mt-3 border-top pt-2">
+                        <small class="text-muted"><strong>Recommended Actions:</strong></small>
+                        <div class="mt-1">
+                            ${generateRecommendedActions(event).map(action => 
+                                `<div class="small mb-1"><i class="fas fa-arrow-right text-primary me-1"></i> ${action}</div>`
+                            ).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            eventList.appendChild(eventCard);
         });
     }
 
@@ -935,27 +904,17 @@
                 value += Math.random() * 4 - 2; // +/- $2B variation
             }
             
-            // Apply event impacts with safe property access
-            if (Array.isArray(events)) {
-                events.forEach(eventData => {
-                    try {
-                        if (!eventData) return;
-                        
-                        const signals_affected = Array.isArray(eventData.signals_affected) ? eventData.signals_affected : [];
-                        const impact_type = String(eventData.impact_type || 'neutral');
-                        const month = Number(eventData.month || 0);
-                        
-                        if (signals_affected.includes(signal.name)) {
-                            const eventMonth = month > 0 ? month - 1 : 0;
-                            if (Math.abs(i - eventMonth) <= 1) { // Event impact window
-                                const impact = impact_type === 'positive' ? 
-                                    (signal.name === 'Free Cash Flow' ? 2.5 : 3) : 
-                                    (signal.name === 'Free Cash Flow' ? -1.8 : -2);
-                                value += impact;
-                            }
+            // Apply event impacts
+            if (events) {
+                events.forEach(event => {
+                    if (event.signals_affected && event.signals_affected.includes(signal.name)) {
+                        const eventMonth = event.month ? event.month - 1 : 0;
+                        if (Math.abs(i - eventMonth) <= 1) { // Event impact window
+                            const impact = event.impact_type === 'positive' ? 
+                                (signal.name === 'Free Cash Flow' ? 2.5 : 3) : 
+                                (signal.name === 'Free Cash Flow' ? -1.8 : -2);
+                            value += impact;
                         }
-                    } catch (error) {
-                        console.warn('Skipping invalid event in signal processing:', error);
                     }
                 });
             }
@@ -977,11 +936,6 @@
 
     function generateRecommendedActions(event) {
         const actions = [];
-        
-        // Safety check for event parameter
-        if (!event) {
-            return ['Monitor market conditions', 'Review thesis assumptions'];
-        }
         
         // Base actions based on impact type
         if (event.impact_type === 'positive') {
@@ -1012,7 +966,7 @@
         }
         
         // Event-specific actions based on title keywords
-        const title = (event.title || event.description || '').toLowerCase();
+        const title = event.title.toLowerCase();
         if (title.includes('earnings') || title.includes('revenue')) {
             actions.push('Compare guidance vs street expectations');
         } else if (title.includes('margin') || title.includes('cost')) {

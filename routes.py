@@ -280,25 +280,30 @@ def document_list():
 
 @app.route('/monitoring')
 def monitoring_dashboard():
-    """Monitoring dashboard with direct database queries"""
+    """Monitoring dashboard showing published thesis analyses and active signals"""
     try:
-        # Get thesis analyses with minimal queries
-        thesis_analyses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).limit(20).all()
+        # Get all published thesis analyses
+        thesis_analyses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).all()
         
-        # Get basic signal counts
-        active_signals_count = SignalMonitoring.query.filter_by(status='active').count()
+        # Get active signals with thesis context
+        active_signals = db.session.query(SignalMonitoring, ThesisAnalysis.title)\
+            .join(ThesisAnalysis)\
+            .filter(SignalMonitoring.status == 'active')\
+            .order_by(SignalMonitoring.created_at.desc())\
+            .all()
         
-        # Create minimal stats
+        # Get recent notifications
+        recent_notifications = NotificationLog.query\
+            .order_by(NotificationLog.sent_at.desc())\
+            .limit(20).all()
+        
+        # Calculate monitoring statistics
         stats = {
             'total_published': len(thesis_analyses),
-            'active_signals': active_signals_count,
-            'triggered_signals': 0,
-            'recent_notifications': 0
+            'active_signals': len(active_signals),
+            'triggered_signals': SignalMonitoring.query.filter_by(status='triggered').count(),
+            'recent_notifications': len(recent_notifications)
         }
-        
-        # Use empty arrays for now to avoid complex queries
-        active_signals = []
-        recent_notifications = []
         
         return render_template('monitoring.html', 
                              thesis_analyses=thesis_analyses,
@@ -306,10 +311,9 @@ def monitoring_dashboard():
                              recent_notifications=recent_notifications,
                              stats=stats)
     except Exception as e:
-        logging.error(f"Monitoring dashboard error: {str(e)}")
         return f"Error loading monitoring dashboard: {str(e)}", 500
 
-@app.route('/monitor/<int:id>')
+@app.route('/thesis/<int:id>/monitor')
 def monitor_thesis(id):
     """View monitoring status for a specific published thesis"""
     try:
@@ -899,12 +903,6 @@ def simulation_page(thesis_id):
         logging.error(f"Error loading simulation page: {str(e)}")
         return render_template('404.html'), 404
 
-@app.route('/test-simulation')
-def test_simulation_page():
-    """Test page for simulation frontend debugging"""
-    with open('test_simulation_frontend.html', 'r') as f:
-        return f.read()
-
 @app.route('/api/thesis/<int:thesis_id>/simulate', methods=['POST'])
 def simulate_thesis(thesis_id):
     """Generate realistic thesis performance simulation"""
@@ -968,9 +966,9 @@ def run_simulation():
         # Get thesis data
         thesis = ThesisAnalysis.query.get_or_404(thesis_id)
         
-        # Import fast simulation service for immediate response
-        from services.fast_simulation_service import FastSimulationService
-        simulation_service = FastSimulationService()
+        # Import LLM simulation service
+        from services.llm_simulation_service import LLMSimulationService
+        simulation_service = LLMSimulationService()
         
         if simulation_type == 'forecast':
             time_horizon = data.get('time_horizon', 1)
