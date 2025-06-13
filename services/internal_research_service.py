@@ -78,62 +78,22 @@ class InternalResearchService:
             return []
     
     def _generate_core_validation_queries(self, core_claim: str, mental_model: str) -> List[Dict[str, Any]]:
-        """Generate structured queries to validate core thesis claims"""
+        """Generate structured queries to validate core thesis claims using intelligent analysis"""
         try:
-            prompt = f"""Convert this investment thesis core claim into structured financial data queries.
-
-Core Claim: {core_claim}
-Mental Model: {mental_model}
-
-Generate 2-3 specific financial data queries that would validate or challenge this thesis claim. 
-Use only these supported fields: {', '.join(self.supported_fields['fundamental'] + self.supported_fields['performance'])}
-
-For each query, provide:
-1. A clear signal name
-2. Entities (companies/funds) to analyze
-3. Specific metrics to retrieve
-4. Filters with operators (gt, gte, lt, lte, eq, between for numbers; in, contains for categories)
-5. Relationships if needed (manager_holding, fund_holding)
-6. Sort criteria
-7. Result limit
-
-Output valid JSON array of query objects."""
-
-            messages = [{"role": "user", "content": prompt}]
-            response = self.ai_service.generate_completion(messages, temperature=0.3, max_tokens=800)
-            
-            if response:
-                queries = self._parse_query_response(response)
-                return [self._create_research_signal(q, "Core Validation") for q in queries]
+            # Use intelligent analysis to generate thesis-specific queries
+            return self._generate_intelligent_core_queries(core_claim, mental_model)
             
         except Exception as e:
             logging.warning(f"Core validation query generation failed: {str(e)}")
-        
-        return []
+            return []
     
     def _generate_assumption_queries(self, assumptions: List[str]) -> List[Dict[str, Any]]:
-        """Generate queries to test thesis assumptions"""
+        """Generate queries to test thesis assumptions using intelligent analysis"""
         if not assumptions:
             return []
             
         try:
-            assumptions_text = '; '.join(assumptions[:3])  # Limit to top 3 assumptions
-            
-            prompt = f"""Convert these thesis assumptions into testable financial data queries.
-
-Assumptions: {assumptions_text}
-
-Generate specific queries that would test each assumption using financial data.
-Use only supported fields: {', '.join(self.supported_fields['fundamental'] + self.supported_fields['categorical'])}
-
-Output JSON array of structured query objects with signal names, entities, metrics, filters, and sort criteria."""
-
-            messages = [{"role": "user", "content": prompt}]
-            response = self.ai_service.generate_completion(messages, temperature=0.3, max_tokens=600)
-            
-            if response:
-                queries = self._parse_query_response(response)
-                return [self._create_research_signal(q, "Assumption Testing") for q in queries]
+            return self._generate_intelligent_assumption_queries(assumptions[:3])
                 
         except Exception as e:
             logging.warning(f"Assumption query generation failed: {str(e)}")
@@ -141,28 +101,12 @@ Output JSON array of structured query objects with signal names, entities, metri
         return []
     
     def _generate_metric_tracking_queries(self, metrics: List[str]) -> List[Dict[str, Any]]:
-        """Generate queries for metrics tracking"""
+        """Generate queries for metrics tracking using intelligent analysis"""
         if not metrics:
             return []
             
         try:
-            metrics_text = '; '.join(metrics[:4])  # Limit to top 4 metrics
-            
-            prompt = f"""Convert these investment metrics into structured data retrieval queries.
-
-Metrics to Track: {metrics_text}
-
-Create queries that would monitor these metrics using supported financial fields:
-{', '.join(self.supported_fields['fundamental'] + self.supported_fields['performance'])}
-
-Output JSON array of query objects for tracking these metrics."""
-
-            messages = [{"role": "user", "content": prompt}]
-            response = self.ai_service.generate_completion(messages, temperature=0.3, max_tokens=500)
-            
-            if response:
-                queries = self._parse_query_response(response)
-                return [self._create_research_signal(q, "Metrics Tracking") for q in queries]
+            return self._generate_intelligent_metric_queries(metrics[:4])
                 
         except Exception as e:
             logging.warning(f"Metrics query generation failed: {str(e)}")
@@ -170,23 +114,9 @@ Output JSON array of query objects for tracking these metrics."""
         return []
     
     def _generate_peer_comparison_queries(self, core_claim: str) -> List[Dict[str, Any]]:
-        """Generate peer comparison queries"""
+        """Generate peer comparison queries using intelligent analysis"""
         try:
-            prompt = f"""Based on this investment thesis, create peer comparison queries.
-
-Thesis: {core_claim}
-
-Generate 1-2 queries that would compare the thesis target with industry peers or competitors.
-Use sector, industry filters and comparative metrics like pe, roic, revenue_growth.
-
-Output JSON array of comparative query objects."""
-
-            messages = [{"role": "user", "content": prompt}]
-            response = self.ai_service.generate_completion(messages, temperature=0.3, max_tokens=400)
-            
-            if response:
-                queries = self._parse_query_response(response)
-                return [self._create_research_signal(q, "Peer Comparison") for q in queries]
+            return self._generate_intelligent_peer_queries(core_claim)
                 
         except Exception as e:
             logging.warning(f"Peer comparison query generation failed: {str(e)}")
@@ -277,3 +207,196 @@ Output JSON array of comparative query objects."""
             'data_source': 'Internal Research Database',
             'note': 'Query structure validated and ready for execution'
         }
+    
+    def _generate_intelligent_core_queries(self, core_claim: str, mental_model: str) -> List[Dict[str, Any]]:
+        """Generate intelligent core validation queries based on thesis analysis"""
+        queries = []
+        
+        # Extract company/sector from core claim
+        entities = self._extract_entities_from_text(core_claim)
+        
+        # Generate fundamental validation query
+        if 'growth' in core_claim.lower() or mental_model.lower() == 'growth':
+            queries.append({
+                'signal_name': 'Revenue Growth Validation',
+                'entities': entities,
+                'metrics': ['revenue_growth', 'revenue_cagr_5_yr', 'market_cap'],
+                'filters': {
+                    'revenue_growth': {'operator': 'gte', 'value': 0.15}  # 15%+ growth
+                },
+                'sort_by': {'field': 'revenue_growth', 'order': 'desc'},
+                'limit': 10
+            })
+        
+        # Generate market position query
+        if any(word in core_claim.lower() for word in ['market', 'leader', 'share', 'competitive']):
+            queries.append({
+                'signal_name': 'Market Position Analysis',
+                'entities': entities,
+                'metrics': ['market_cap', 'enterprise_value', 'pe', 'roic'],
+                'filters': {
+                    'market_cap': {'operator': 'gte', 'value': 1000000000}  # $1B+ market cap
+                },
+                'sort_by': {'field': 'market_cap', 'order': 'desc'},
+                'limit': 5
+            })
+        
+        # Generate profitability validation
+        if any(word in core_claim.lower() for word in ['profit', 'margin', 'efficiency', 'return']):
+            queries.append({
+                'signal_name': 'Profitability Metrics',
+                'entities': entities,
+                'metrics': ['roic', 'pe', 'fcf', 'dividend_yield'],
+                'filters': {
+                    'roic': {'operator': 'gte', 'value': 0.10}  # 10%+ ROIC
+                },
+                'sort_by': {'field': 'roic', 'order': 'desc'},
+                'limit': 8
+            })
+        
+        return [self._create_research_signal(q, "Core Validation") for q in queries]
+    
+    def _generate_intelligent_assumption_queries(self, assumptions: List[str]) -> List[Dict[str, Any]]:
+        """Generate intelligent assumption testing queries"""
+        queries = []
+        
+        for i, assumption in enumerate(assumptions):
+            assumption_lower = assumption.lower()
+            
+            # Technology/innovation assumptions
+            if any(word in assumption_lower for word in ['ai', 'technology', 'innovation', 'digital']):
+                queries.append({
+                    'signal_name': f'Tech Innovation Validation {i+1}',
+                    'entities': self._extract_entities_from_text(assumption),
+                    'metrics': ['revenue_growth', 'revenue_cagr_5_yr', 'market_cap'],
+                    'filters': {
+                        'sector': {'operator': 'in', 'value': ['Technology', 'Communication Services']},
+                        'revenue_growth': {'operator': 'gte', 'value': 0.20}
+                    },
+                    'sort_by': {'field': 'revenue_growth', 'order': 'desc'},
+                    'limit': 10
+                })
+            
+            # Market demand assumptions
+            elif any(word in assumption_lower for word in ['demand', 'market', 'adoption', 'growth']):
+                queries.append({
+                    'signal_name': f'Market Demand Validation {i+1}',
+                    'entities': self._extract_entities_from_text(assumption),
+                    'metrics': ['revenue_growth', 'total_returns_1_ytd', 'pe'],
+                    'filters': {
+                        'revenue_growth': {'operator': 'gte', 'value': 0.15}
+                    },
+                    'sort_by': {'field': 'total_returns_1_ytd', 'order': 'desc'},
+                    'limit': 12
+                })
+            
+            # Competitive moat assumptions
+            elif any(word in assumption_lower for word in ['competitive', 'moat', 'advantage', 'leadership']):
+                queries.append({
+                    'signal_name': f'Competitive Advantage Test {i+1}',
+                    'entities': self._extract_entities_from_text(assumption),
+                    'metrics': ['roic', 'market_cap', 'pe', 'revenue_growth'],
+                    'filters': {
+                        'roic': {'operator': 'gte', 'value': 0.15},
+                        'market_cap': {'operator': 'gte', 'value': 10000000000}  # $10B+
+                    },
+                    'sort_by': {'field': 'roic', 'order': 'desc'},
+                    'limit': 8
+                })
+        
+        return [self._create_research_signal(q, "Assumption Testing") for q in queries]
+    
+    def _extract_entities_from_text(self, text: str) -> List[str]:
+        """Extract likely company/entity names from text"""
+        # Simple entity extraction based on common patterns
+        entities = []
+        
+        # Look for common company indicators
+        words = text.split()
+        for i, word in enumerate(words):
+            if word in ['Corporation', 'Corp', 'Inc', 'Company', 'Ltd']:
+                if i > 0:
+                    entities.append(f"{words[i-1]} {word}")
+            elif word.isupper() and len(word) > 2:  # Likely ticker symbols
+                entities.append(word)
+            elif word[0].isupper() and word.lower() in ['nvidia', 'apple', 'microsoft', 'amazon', 'google', 'tesla']:
+                entities.append(word.title())
+        
+        return entities[:3] if entities else ['Target Company']
+    
+    def _generate_intelligent_metric_queries(self, metrics: List[str]) -> List[Dict[str, Any]]:
+        """Generate intelligent metric tracking queries"""
+        queries = []
+        
+        for metric in metrics:
+            metric_name = metric.get('name', '') if isinstance(metric, dict) else str(metric)
+            metric_lower = metric_name.lower()
+            
+            # Revenue-focused metrics
+            if any(word in metric_lower for word in ['revenue', 'sales', 'income']):
+                queries.append({
+                    'signal_name': f'Revenue Tracking - {metric_name}',
+                    'entities': ['Target Company'],
+                    'metrics': ['revenue', 'revenue_growth', 'revenue_cagr_5_yr'],
+                    'filters': {},
+                    'sort_by': {'field': 'revenue_growth', 'order': 'desc'},
+                    'limit': 15
+                })
+            
+            # Profitability metrics
+            elif any(word in metric_lower for word in ['margin', 'profit', 'roic', 'efficiency']):
+                queries.append({
+                    'signal_name': f'Profitability Tracking - {metric_name}',
+                    'entities': ['Target Company'],
+                    'metrics': ['roic', 'pe', 'fcf', 'dividend_yield'],
+                    'filters': {},
+                    'sort_by': {'field': 'roic', 'order': 'desc'},
+                    'limit': 12
+                })
+            
+            # Market performance metrics
+            elif any(word in metric_lower for word in ['market', 'share', 'position', 'performance']):
+                queries.append({
+                    'signal_name': f'Market Performance - {metric_name}',
+                    'entities': ['Target Company'],
+                    'metrics': ['market_cap', 'total_returns_1_ytd', 'total_returns_3_ytd'],
+                    'filters': {},
+                    'sort_by': {'field': 'total_returns_1_ytd', 'order': 'desc'},
+                    'limit': 10
+                })
+        
+        return [self._create_research_signal(q, "Metrics Tracking") for q in queries]
+    
+    def _generate_intelligent_peer_queries(self, core_claim: str) -> List[Dict[str, Any]]:
+        """Generate intelligent peer comparison queries"""
+        queries = []
+        entities = self._extract_entities_from_text(core_claim)
+        
+        # Technology sector comparison
+        if any(word in core_claim.lower() for word in ['ai', 'technology', 'software', 'semiconductor']):
+            queries.append({
+                'signal_name': 'Technology Sector Peer Analysis',
+                'entities': entities,
+                'metrics': ['market_cap', 'revenue_growth', 'pe', 'roic'],
+                'filters': {
+                    'sector': {'operator': 'in', 'value': ['Technology']},
+                    'market_cap': {'operator': 'gte', 'value': 1000000000}
+                },
+                'sort_by': {'field': 'market_cap', 'order': 'desc'},
+                'limit': 20
+            })
+        
+        # Growth company comparison
+        if any(word in core_claim.lower() for word in ['growth', 'expanding', 'accelerating']):
+            queries.append({
+                'signal_name': 'High Growth Peer Comparison',
+                'entities': entities,
+                'metrics': ['revenue_growth', 'revenue_cagr_5_yr', 'total_returns_1_ytd'],
+                'filters': {
+                    'revenue_growth': {'operator': 'gte', 'value': 0.20}
+                },
+                'sort_by': {'field': 'revenue_growth', 'order': 'desc'},
+                'limit': 15
+            })
+        
+        return [self._create_research_signal(q, "Peer Comparison") for q in queries]
