@@ -56,10 +56,14 @@ class SignalClassifier:
             # Generate Level 0 Raw Economic Activity signals first
             level_0_signals = self.research_service.generate_research_signals(ai_analysis)
             for research_signal in level_0_signals:
+                # Handle both old and new structured signal formats
+                description = research_signal.get('description', 
+                    f"Structured query: {research_signal.get('category', 'Financial Analysis')}")
+                
                 signal = Signal(
                     name=research_signal['signal_name'],
                     level=SignalLevel.LEVEL_0,
-                    description=research_signal['description'],
+                    description=description,
                     data_source='Internal Research Database',
                     value_chain_position='data_foundation',
                     predictive_power='high',

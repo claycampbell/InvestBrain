@@ -1,0 +1,84 @@
+Example Input:
+“List the top 5 manager holders of Microsoft with a 5-year dividend per share CAGR greater than 5% and a market cap over $100B.”
+
+Example Output:
+
+{
+  "entities": ["Microsoft"],
+  "relationships": ["manager_holding"],
+  "filters": [
+    {"field": "market_cap", "operator": ">", "value": 100000000000}
+  ],
+  "metrics": ["market_cap", "share_count"],
+  "sort_by": {"field": "market_cap", "order": "desc"},
+  "limit": 5,
+  "unsupported_filters": [
+    {"field": "dps_cagr_5_yr", "reason": "Not joinable with manager_holding in current data pipeline"}
+  ]
+}
+{
+    "chat_id": "chat_123",
+    "disclaimer_messages": null,
+    "request_id": "coreml:iggpt:request:01976a5b-fe99-7a02-9e1d-f8f5c12fd028",
+    "widgets": [
+        {
+            "assessed_quality_score": null,
+            "chat_id": "chat_123",
+            "generated_markdown_text": "Here are the top 5 funds holding Meta Platforms Inc by market value:\n\n1. **GFA**: Market Value - $7,873,091,706.24\n2. **ICA**: Market Value - $6,366,638,141.28\n3. **NPF**: Market Value - $5,549,679,094.32\n4. **GFA**: Market Value - $5,355,178,440.48\n5. **GFA**: Market Value - $4,110,695,004.24\n\nPlease note that GFA appears multiple times with different market values, indicating different holdings or positions within the fund.",
+            "generation_time_utc": "2025-06-13 17:35:20",
+            "metadata": {},
+            "referenced_query": "List the top 5 funds holding Meta Platforms by market value.",
+            "request_id": "coreml:iggpt:request:01976a5b-fe99-7a02-9e1d-f8f5c12fd028",
+            "source_references": [
+                {
+                    "id": "data_provider_clarity_company_holder_tool_01976a5c-2953-7170-bd5e-7f7f9a37d5e1",
+                    "relevant_content": null,
+                    "source_metadata": {
+                        "audience": null,
+                        "authors": null,
+                        "content_length": null,
+                        "publication_date_utc": "2025-06-12",
+                        "reference_url": "https://ig-portal-qa.capgroup.com/company/133095533#Holders&Meta%2520Platforms%2520Inc",
+                        "source": "Portal Data",
+                        "tags": {
+                            "issuer_id": "133095533",
+                            "issuer_name": "Meta%20Platforms%20Inc",
+                            "last_position_date": "2025-06-12",
+                            "option": "fund",
+                            "security_asset_id": "118402070",
+                            "units": "CRGI,CII,CWI"
+                        },
+                        "title": "Portal - Company - Meta%20Platforms%20Inc - Holder"
+                    },
+                    "source_type": "url"
+                }
+            ],
+            "source_remote_reference": [
+                {
+                    "id": "coreml:iggpt:remote_reference:01976a5c-40d2-75d3-9efc-878e50f2a37d",
+                    "relevant_content": null,
+                    "source_metadata": {
+                        "audience": null,
+                        "authors": null,
+                        "content_length": null,
+                        "publication_date_utc": null,
+                        "reference_url": "https://core-ml-sdev-uw2-iggpt-artifact.s3.amazonaws.com/polus-agent-output/data_post_processor_data_manipulation_sort_and_head_tool_01976a5c-31e3-74f1-9687-38282322b9af_referenced.csv?AWSAccessKeyId=ASIAWJ77HVRF73PBLEJ5&Signature=8H1x4kVYX7En9DwPUMF4N0s2qEk%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEDIaCXVzLXdlc3QtMiJHMEUCIEnKfMKjeDE9JdcefjIvXQHhMnrZkeFKHkv59%2F0AWdtaAiEA0p%2Fe41uQiezJrEqbjXptWG1F4Q9HmzcyPeCeA%2FHQ5TcqowQIGxADGgw0MzM3OTAxMDI2MDMiDP1gme0n7EUBafjQDCqABEEOmA0Ck%2B3G5Pfoze3B0hvbkPRq9XgitswsXS7C1xMSlHNfdi%2BFaWGCpo2JFGJt49ikT7JG9G%2FaAhRXX12rdRSbyziGatklqSyukmca%2FxBrQ8%2BetfFtWf5l6VVPUj9FH5l4UbxbqKQkAY9%2FHfy%2B9sADVzQgUKsLZIym3yw7suC%2B%2BY2gB8K1DoBOsPEkt%2BLP8pcUSC93giEBYiCHj%2FJLo3GBEIUtjJAi5qPhvN9RwJdBox%2BWw9vD8FIuLdFvkHULCgbnH0QAeu8RTqfLPICsPFZmZToegBDefpCdpBXcIieBT3pAIgMSDPiF1JfzU26U883XGdg5DhQsHGn7zpU%2FOtn3u5buExPDUS3LDONoNCFov8wZATLBUk9e8BB5Tgff0WbKk9%2FJ2QMJ8iBonKFa%2FZowf3y89yfegRJjoBia0dydUihP54Dl0pDuHsX0P2L09rbPebvsG27ODK9JGURgCf0dCHOrCc7kWkZtFAhYiQw5jJNUu7nxCVlwtcxGL3fsE2veJUxDpxrmrACImY2SElMTt1n1jfyMqlgiEZz6NWUSM7PCoUhX9qHN7XZXosZJZF6TpNhtPQPuAV6n8jNV879TU3IG8MhRSO1DZor%2FbkGxviYPdnvvU98nexBfTljcCvHnJwUoJ4nZ5wQBMmplYY5LA87zO0QfnzfiFxUCQoNTMNPBscIGOqYB%2FP1mlsAQPNAKCaBLJCRkShL36BPN4UCPFkCe7w1PHt%2FMJyfQOms4FM8e4kXdUvm17iimx9GBi6FjChP71gvnt55DXjPsw4rWByM3W%2BgmLaeZaNfzfcmXhZVRn68Jjd%2B%2FmTIgGpeeOcL8VwzdYNlSmS4EzpmpQmufohs%2FUgljIMsNZiUrB6bJmfrwi%2F1A%2F9JpdZM%2F5rlzZqqMzYYCexVSC%2F0F0IdNxg%3D%3D&Expires=1749879320",
+                        "source": "Polus",
+                        "tags": {
+                            "data_size": 336,
+                            "relevant_cols": [
+                                "Fund",
+                                "Mkt val ($M)"
+                            ],
+                            "remote_reference_key": "s3://core-ml-sdev-uw2-iggpt-artifact/polus-agent-output/80058424/coreml:iggpt:request:01976a5b-fe99-7a02-9e1d-f8f5c12fd028/data_post_processor_data_manipulation_sort_and_head_tool_01976a5c-31e3-74f1-9687-38282322b9af.csv"
+                        },
+                        "title": ""
+                    },
+                    "source_type": "downloadable_url"
+                }
+            ],
+            "validation_scores": null,
+            "widget_id": "coreml:iggpt:widget:01976a5c-40d2-75d3-9efc-877acc0529b5"
+        }
+    ]
+}

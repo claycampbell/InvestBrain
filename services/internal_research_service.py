@@ -209,52 +209,58 @@ class InternalResearchService:
         }
     
     def _generate_intelligent_core_queries(self, core_claim: str, mental_model: str) -> List[Dict[str, Any]]:
-        """Generate intelligent core validation queries based on thesis analysis"""
+        """Generate intelligent core validation queries using structured signal format"""
         queries = []
         
         # Extract company/sector from core claim
         entities = self._extract_entities_from_text(core_claim)
         
-        # Generate fundamental validation query
+        # Generate fundamental validation query using structured format
         if 'growth' in core_claim.lower() or mental_model.lower() == 'growth':
-            queries.append({
-                'signal_name': 'Revenue Growth Validation',
-                'entities': entities,
-                'metrics': ['revenue_growth', 'revenue_cagr_5_yr', 'market_cap'],
-                'filters': {
-                    'revenue_growth': {'operator': 'gte', 'value': 0.15}  # 15%+ growth
-                },
-                'sort_by': {'field': 'revenue_growth', 'order': 'desc'},
-                'limit': 10
-            })
+            query_structure = {
+                "entities": entities,
+                "relationships": [],
+                "filters": [
+                    {"field": "revenue_cagr_5_yr", "operator": ">", "value": 0.15}
+                ],
+                "metrics": ["revenue", "revenue_cagr_5_yr", "market_cap"],
+                "sort_by": {"field": "revenue_cagr_5_yr", "order": "desc"},
+                "limit": 10,
+                "unsupported_filters": []
+            }
+            queries.append(self._create_structured_signal("Revenue Growth Validation", query_structure, "Core Validation"))
         
         # Generate market position query
         if any(word in core_claim.lower() for word in ['market', 'leader', 'share', 'competitive']):
-            queries.append({
-                'signal_name': 'Market Position Analysis',
-                'entities': entities,
-                'metrics': ['market_cap', 'enterprise_value', 'pe', 'roic'],
-                'filters': {
-                    'market_cap': {'operator': 'gte', 'value': 1000000000}  # $1B+ market cap
-                },
-                'sort_by': {'field': 'market_cap', 'order': 'desc'},
-                'limit': 5
-            })
+            query_structure = {
+                "entities": entities,
+                "relationships": [],
+                "filters": [
+                    {"field": "market_cap", "operator": ">", "value": 1000000000}
+                ],
+                "metrics": ["market_cap", "pe", "roic"],
+                "sort_by": {"field": "market_cap", "order": "desc"},
+                "limit": 5,
+                "unsupported_filters": []
+            }
+            queries.append(self._create_structured_signal("Market Position Analysis", query_structure, "Core Validation"))
         
         # Generate profitability validation
         if any(word in core_claim.lower() for word in ['profit', 'margin', 'efficiency', 'return']):
-            queries.append({
-                'signal_name': 'Profitability Metrics',
-                'entities': entities,
-                'metrics': ['roic', 'pe', 'fcf', 'dividend_yield'],
-                'filters': {
-                    'roic': {'operator': 'gte', 'value': 0.10}  # 10%+ ROIC
-                },
-                'sort_by': {'field': 'roic', 'order': 'desc'},
-                'limit': 8
-            })
+            query_structure = {
+                "entities": entities,
+                "relationships": [],
+                "filters": [
+                    {"field": "roic", "operator": ">", "value": 0.10}
+                ],
+                "metrics": ["roic", "pe", "dividend_yield"],
+                "sort_by": {"field": "roic", "order": "desc"},
+                "limit": 8,
+                "unsupported_filters": []
+            }
+            queries.append(self._create_structured_signal("Profitability Metrics", query_structure, "Core Validation"))
         
-        return [self._create_research_signal(q, "Core Validation") for q in queries]
+        return queries
     
     def _generate_intelligent_assumption_queries(self, assumptions: List[str]) -> List[Dict[str, Any]]:
         """Generate intelligent assumption testing queries"""
@@ -324,8 +330,19 @@ class InternalResearchService:
         
         return entities[:3] if entities else ['Target Company']
     
+    def _create_structured_signal(self, signal_name: str, query_structure: Dict[str, Any], category: str) -> Dict[str, Any]:
+        """Create a structured signal using the new financial query format"""
+        return {
+            'signal_name': signal_name,
+            'category': category,
+            'query_structure': query_structure,
+            'data_source': 'Internal Research Database',
+            'execution_ready': True,
+            'structured_format': True
+        }
+    
     def _generate_intelligent_metric_queries(self, metrics: List[str]) -> List[Dict[str, Any]]:
-        """Generate intelligent metric tracking queries"""
+        """Generate intelligent metric tracking queries using structured format"""
         queries = []
         
         for metric in metrics:
@@ -334,69 +351,80 @@ class InternalResearchService:
             
             # Revenue-focused metrics
             if any(word in metric_lower for word in ['revenue', 'sales', 'income']):
-                queries.append({
-                    'signal_name': f'Revenue Tracking - {metric_name}',
-                    'entities': ['Target Company'],
-                    'metrics': ['revenue', 'revenue_growth', 'revenue_cagr_5_yr'],
-                    'filters': {},
-                    'sort_by': {'field': 'revenue_growth', 'order': 'desc'},
-                    'limit': 15
-                })
+                query_structure = {
+                    "entities": ['Target Company'],
+                    "relationships": [],
+                    "filters": [],
+                    "metrics": ["revenue", "revenue_cagr_5_yr"],
+                    "sort_by": {"field": "revenue_cagr_5_yr", "order": "desc"},
+                    "limit": 15,
+                    "unsupported_filters": []
+                }
+                queries.append(self._create_structured_signal(f'Revenue Tracking - {metric_name}', query_structure, "Metrics Tracking"))
             
             # Profitability metrics
             elif any(word in metric_lower for word in ['margin', 'profit', 'roic', 'efficiency']):
-                queries.append({
-                    'signal_name': f'Profitability Tracking - {metric_name}',
-                    'entities': ['Target Company'],
-                    'metrics': ['roic', 'pe', 'fcf', 'dividend_yield'],
-                    'filters': {},
-                    'sort_by': {'field': 'roic', 'order': 'desc'},
-                    'limit': 12
-                })
+                query_structure = {
+                    "entities": ['Target Company'],
+                    "relationships": [],
+                    "filters": [],
+                    "metrics": ["roic", "pe", "dividend_yield"],
+                    "sort_by": {"field": "roic", "order": "desc"},
+                    "limit": 12,
+                    "unsupported_filters": []
+                }
+                queries.append(self._create_structured_signal(f'Profitability Tracking - {metric_name}', query_structure, "Metrics Tracking"))
             
             # Market performance metrics
             elif any(word in metric_lower for word in ['market', 'share', 'position', 'performance']):
-                queries.append({
-                    'signal_name': f'Market Performance - {metric_name}',
-                    'entities': ['Target Company'],
-                    'metrics': ['market_cap', 'total_returns_1_ytd', 'total_returns_3_ytd'],
-                    'filters': {},
-                    'sort_by': {'field': 'total_returns_1_ytd', 'order': 'desc'},
-                    'limit': 10
-                })
+                query_structure = {
+                    "entities": ['Target Company'],
+                    "relationships": [],
+                    "filters": [],
+                    "metrics": ["market_cap", "total_returns_1_ytd"],
+                    "sort_by": {"field": "total_returns_1_ytd", "order": "desc"},
+                    "limit": 10,
+                    "unsupported_filters": []
+                }
+                queries.append(self._create_structured_signal(f'Market Performance - {metric_name}', query_structure, "Metrics Tracking"))
         
-        return [self._create_research_signal(q, "Metrics Tracking") for q in queries]
+        return queries
     
     def _generate_intelligent_peer_queries(self, core_claim: str) -> List[Dict[str, Any]]:
-        """Generate intelligent peer comparison queries"""
+        """Generate intelligent peer comparison queries using structured format"""
         queries = []
         entities = self._extract_entities_from_text(core_claim)
         
         # Technology sector comparison
         if any(word in core_claim.lower() for word in ['ai', 'technology', 'software', 'semiconductor']):
-            queries.append({
-                'signal_name': 'Technology Sector Peer Analysis',
-                'entities': entities,
-                'metrics': ['market_cap', 'revenue_growth', 'pe', 'roic'],
-                'filters': {
-                    'sector': {'operator': 'in', 'value': ['Technology']},
-                    'market_cap': {'operator': 'gte', 'value': 1000000000}
-                },
-                'sort_by': {'field': 'market_cap', 'order': 'desc'},
-                'limit': 20
-            })
+            query_structure = {
+                "entities": entities,
+                "relationships": [],
+                "filters": [
+                    {"field": "market_cap", "operator": ">", "value": 1000000000}
+                ],
+                "metrics": ["market_cap", "pe", "roic"],
+                "sort_by": {"field": "market_cap", "order": "desc"},
+                "limit": 20,
+                "unsupported_filters": [
+                    {"field": "sector", "reason": "Sector filtering requires industry field mapping"}
+                ]
+            }
+            queries.append(self._create_structured_signal('Technology Sector Peer Analysis', query_structure, "Peer Comparison"))
         
         # Growth company comparison
         if any(word in core_claim.lower() for word in ['growth', 'expanding', 'accelerating']):
-            queries.append({
-                'signal_name': 'High Growth Peer Comparison',
-                'entities': entities,
-                'metrics': ['revenue_growth', 'revenue_cagr_5_yr', 'total_returns_1_ytd'],
-                'filters': {
-                    'revenue_growth': {'operator': 'gte', 'value': 0.20}
-                },
-                'sort_by': {'field': 'revenue_growth', 'order': 'desc'},
-                'limit': 15
-            })
+            query_structure = {
+                "entities": entities,
+                "relationships": [],
+                "filters": [
+                    {"field": "revenue_cagr_5_yr", "operator": ">", "value": 0.20}
+                ],
+                "metrics": ["revenue_cagr_5_yr", "total_returns_1_ytd"],
+                "sort_by": {"field": "revenue_cagr_5_yr", "order": "desc"},
+                "limit": 15,
+                "unsupported_filters": []
+            }
+            queries.append(self._create_structured_signal('High Growth Peer Comparison', query_structure, "Peer Comparison"))
         
-        return [self._create_research_signal(q, "Peer Comparison") for q in queries]
+        return queries
