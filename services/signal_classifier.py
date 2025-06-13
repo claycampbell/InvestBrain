@@ -12,11 +12,12 @@ from enum import Enum
 
 class SignalLevel(Enum):
     """Signal classification levels based on processing complexity"""
-    LEVEL_0 = "Raw Economic Activity"          # Direct measurements
-    LEVEL_1 = "Simple Aggregation"            # Basic combinations
-    LEVEL_2 = "Derived Metrics"               # Calculated ratios
-    LEVEL_3 = "Complex Derivatives"           # Multi-input calculations
-    LEVEL_4 = "Synthetic Indicators"          # Highly processed composites
+    LEVEL_0 = "Internal Research Data"        # Structured financial queries
+    LEVEL_1 = "Raw Economic Activity"         # Direct measurements
+    LEVEL_2 = "Simple Aggregation"           # Basic combinations
+    LEVEL_3 = "Derived Metrics"              # Calculated ratios
+    LEVEL_4 = "Complex Derivatives"          # Multi-input calculations
+    LEVEL_5 = "Synthetic Indicators"         # Highly processed composites
 
 @dataclass
 class Signal:
@@ -42,16 +43,36 @@ class SignalClassifier:
     
     def __init__(self):
         # Signal classifier relies purely on LLM analysis without hardcoded patterns
-        pass
+        from services.internal_research_service import InternalResearchService
+        self.research_service = InternalResearchService()
         
     def extract_signals_from_ai_analysis(self, ai_analysis: Dict[str, Any], processed_documents: List[Dict], focus_primary: bool = True) -> Dict[str, Any]:
         """
-        Extract and classify signals from AI analysis results only
+        Extract and classify signals from AI analysis results with Level 0-5 hierarchy
         """
         try:
             all_signals = []
             
-            # Extract signals from AI analysis metrics_to_track
+            # Generate Level 0 Internal Research Data signals first
+            level_0_signals = self.research_service.generate_research_signals(ai_analysis)
+            for research_signal in level_0_signals:
+                signal = Signal(
+                    name=research_signal['signal_name'],
+                    level=SignalLevel.LEVEL_0,
+                    description=research_signal['description'],
+                    data_source='Internal Research Database',
+                    value_chain_position='data_foundation',
+                    predictive_power='high',
+                    market_attention='low',
+                    lead_lag_indicator='leading',
+                    raw_data_points=[research_signal['signal_name']],
+                    collection_frequency='daily',
+                    reliability_score=0.95
+                )
+                all_signals.append(signal)
+                logging.info(f"Added Level 0 signal: {signal.name} ({research_signal['category']})")
+            
+            # Extract signals from AI analysis metrics_to_track (Level 1-5)
             metrics_to_track = ai_analysis.get('metrics_to_track', [])
             logging.info(f"Processing {len(metrics_to_track)} metrics from AI analysis")
             
@@ -85,9 +106,9 @@ class SignalClassifier:
             document_signals = self._extract_signals_from_documents(processed_documents, focus_primary)
             all_signals.extend(document_signals)
             
-            # If focusing on primary signals, prioritize Level 0-1
+            # If focusing on primary signals, prioritize Level 0-2 (Internal Research + Raw Activity + Simple Aggregation)
             if focus_primary:
-                primary_signals = [s for s in all_signals if s.level in [SignalLevel.LEVEL_0, SignalLevel.LEVEL_1]]
+                primary_signals = [s for s in all_signals if s.level in [SignalLevel.LEVEL_0, SignalLevel.LEVEL_1, SignalLevel.LEVEL_2]]
                 all_signals = primary_signals + [s for s in all_signals if s not in primary_signals]
             
             # Analyze relationships and value chain mapping
@@ -154,15 +175,22 @@ class SignalClassifier:
             return {'error': str(e)}
     
     def _parse_signal_level(self, level_str: str) -> SignalLevel:
-        """Parse signal level string from AI analysis"""
+        """Parse signal level string from AI analysis - Updated for 6-level hierarchy"""
         level_mapping = {
-            'Level_0_Raw_Activity': SignalLevel.LEVEL_0,
-            'Level_1_Simple_Aggregation': SignalLevel.LEVEL_1,
-            'Level_2_Derived_Metrics': SignalLevel.LEVEL_2,
-            'Level_3_Complex_Derivatives': SignalLevel.LEVEL_3,
-            'Level_4_Synthetic_Indicators': SignalLevel.LEVEL_4
+            'Level_0_Internal_Research': SignalLevel.LEVEL_0,
+            'Level_1_Raw_Activity': SignalLevel.LEVEL_1,
+            'Level_2_Simple_Aggregation': SignalLevel.LEVEL_2,
+            'Level_3_Derived_Metrics': SignalLevel.LEVEL_3,
+            'Level_4_Complex_Derivatives': SignalLevel.LEVEL_4,
+            'Level_5_Synthetic_Indicators': SignalLevel.LEVEL_5,
+            # Legacy mappings for backward compatibility
+            'Level_0_Raw_Activity': SignalLevel.LEVEL_1,
+            'Level_1_Simple_Aggregation': SignalLevel.LEVEL_2,
+            'Level_2_Derived_Metrics': SignalLevel.LEVEL_3,
+            'Level_3_Complex_Derivatives': SignalLevel.LEVEL_4,
+            'Level_4_Synthetic_Indicators': SignalLevel.LEVEL_5
         }
-        return level_mapping.get(level_str, SignalLevel.LEVEL_2)
+        return level_mapping.get(level_str, SignalLevel.LEVEL_3)
     
     def _extract_signals_from_documents(self, processed_documents: List[Dict], focus_primary: bool) -> List[Signal]:
         """Extract signals from LLM-processed document content only"""
