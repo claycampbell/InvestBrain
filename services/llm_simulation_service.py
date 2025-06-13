@@ -34,16 +34,20 @@ class LLMSimulationService:
             }
         
         try:
-            # Use thesis-based performance data for reliable execution
-            performance_data = self._generate_thesis_based_simulation(
+            # Generate authentic performance data using Azure OpenAI
+            performance_data = self._generate_llm_performance_simulation(
                 thesis, time_horizon, scenario, volatility
             )
             
-            # Skip events generation to prevent network timeouts
+            # Generate authentic market events if requested
             events = []
+            if include_events:
+                events = self._generate_llm_market_events(
+                    thesis, time_horizon, scenario, performance_data
+                )
             
-            # Use thesis-based scenario analysis for reliable execution  
-            scenario_analysis = self._generate_fallback_scenario_analysis(
+            # Generate authentic scenario analysis using Azure OpenAI
+            scenario_analysis = self._generate_scenario_analysis(
                 thesis, scenario, time_horizon, performance_data
             )
             
@@ -67,7 +71,7 @@ class LLMSimulationService:
                     'time_horizon': time_horizon,
                     'include_events': include_events,
                     'generated_at': datetime.utcnow().isoformat(),
-                    'data_source': 'Thesis-based Analysis'
+                    'data_source': 'Azure OpenAI LLM Analysis'
                 }
             }
             
@@ -327,6 +331,120 @@ Return JSON format:
         except Exception as e:
             logging.error(f"LLM scenario analysis failed: {str(e)}")
             raise Exception(f"Failed to generate LLM scenario analysis: {str(e)}")
+    
+    def _generate_llm_performance_simulation(self, thesis, time_horizon: int, scenario: str, volatility: str) -> Dict[str, List[float]]:
+        """
+        Generate authentic performance simulation using Azure OpenAI
+        """
+        prompt = f"""Analyze this investment thesis and generate realistic monthly performance data:
+
+THESIS: {thesis.original_thesis}
+
+SCENARIO: {scenario}
+TIME HORIZON: {time_horizon} year(s) 
+VOLATILITY: {volatility}
+
+Generate {time_horizon * 12} monthly performance values starting from 100.0 (base index):
+1. Extract key growth assumptions from the thesis
+2. Apply scenario-specific adjustments ({scenario})
+3. Add realistic volatility ({volatility})
+4. Create authentic market benchmark comparison
+5. Ensure performance reflects thesis quality and market conditions
+
+Return JSON format only:
+{{
+  "performance": [100.0, 101.2, 103.5, ...],
+  "benchmark": [100.0, 100.8, 102.1, ...],
+  "growth_assumptions": ["Key assumption 1", "Key assumption 2"],
+  "performance_drivers": ["Driver 1", "Driver 2"],
+  "risk_factors": ["Risk 1", "Risk 2"]
+}}
+
+Performance values should reflect realistic monthly progression based on thesis fundamentals."""
+
+        messages = [{"role": "user", "content": prompt}]
+        
+        try:
+            response = self.ai_service.generate_completion(
+                messages, temperature=0.5, max_tokens=2000
+            )
+            
+            if not response:
+                raise Exception("Azure OpenAI returned empty response for performance simulation")
+            
+            # Parse the JSON response
+            cleaned_response = self._clean_json_response(response)
+            performance_data = json.loads(cleaned_response)
+            
+            # Validate data structure
+            if not isinstance(performance_data.get('performance'), list):
+                raise Exception("Invalid performance data structure")
+            if not isinstance(performance_data.get('benchmark'), list):
+                raise Exception("Invalid benchmark data structure")
+                
+            expected_points = time_horizon * 12
+            if len(performance_data['performance']) != expected_points:
+                raise Exception(f"Expected {expected_points} performance points")
+                
+            return performance_data
+            
+        except Exception as e:
+            logging.error(f"LLM performance simulation failed: {str(e)}")
+            raise Exception(f"Failed to generate LLM performance simulation: {str(e)}")
+    
+    def _generate_llm_market_events(self, thesis, time_horizon: int, scenario: str, performance_data: Dict) -> List[Dict[str, Any]]:
+        """
+        Generate authentic market events using Azure OpenAI
+        """
+        prompt = f"""Generate realistic market events for this investment thesis simulation:
+
+THESIS: {thesis.original_thesis}
+SCENARIO: {scenario}
+TIME HORIZON: {time_horizon} year(s)
+
+Generate 2-4 realistic market events that could impact this thesis over the time period:
+- Events should be authentic to current market conditions
+- Include specific timing (month 1-{time_horizon * 12})
+- Specify realistic impact types and magnitudes
+- Connect events to thesis-specific signals
+- Make events feel like real market developments
+
+Return JSON array only:
+[
+  {{
+    "month": 6,
+    "title": "Specific Event Title",
+    "description": "Detailed description of the market event and its implications",
+    "impact_type": "positive",
+    "magnitude": "moderate",
+    "signals_affected": ["Specific Signal Name 1", "Specific Signal Name 2"],
+    "market_context": "Why this event matters for the investment thesis",
+    "probability": "high"
+  }}
+]"""
+
+        messages = [{"role": "user", "content": prompt}]
+        
+        try:
+            response = self.ai_service.generate_completion(
+                messages, temperature=0.7, max_tokens=1200
+            )
+            
+            if not response:
+                return []  # Return empty events rather than failing
+            
+            # Parse the JSON response
+            cleaned_response = self._clean_json_response(response)
+            events_data = json.loads(cleaned_response)
+            
+            if not isinstance(events_data, list):
+                return []
+                
+            return events_data[:4]  # Limit to 4 events maximum
+            
+        except Exception as e:
+            logging.warning(f"LLM events generation failed, returning empty events: {str(e)}")
+            return []  # Return empty events rather than failing the entire simulation
     
     def _clean_json_response(self, response: str) -> str:
         """
