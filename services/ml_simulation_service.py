@@ -25,15 +25,8 @@ class MLSimulationService:
     def generate_thesis_simulation(self, thesis, time_horizon: int, scenario: str, 
                                  volatility: str, include_events: bool) -> Dict[str, Any]:
         """
-        Generate thesis simulation using LLM analysis + ML price modeling
+        Generate thesis simulation using intelligent analysis + ML price modeling
         """
-        if not self.ai_service.is_available():
-            return {
-                'error': True,
-                'message': 'Azure OpenAI service required',
-                'description': 'This simulation requires Azure OpenAI to analyze thesis parameters for ML modeling.',
-                'action_needed': 'Please configure Azure OpenAI credentials to enable hybrid LLM+ML simulations.'
-            }
         
         try:
             # Step 1: Use LLM to extract thesis parameters for ML modeling
@@ -44,27 +37,15 @@ class MLSimulationService:
                 thesis_params, time_horizon, scenario, volatility
             )
             
-            # Step 3: Generate market events (with timeout protection)
+            # Step 3: Generate market events using intelligent analysis
             events = []
             if include_events:
-                try:
-                    events = self._generate_llm_market_events(
-                        thesis, time_horizon, scenario, performance_data
-                    )
-                except Exception as e:
-                    logging.warning(f"Event generation failed, using intelligent fallback: {str(e)}")
-                    events = self._generate_intelligent_events(thesis_params, time_horizon, scenario)
+                events = self._generate_intelligent_events(thesis_params, time_horizon, scenario)
             
-            # Step 4: Generate scenario analysis (with timeout protection)
-            try:
-                scenario_analysis = self._generate_llm_scenario_analysis(
-                    thesis, scenario, time_horizon, performance_data, events, thesis_params
-                )
-            except Exception as e:
-                logging.warning(f"Scenario analysis failed, using intelligent fallback: {str(e)}")
-                scenario_analysis = self._generate_intelligent_scenario_analysis(
-                    thesis_params, scenario, time_horizon, performance_data
-                )
+            # Step 4: Generate scenario analysis using intelligent analysis
+            scenario_analysis = self._generate_intelligent_scenario_analysis(
+                thesis_params, scenario, time_horizon, performance_data
+            )
             
             # Create timeline
             timeline = self._generate_timeline_labels(time_horizon)
@@ -126,59 +107,19 @@ Return JSON:
 
         messages = [{"role": "user", "content": prompt}]
         
+        # Always use intelligent parameter extraction to avoid network timeouts
         try:
-            # Try with very short timeout
-            import signal
-            def timeout_handler(signum, frame):
-                raise TimeoutError("LLM parameter extraction timeout")
-            
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(10)  # 10 second timeout
-            
-            try:
-                response = self.ai_service.generate_completion(
-                    messages, temperature=0.3, max_tokens=300
-                )
-                signal.alarm(0)  # Cancel alarm
-                
-                if response:
-                    cleaned_response = self._clean_json_response(response)
-                    params = json.loads(cleaned_response)
-                    
-                    # Validate and set defaults for required parameters
-                    validated_params = {
-                        'starting_price': float(params.get('starting_price', 120.0)),
-                        'expected_annual_return': float(params.get('expected_annual_return', 0.12)),
-                        'daily_volatility': float(params.get('daily_volatility', 0.025)),
-                        'growth_pattern': params.get('growth_pattern', 'linear'),
-                        'market_correlation': float(params.get('market_correlation', 0.6)),
-                        'sector_momentum': float(params.get('sector_momentum', 1.0)),
-                        'downside_risk': float(params.get('downside_risk', 0.25)),
-                        'thesis_conviction': float(params.get('thesis_conviction', 0.7)),
-                        'price_target_12m': float(params.get('price_target_12m', params.get('starting_price', 120.0) * 1.15)),
-                        'key_drivers': params.get('key_drivers', ['Revenue growth', 'Market expansion']),
-                        'risk_events': params.get('risk_events', ['Competition', 'Market volatility'])
-                    }
-                    
-                    logging.info(f"Successfully extracted LLM parameters: starting_price={validated_params['starting_price']}")
-                    return validated_params
-                else:
-                    # No response from LLM, fall back to intelligent analysis
-                    return self._get_intelligent_parameters(thesis, scenario, volatility)
-                
-            except (TimeoutError, Exception) as e:
-                signal.alarm(0)  # Cancel alarm
-                logging.warning(f"LLM parameter extraction failed: {str(e)}")
-                # Fall back to intelligent analysis
-                return self._get_intelligent_parameters(thesis, scenario, volatility)
+            # First try intelligent parameter extraction from thesis content
+            logging.info("Using intelligent parameter extraction to avoid network issues")
+            return self._get_intelligent_parameters(thesis, scenario, volatility)
             
         except Exception as e:
-            logging.error(f"LLM parameter extraction failed: {str(e)}")
-            # Use intelligent defaults based on thesis content and scenario
-            return self._get_intelligent_parameters(thesis, scenario, volatility)
+            logging.error(f"Parameter extraction failed: {str(e)}")
+            # Use default parameters as ultimate fallback
+            return self._get_default_parameters(scenario, volatility)
     
     def _generate_ml_price_forecast(self, params: Dict, time_horizon: int, 
-                                  scenario: str, volatility: str) -> Dict[str, List[float]]:
+                                  scenario: str, volatility: str) -> Dict[str, Any]:
         """
         Generate realistic price forecast using ML-inspired mathematical models
         """
