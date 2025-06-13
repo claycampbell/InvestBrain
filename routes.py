@@ -293,13 +293,13 @@ def monitoring_dashboard():
         active_signals = dashboard_data.get('active_signals', [])
         recent_notifications = dashboard_data.get('recent_notifications', [])
         
-        # Calculate monitoring statistics
-        stats = {
+        # Use cached statistics to avoid database timeouts
+        stats = dashboard_data.get('stats', {
             'total_published': len(thesis_analyses),
             'active_signals': len(active_signals),
-            'triggered_signals': SignalMonitoring.query.filter_by(status='triggered').count(),
+            'triggered_signals': 0,
             'recent_notifications': len(recent_notifications)
-        }
+        })
         
         return render_template('monitoring.html', 
                              thesis_analyses=thesis_analyses,
