@@ -280,22 +280,18 @@ def document_list():
 
 @app.route('/monitoring')
 def monitoring_dashboard():
-    """Monitoring dashboard showing published thesis analyses and active signals"""
+    """Monitoring dashboard with cached data for fast loading"""
     try:
-        # Get all published thesis analyses
-        thesis_analyses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).all()
+        # Use monitoring cache for optimized performance
+        from services.monitoring_cache import monitoring_cache
+        dashboard_data = monitoring_cache.get_dashboard_data()
         
-        # Get active signals with thesis context
-        active_signals = db.session.query(SignalMonitoring, ThesisAnalysis.title)\
-            .join(ThesisAnalysis)\
-            .filter(SignalMonitoring.status == 'active')\
-            .order_by(SignalMonitoring.created_at.desc())\
-            .all()
-        
-        # Get recent notifications
-        recent_notifications = NotificationLog.query\
-            .order_by(NotificationLog.sent_at.desc())\
-            .limit(20).all()
+        # Extract cached data
+        thesis_analyses = dashboard_data.get('thesis_analyses', [])
+        stats = dashboard_data.get('stats', {})
+        status_distribution = dashboard_data.get('status_distribution', {})
+        active_signals = dashboard_data.get('active_signals', [])
+        recent_notifications = dashboard_data.get('recent_notifications', [])
         
         # Calculate monitoring statistics
         stats = {
