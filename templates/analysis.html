@@ -2196,6 +2196,334 @@ document.addEventListener('DOMContentLoaded', function() {
         
         return '';
     }
+    
+    // Animated Monitoring Setup Popup
+    function showMonitoringSetupAnimation(thesisData) {
+        return new Promise((resolve) => {
+            // Extract real data from the analysis
+            const companyName = extractCompanyNameFromAnalysis() || 'Target Company';
+            const signals = window.extractedSignals || [];
+            const metricsToTrack = window.analysisData?.metrics_to_track || [];
+            const monitoringPlan = window.analysisData?.monitoring_plan || {};
+            
+            // Create popup overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'monitoring-setup-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(5px);
+            `;
+            
+            // Create popup content
+            overlay.innerHTML = `
+                <div class="monitoring-setup-popup" style="
+                    background: var(--bs-dark);
+                    border-radius: 15px;
+                    padding: 40px;
+                    max-width: 600px;
+                    width: 90%;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                    border: 1px solid var(--bs-secondary);
+                    position: relative;
+                    overflow: hidden;
+                ">
+                    <!-- Animated background -->
+                    <div class="setup-background" style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: linear-gradient(45deg, 
+                            transparent, 
+                            rgba(13, 202, 240, 0.1), 
+                            transparent);
+                        animation: setupGlow 2s ease-in-out infinite alternate;
+                        pointer-events: none;
+                    "></div>
+                    
+                    <!-- Header -->
+                    <div class="text-center mb-4" style="position: relative; z-index: 2;">
+                        <div class="setup-icon" style="
+                            width: 80px;
+                            height: 80px;
+                            background: linear-gradient(135deg, var(--bs-info), var(--bs-primary));
+                            border-radius: 50%;
+                            margin: 0 auto 20px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            animation: setupPulse 1.5s ease-in-out infinite;
+                        ">
+                            <i class="fas fa-satellite-dish text-white" style="font-size: 2rem;"></i>
+                        </div>
+                        <h3 class="text-white mb-2">Setting Up Monitoring</h3>
+                        <p class="text-muted mb-0">Establishing data connections for ${companyName}</p>
+                    </div>
+                    
+                    <!-- Progress Steps -->
+                    <div class="setup-steps" style="position: relative; z-index: 2;">
+                        <div class="setup-step" id="step-1" style="display: flex; align-items: center; margin-bottom: 20px; opacity: 0;">
+                            <div class="step-icon" style="
+                                width: 40px;
+                                height: 40px;
+                                background: var(--bs-success);
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                margin-right: 15px;
+                                animation: stepComplete 0.5s ease-in-out;
+                            ">
+                                <i class="fas fa-check text-white"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="text-white">Connecting to FactSet API</div>
+                                <div class="text-muted small">Establishing real-time data feeds</div>
+                            </div>
+                        </div>
+                        
+                        <div class="setup-step" id="step-2" style="display: flex; align-items: center; margin-bottom: 20px; opacity: 0;">
+                            <div class="step-icon" style="
+                                width: 40px;
+                                height: 40px;
+                                background: var(--bs-success);
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                margin-right: 15px;
+                                animation: stepComplete 0.5s ease-in-out;
+                            ">
+                                <i class="fas fa-check text-white"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="text-white">Configuring Signal Tracking</div>
+                                <div class="text-muted small">${signals.length} signals identified for monitoring</div>
+                            </div>
+                        </div>
+                        
+                        <div class="setup-step" id="step-3" style="display: flex; align-items: center; margin-bottom: 20px; opacity: 0;">
+                            <div class="step-icon" style="
+                                width: 40px;
+                                height: 40px;
+                                background: var(--bs-success);
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                margin-right: 15px;
+                                animation: stepComplete 0.5s ease-in-out;
+                            ">
+                                <i class="fas fa-check text-white"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="text-white">Setting Up Metric Collection</div>
+                                <div class="text-muted small">${metricsToTrack.length || 'Multiple'} key metrics configured</div>
+                            </div>
+                        </div>
+                        
+                        <div class="setup-step" id="step-4" style="display: flex; align-items: center; margin-bottom: 20px; opacity: 0;">
+                            <div class="step-icon" style="
+                                width: 40px;
+                                height: 40px;
+                                background: var(--bs-success);
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                margin-right: 15px;
+                                animation: stepComplete 0.5s ease-in-out;
+                            ">
+                                <i class="fas fa-check text-white"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="text-white">Initializing Alert System</div>
+                                <div class="text-muted small">Real-time notifications configured</div>
+                            </div>
+                        </div>
+                        
+                        <div class="setup-step" id="step-5" style="display: flex; align-items: center; margin-bottom: 20px; opacity: 0;">
+                            <div class="step-icon" style="
+                                width: 40px;
+                                height: 40px;
+                                background: var(--bs-info);
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                margin-right: 15px;
+                            ">
+                                <i class="fas fa-rocket text-white"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="text-white">Activating Monitoring Dashboard</div>
+                                <div class="text-muted small">Thesis monitoring is now live</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Real Data Preview -->
+                    <div class="data-preview mt-4 p-3" style="
+                        background: rgba(255, 255, 255, 0.05);
+                        border-radius: 10px;
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        position: relative;
+                        z-index: 2;
+                        opacity: 0;
+                    " id="data-preview">
+                        <div class="small text-muted mb-2">Monitoring Configuration:</div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-white small">Company:</div>
+                                <div class="text-info">${companyName}</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-white small">Signals:</div>
+                                <div class="text-info">${signals.length} active</div>
+                            </div>
+                        </div>
+                        ${signals.length > 0 ? `
+                            <div class="mt-2">
+                                <div class="text-white small">Key Signals:</div>
+                                ${signals.slice(0, 3).map(signal => `
+                                    <div class="badge bg-secondary me-1 mb-1 small">${signal.name || 'Signal'}</div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <style>
+                        @keyframes setupGlow {
+                            0% { opacity: 0.3; }
+                            100% { opacity: 0.7; }
+                        }
+                        
+                        @keyframes setupPulse {
+                            0%, 100% { transform: scale(1); }
+                            50% { transform: scale(1.05); }
+                        }
+                        
+                        @keyframes stepComplete {
+                            0% { transform: scale(0); }
+                            50% { transform: scale(1.2); }
+                            100% { transform: scale(1); }
+                        }
+                        
+                        @keyframes fadeInUp {
+                            0% { 
+                                opacity: 0; 
+                                transform: translateY(20px); 
+                            }
+                            100% { 
+                                opacity: 1; 
+                                transform: translateY(0); 
+                            }
+                        }
+                    </style>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            // Animate steps sequentially
+            const steps = ['step-1', 'step-2', 'step-3', 'step-4', 'step-5'];
+            let currentStep = 0;
+            
+            function animateNextStep() {
+                if (currentStep < steps.length) {
+                    const stepElement = document.getElementById(steps[currentStep]);
+                    if (stepElement) {
+                        stepElement.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                        stepElement.style.opacity = '1';
+                    }
+                    currentStep++;
+                    
+                    if (currentStep < steps.length) {
+                        setTimeout(animateNextStep, 800);
+                    } else {
+                        // Show data preview and complete
+                        setTimeout(() => {
+                            const preview = document.getElementById('data-preview');
+                            if (preview) {
+                                preview.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                                preview.style.opacity = '1';
+                            }
+                            
+                            // Complete setup after preview
+                            setTimeout(() => {
+                                document.body.removeChild(overlay);
+                                resolve();
+                            }, 1500);
+                        }, 500);
+                    }
+                } else {
+                    setTimeout(() => {
+                        document.body.removeChild(overlay);
+                        resolve();
+                    }, 1000);
+                }
+            }
+            
+            // Start animation sequence
+            setTimeout(animateNextStep, 500);
+        });
+    }
+    
+    // Update publish analysis function to use the animated setup
+    window.publishAnalysis = function() {
+        if (!window.currentAnalysis) {
+            alert('No analysis data available to publish');
+            return;
+        }
+        
+        const button = document.querySelector('button[onclick="publishAnalysis()"]');
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+        }
+        
+        // Show animated setup before publishing
+        showMonitoringSetupAnimation(window.currentAnalysis)
+            .then(() => {
+                return fetch('/publish_thesis', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(window.currentAnalysis)
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = `/monitoring/thesis/${data.thesis_id}`;
+                } else {
+                    alert('Failed to publish analysis: ' + data.error);
+                    if (button) {
+                        button.disabled = false;
+                        button.innerHTML = '<i class="fas fa-rocket"></i> Publish for Monitoring';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error publishing analysis:', error);
+                alert('Failed to publish analysis. Please try again.');
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-rocket"></i> Publish for Monitoring';
+                }
+            });
+    };
 });
 </script>
 {% endblock %}
