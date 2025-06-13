@@ -52,7 +52,7 @@ class SignalClassifier:
         try:
             all_signals = []
             
-            # Generate Level 0 Internal Research Data signals first
+            # Generate Level 0 Raw Economic Activity signals first
             level_0_signals = self.research_service.generate_research_signals(ai_analysis)
             for research_signal in level_0_signals:
                 signal = Signal(
@@ -105,7 +105,7 @@ class SignalClassifier:
             document_signals = self._extract_signals_from_documents(processed_documents, focus_primary)
             all_signals.extend(document_signals)
             
-            # If focusing on primary signals, prioritize Level 0-2 (Internal Research + Raw Activity + Simple Aggregation)
+            # If focusing on primary signals, prioritize Level 0-1 (Raw Economic Activity + Simple Aggregation)
             if focus_primary:
                 primary_signals = [s for s in all_signals if s.level in [SignalLevel.LEVEL_0, SignalLevel.LEVEL_1, SignalLevel.LEVEL_2]]
                 all_signals = primary_signals + [s for s in all_signals if s not in primary_signals]

@@ -736,42 +736,42 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!signalsByLevel) return '<p class="text-muted">No signal discovery journey available</p>';
         
         const levelOrder = [
-            'Level_0_Raw_Economic',
-            'Level_1_Simple_Aggregation', 
-            'Level_2_Derived_Metrics',
-            'Level_3_Complex_Ratios',
-            'Level_4_Market_Sentiment'
+            'Raw Economic Activity',
+            'Simple Aggregation', 
+            'Derived Metrics',
+            'Complex Ratios',
+            'Market Sentiment'
         ];
         
         const levelInfo = {
-            'Level_0_Raw_Economic': { 
+            'Raw Economic Activity': { 
                 icon: 'fas fa-industry', 
-                name: 'Raw Economic', 
-                description: 'Direct economic activity',
+                name: 'Level 0 - Raw Economic Activity', 
+                description: 'Direct measurements: housing starts, permit applications, factory utilization',
                 color: 'success'
             },
-            'Level_1_Simple_Aggregation': { 
+            'Simple Aggregation': { 
                 icon: 'fas fa-calculator', 
-                name: 'Simple Aggregation', 
-                description: 'Basic data compilation',
+                name: 'Level 1 - Simple Aggregation', 
+                description: 'Basic combinations: monthly spending totals, inventory levels',
                 color: 'info'
             },
-            'Level_2_Derived_Metrics': { 
+            'Derived Metrics': { 
                 icon: 'fas fa-chart-line', 
-                name: 'Derived Metrics', 
-                description: 'Calculated indicators',
+                name: 'Level 2 - Derived Metrics', 
+                description: 'Calculated ratios: growth rates, market share changes',
                 color: 'warning'
             },
-            'Level_3_Complex_Ratios': { 
+            'Complex Ratios': { 
                 icon: 'fas fa-cogs', 
-                name: 'Complex Ratios', 
-                description: 'Advanced relationships',
+                name: 'Level 3 - Complex Ratios', 
+                description: 'Multi-variable calculations: valuation multiples, peer comparisons',
                 color: 'secondary'
             },
-            'Level_4_Market_Sentiment': { 
+            'Market Sentiment': { 
                 icon: 'fas fa-brain', 
-                name: 'Market Sentiment', 
-                description: 'Behavioral indicators',
+                name: 'Level 4 - Market Sentiment', 
+                description: 'Behavioral indicators: analyst sentiment, options flow',
                 color: 'danger'
             }
         };
