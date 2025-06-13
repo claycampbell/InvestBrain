@@ -552,31 +552,39 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!signalsByLevel) return '<p class="text-muted">No signals classified</p>';
         
         const levelBadges = {
-            'Level_0_Raw_Economic': 'bg-success',
-            'Level_1_Simple_Aggregation': 'bg-info', 
-            'Level_2_Derived_Metrics': 'bg-warning text-dark',
-            'Level_3_Complex_Ratios': 'bg-secondary',
-            'Level_4_Market_Sentiment': 'bg-danger',
-            // Legacy mappings for backwards compatibility
             'Raw Economic Activity': 'bg-success',
             'Simple Aggregation': 'bg-info',
-            'Derived Metrics': 'bg-warning',
-            'Complex Derivatives': 'bg-secondary',
-            'Synthetic Indicators': 'bg-danger'
+            'Derived Metrics': 'bg-warning text-dark',
+            'Complex Ratios': 'bg-secondary',
+            'Market Sentiment': 'bg-danger'
         };
         
         const levelDisplayNames = {
-            'Level_0_Raw_Economic': 'Level_0_Raw_Economic',
-            'Level_1_Simple_Aggregation': 'Level_1_Simple_Aggregation',
-            'Level_2_Derived_Metrics': 'Level_2_Derived_Metrics', 
-            'Level_3_Complex_Ratios': 'Level_3_Complex_Ratios',
-            'Level_4_Market_Sentiment': 'Level_4_Market_Sentiment'
+            'Raw Economic Activity': 'Level 0 - Raw Economic Activity',
+            'Simple Aggregation': 'Level 1 - Simple Aggregation',
+            'Derived Metrics': 'Level 2 - Derived Metrics',
+            'Complex Ratios': 'Level 3 - Complex Ratios',
+            'Market Sentiment': 'Level 4 - Market Sentiment'
+        };
+        
+        const levelDescriptions = {
+            'Raw Economic Activity': 'Direct measurements: housing starts, permit applications, factory utilization',
+            'Simple Aggregation': 'Basic combinations: monthly spending totals, inventory levels',
+            'Derived Metrics': 'Calculated ratios: growth rates, market share changes',
+            'Complex Ratios': 'Multi-variable calculations: valuation multiples, peer comparisons',
+            'Market Sentiment': 'Behavioral indicators: analyst sentiment, options flow'
         };
         
         return Object.entries(signalsByLevel).map(([level, signals]) => `
-            <div class="mb-2">
-                <span class="badge ${levelBadges[level] || 'bg-secondary'}">${signals.length}</span>
-                <small class="ms-2">${levelDisplayNames[level] || level}</small>
+            <div class="mb-3 p-3 border rounded">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge ${levelBadges[level] || 'bg-secondary'} me-2">${signals.length}</span>
+                    <strong>${levelDisplayNames[level] || level}</strong>
+                </div>
+                <small class="text-muted d-block mb-2">${levelDescriptions[level] || ''}</small>
+                <div class="signal-list">
+                    ${signals.map(signal => `<span class="badge bg-light text-dark me-1 mb-1">${signal}</span>`).join('')}
+                </div>
             </div>
         `).join('');
     }
