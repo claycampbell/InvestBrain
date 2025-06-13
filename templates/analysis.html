@@ -1870,6 +1870,243 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 1000); // Wait for dynamic content to load
     
     // Market sentiment is now integrated into main analysis - no separate loading needed
+    
+    // Level 0 Signal Validation Functions
+    let validationRequests = new Map();
+    
+    window.initiateValidation = async function(signalName, signalId) {
+        const button = document.querySelector(`[data-signal-id="${signalId}"]`);
+        const statusDiv = document.getElementById(`${signalId}-status`);
+        const resultDiv = document.getElementById(`${signalId}-result`);
+        
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validating...';
+        
+        statusDiv.style.display = 'block';
+        statusDiv.innerHTML = `
+            <div class="alert alert-info mb-0">
+                <i class="fas fa-clock"></i> Initiating validation request for "${signalName}"...
+            </div>
+        `;
+        
+        try {
+            const queryStructure = generateQueryStructureForSignal(signalName);
+            
+            let jwtToken = localStorage.getItem('validation_jwt_token');
+            if (!jwtToken) {
+                jwtToken = prompt('Please enter your JWT token for data validation:');
+                if (jwtToken) {
+                    localStorage.setItem('validation_jwt_token', jwtToken);
+                }
+            }
+            
+            const response = await fetch('/api/validate-signal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query_structure: queryStructure,
+                    signal_name: signalName,
+                    jwt_token: jwtToken
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                validationRequests.set(signalId, {
+                    requestId: result.request_id,
+                    signalName: signalName,
+                    startTime: new Date()
+                });
+                
+                statusDiv.innerHTML = `
+                    <div class="alert alert-warning mb-0">
+                        <i class="fas fa-hourglass-half"></i> Validation in progress...
+                        <br><small class="text-muted">Request ID: ${result.request_id}</small>
+                    </div>
+                `;
+                
+                pollValidationStatus(signalId, result.request_id);
+            } else {
+                throw new Error(result.error || 'Validation request failed');
+            }
+        } catch (error) {
+            statusDiv.innerHTML = `
+                <div class="alert alert-danger mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Validation failed: ${error.message}
+                </div>
+            `;
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-check-circle"></i> Validate Data';
+        }
+    };
+    
+    async function pollValidationStatus(signalId, requestId) {
+        const statusDiv = document.getElementById(`${signalId}-status`);
+        const button = document.querySelector(`[data-signal-id="${signalId}"]`);
+        let attempts = 0;
+        const maxAttempts = 20;
+        
+        const pollInterval = setInterval(async () => {
+            attempts++;
+            
+            try {
+                const response = await fetch(`/api/validation-status/${requestId}`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    if (result.status === 'completed') {
+                        clearInterval(pollInterval);
+                        displayValidationResult(signalId, result.result);
+                        statusDiv.innerHTML = `
+                            <div class="alert alert-success mb-0">
+                                <i class="fas fa-check-circle"></i> Validation completed successfully
+                            </div>
+                        `;
+                        button.disabled = false;
+                        button.innerHTML = '<i class="fas fa-sync-alt"></i> Re-validate';
+                    } else if (result.status === 'failed') {
+                        clearInterval(pollInterval);
+                        statusDiv.innerHTML = `
+                            <div class="alert alert-danger mb-0">
+                                <i class="fas fa-times-circle"></i> Validation failed
+                                ${result.result?.error ? `<br><small>${result.result.error}</small>` : ''}
+                            </div>
+                        `;
+                        button.disabled = false;
+                        button.innerHTML = '<i class="fas fa-check-circle"></i> Validate Data';
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(pollInterval);
+                        statusDiv.innerHTML = `
+                            <div class="alert alert-warning mb-0">
+                                <i class="fas fa-clock"></i> Validation timeout
+                                <br><small class="text-muted">Request ID: ${requestId}</small>
+                            </div>
+                        `;
+                        button.disabled = false;
+                        button.innerHTML = '<i class="fas fa-check-circle"></i> Validate Data';
+                    }
+                } else {
+                    throw new Error(result.error || 'Status check failed');
+                }
+            } catch (error) {
+                if (attempts >= 3) {
+                    clearInterval(pollInterval);
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-danger mb-0">
+                            <i class="fas fa-exclamation-triangle"></i> Status check failed: ${error.message}
+                        </div>
+                    `;
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-check-circle"></i> Validate Data';
+                }
+            }
+        }, 6000);
+    }
+    
+    function displayValidationResult(signalId, validationResult) {
+        const resultDiv = document.getElementById(`${signalId}-result`);
+        
+        if (!validationResult?.widgets?.length) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle"></i> No validation data returned
+                </div>
+            `;
+            return;
+        }
+        
+        const widget = validationResult.widgets[0];
+        const markdown = widget.generated_markdown_text || 'No results available';
+        const qualityScore = widget.assessed_quality_score || 0;
+        const sourceRefs = widget.source_references || [];
+        
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+            <div class="card border-success">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 text-success">
+                            <i class="fas fa-database"></i> Validation Results
+                        </h6>
+                        <span class="badge bg-success">${Math.round(qualityScore * 100)}% Quality</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="validation-content mb-3">
+                        ${formatMarkdownContent(markdown)}
+                    </div>
+                    ${sourceRefs.length > 0 ? `
+                        <div class="border-top pt-3">
+                            <h6 class="small text-muted mb-2">Data Sources:</h6>
+                            ${sourceRefs.map(ref => `
+                                <div class="small mb-1">
+                                    <i class="fas fa-link"></i> 
+                                    <strong>${ref.source_metadata?.source || 'Internal Database'}</strong>
+                                    ${ref.source_metadata?.publication_date_utc ? 
+                                        `<span class="text-muted ms-2">Updated: ${ref.source_metadata.publication_date_utc}</span>` 
+                                        : ''
+                                    }
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    function formatMarkdownContent(markdown) {
+        return markdown
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>')
+            .replace(/^/, '<p>')
+            .replace(/$/, '</p>');
+    }
+    
+    function generateQueryStructureForSignal(signalName) {
+        const name = signalName.toLowerCase();
+        
+        if (name.includes('revenue') && name.includes('validation')) {
+            return {
+                "entities": ["Target Company"],
+                "relationships": [],
+                "filters": [{"field": "revenue_cagr_5_yr", "operator": ">", "value": 0.15}],
+                "metrics": ["revenue", "revenue_cagr_5_yr", "market_cap"],
+                "sort_by": {"field": "revenue", "order": "desc"},
+                "limit": 5
+            };
+        } else if (name.includes('holder') || name.includes('holding')) {
+            return {
+                "entities": ["Target Company"],
+                "relationships": ["fund_holding"],
+                "filters": [{"field": "market_cap", "operator": ">", "value": 5000000000}],
+                "metrics": ["market_cap", "share_count"],
+                "sort_by": {"field": "market_cap", "order": "desc"},
+                "limit": 5
+            };
+        } else if (name.includes('market') && name.includes('position')) {
+            return {
+                "entities": ["Target Company"],
+                "relationships": [],
+                "filters": [{"field": "market_cap", "operator": ">", "value": 100000000000}],
+                "metrics": ["market_cap", "pe", "roic"],
+                "sort_by": {"field": "market_cap", "order": "desc"},
+                "limit": 10
+            };
+        } else {
+            return {
+                "entities": ["Target Company"],
+                "relationships": [],
+                "filters": [],
+                "metrics": ["market_cap", "revenue", "pe"],
+                "sort_by": {"field": "market_cap", "order": "desc"},
+                "limit": 5
+            };
+        }
+    }
 });
 </script>
 {% endblock %}

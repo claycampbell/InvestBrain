@@ -96,39 +96,54 @@ class DataValidationService:
             }
             
             # Make initial request to start validation
-            response = requests.post(
-                f"{self.api_base_url}/api/query/structured/start",
-                headers=headers,
-                json=payload,
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                
-                # Create validation request object
-                validation_request = ValidationRequest(
-                    request_id=result.get('request_id'),
-                    chat_id=result.get('chat_id'),
-                    callback_url=result.get('callback_url'),
-                    signal_name=signal_name,
-                    query_structure=query_structure,
-                    status='processing',
-                    created_at=datetime.now(timezone.utc)
+            try:
+                response = requests.post(
+                    f"{self.api_base_url}/api/query/structured/start",
+                    headers=headers,
+                    json=payload,
+                    timeout=30
                 )
                 
-                # Store request for tracking
-                self.active_requests[validation_request.request_id] = validation_request
-                
-                logging.info(f"Initiated validation for signal: {signal_name}")
-                logging.info(f"Request ID: {validation_request.request_id}")
-                logging.info(f"Callback URL: {validation_request.callback_url}")
-                
-                return validation_request
-                
-            else:
-                # Handle API error
-                logging.error(f"API request failed: {response.status_code} - {response.text}")
+                if response.status_code == 200:
+                    result = response.json()
+                    
+                    # Create validation request object
+                    validation_request = ValidationRequest(
+                        request_id=result.get('request_id'),
+                        chat_id=result.get('chat_id'),
+                        callback_url=result.get('callback_url'),
+                        signal_name=signal_name,
+                        query_structure=query_structure,
+                        status='processing',
+                        created_at=datetime.now(timezone.utc)
+                    )
+                    
+                    # Store request for tracking
+                    self.active_requests[validation_request.request_id] = validation_request
+                    
+                    logging.info(f"Initiated validation for signal: {signal_name}")
+                    logging.info(f"Request ID: {validation_request.request_id}")
+                    logging.info(f"Callback URL: {validation_request.callback_url}")
+                    
+                    return validation_request
+                    
+                else:
+                    # Handle API error
+                    logging.error(f"API request failed: {response.status_code} - {response.text}")
+                    return ValidationRequest(
+                        request_id=f"error_{uuid.uuid4().hex[:8]}",
+                        chat_id=chat_id,
+                        callback_url="",
+                        signal_name=signal_name,
+                        query_structure=query_structure,
+                        status='failed',
+                        created_at=datetime.now(timezone.utc),
+                        result={'error': f"API request failed: {response.status_code}"}
+                    )
+                    
+            except requests.exceptions.RequestException as e:
+                # Handle network/connection errors - API may not be accessible in development
+                logging.warning(f"External API not accessible: {str(e)}")
                 return ValidationRequest(
                     request_id=f"error_{uuid.uuid4().hex[:8]}",
                     chat_id=chat_id,
@@ -137,7 +152,7 @@ class DataValidationService:
                     query_structure=query_structure,
                     status='failed',
                     created_at=datetime.now(timezone.utc),
-                    result={'error': f"API request failed: {response.status_code}"}
+                    result={'error': f"External API not accessible: {str(e)[:100]}"}
                 )
                 
         except Exception as e:
