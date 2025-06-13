@@ -754,10 +754,10 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h6 class="card-title">${event.title}</h6>
-                            <p class="card-text small">${event.description}</p>
+                            <h6 class="card-title">${event.title || event.description || 'Market Event'}</h6>
+                            <p class="card-text small">${event.description || event.title || 'Market event details'}</p>
                             <small class="text-muted">
-                                <i class="fas fa-calendar"></i> ${event.date}
+                                <i class="fas fa-calendar"></i> ${event.date || 'Recent'}
                             </small>
                         </div>
                         <div class="text-end">
