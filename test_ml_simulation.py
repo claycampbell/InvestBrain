@@ -49,6 +49,8 @@ def test_ml_simulation():
         
         print(f"✓ Market prices generated: {len(market_prices)} data points")
         print(f"✓ Thesis prices generated: {len(thesis_prices)} data points")
+        print(f"Debug - performance_data keys: {list(performance_data.keys())}")
+        print(f"Debug - result keys: {list(result.keys())}")
         
         if market_prices and thesis_prices:
             final_market = market_prices[-1]

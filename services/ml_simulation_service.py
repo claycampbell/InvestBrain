@@ -51,6 +51,8 @@ class MLSimulationService:
             timeline = self._generate_timeline_labels(time_horizon)
             
             return {
+                'performance_data': performance_data,
+                'timeline': timeline,
                 'chart_data': {
                     'performance_data': performance_data,
                     'timeline': timeline
