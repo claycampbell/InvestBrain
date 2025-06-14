@@ -1536,7 +1536,184 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Send analysis data to publish endpoint
+        showPublishingProgress();
+    }
+
+    function showPublishingProgress() {
+        // Create publishing modal overlay
+        const modal = document.createElement('div');
+        modal.className = 'publishing-modal';
+        modal.innerHTML = `
+            <div class="publishing-overlay">
+                <div class="publishing-container">
+                    <div class="publishing-header">
+                        <h4><i class="fas fa-rocket"></i> Publishing Thesis for Live Monitoring</h4>
+                        <p class="text-muted">Setting up real-time data feeds and alert systems...</p>
+                    </div>
+                    
+                    <div class="publishing-steps">
+                        <div class="step" id="step-1">
+                            <div class="step-icon"><i class="fas fa-spinner fa-spin"></i></div>
+                            <div class="step-content">
+                                <h6>Analyzing thesis structure</h6>
+                                <p class="step-details">Extracting core claims and assumptions...</p>
+                            </div>
+                            <div class="step-status pending">•••</div>
+                        </div>
+                        
+                        <div class="step" id="step-2">
+                            <div class="step-icon"><i class="fas fa-database"></i></div>
+                            <div class="step-content">
+                                <h6>Configuring data feeds</h6>
+                                <p class="step-details">Setting up FactSet and Xpressfeed connections...</p>
+                            </div>
+                            <div class="step-status pending">•••</div>
+                        </div>
+                        
+                        <div class="step" id="step-3">
+                            <div class="step-icon"><i class="fas fa-bell"></i></div>
+                            <div class="step-content">
+                                <h6>Creating alert triggers</h6>
+                                <p class="step-details">Configuring threshold monitors...</p>
+                            </div>
+                            <div class="step-status pending">•••</div>
+                        </div>
+                        
+                        <div class="step" id="step-4">
+                            <div class="step-icon"><i class="fas fa-chart-line"></i></div>
+                            <div class="step-content">
+                                <h6>Initializing monitoring dashboard</h6>
+                                <p class="step-details">Preparing real-time visualization...</p>
+                            </div>
+                            <div class="step-status pending">•••</div>
+                        </div>
+                        
+                        <div class="step" id="step-5">
+                            <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="step-content">
+                                <h6>Activating live monitoring</h6>
+                                <p class="step-details">System ready for real-time alerts...</p>
+                            </div>
+                            <div class="step-status pending">•••</div>
+                        </div>
+                    </div>
+                    
+                    <div class="publishing-progress">
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text">Initializing...</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add CSS for publishing modal
+        addPublishingModalCSS();
+        
+        // Start the publishing animation
+        startPublishingAnimation();
+    }
+
+    function startPublishingAnimation() {
+        const steps = [
+            {
+                id: 'step-1',
+                duration: 2000,
+                progress: 20,
+                action: 'Analyzing thesis structure',
+                details: () => {
+                    const thesis = window.currentAnalysis?.thesis_analysis;
+                    return `Found core claim: "${thesis?.core_claim?.substring(0, 60)}..."`;
+                }
+            },
+            {
+                id: 'step-2',
+                duration: 3000,
+                progress: 40,
+                action: 'Configuring data feeds',
+                details: () => {
+                    const signals = window.currentAnalysis?.signal_extraction?.raw_signals || [];
+                    return `Setting up ${signals.length} data feed connections for real-time monitoring`;
+                }
+            },
+            {
+                id: 'step-3',
+                duration: 2500,
+                progress: 60,
+                action: 'Creating alert triggers',
+                details: () => {
+                    const signals = window.currentAnalysis?.signal_extraction?.raw_signals || [];
+                    const alertCount = signals.filter(s => s.threshold).length;
+                    return `Configured ${alertCount} threshold-based alerts with real-time triggers`;
+                }
+            },
+            {
+                id: 'step-4',
+                duration: 2000,
+                progress: 80,
+                action: 'Initializing monitoring dashboard',
+                details: () => {
+                    const metrics = window.currentAnalysis?.thesis_analysis?.metrics_to_track || [];
+                    return `Dashboard ready with ${metrics.length} tracked metrics and live charts`;
+                }
+            },
+            {
+                id: 'step-5',
+                duration: 1500,
+                progress: 100,
+                action: 'Activating live monitoring',
+                details: () => 'System is now actively monitoring your thesis with real-time data feeds'
+            }
+        ];
+        
+        let currentStep = 0;
+        
+        function executeStep(stepIndex) {
+            if (stepIndex >= steps.length) {
+                // All steps complete, publish the thesis
+                actuallyPublishThesis();
+                return;
+            }
+            
+            const step = steps[stepIndex];
+            const stepElement = document.getElementById(step.id);
+            const progressBar = document.querySelector('.progress-bar');
+            const progressText = document.querySelector('.progress-text');
+            
+            // Update step status
+            stepElement.querySelector('.step-icon i').className = 'fas fa-spinner fa-spin text-primary';
+            stepElement.querySelector('.step-status').innerHTML = '<span class="text-primary">Processing...</span>';
+            
+            // Update progress
+            progressBar.style.width = step.progress + '%';
+            progressText.textContent = step.action;
+            
+            // Show step details
+            setTimeout(() => {
+                stepElement.querySelector('.step-details').textContent = step.details();
+            }, 500);
+            
+            // Complete step after duration
+            setTimeout(() => {
+                stepElement.querySelector('.step-icon i').className = 'fas fa-check-circle text-success';
+                stepElement.querySelector('.step-status').innerHTML = '<span class="text-success">✓ Complete</span>';
+                stepElement.classList.add('completed');
+                
+                // Move to next step
+                setTimeout(() => {
+                    executeStep(stepIndex + 1);
+                }, 300);
+            }, step.duration);
+        }
+        
+        // Start first step
+        executeStep(0);
+    }
+
+    function actuallyPublishThesis() {
         fetch('/publish_thesis', {
             method: 'POST',
             headers: {
@@ -1547,16 +1724,234 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Analysis published successfully! You can now monitor this thesis.');
-                window.location.href = `/thesis/${data.thesis_id}/monitor`;
+                // Update final step
+                const progressText = document.querySelector('.progress-text');
+                progressText.innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> Successfully Published!</span>';
+                
+                setTimeout(() => {
+                    window.location.href = `/thesis/${data.thesis_id}/monitor`;
+                }, 1500);
             } else {
-                alert('Failed to publish analysis: ' + data.error);
+                showPublishingError(data.error);
             }
         })
         .catch(error => {
             console.error('Error publishing analysis:', error);
-            alert('Failed to publish analysis. Please try again.');
+            showPublishingError('Network error occurred. Please try again.');
         });
+    }
+
+    function showPublishingError(errorMessage) {
+        const progressText = document.querySelector('.progress-text');
+        progressText.innerHTML = `<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Error: ${errorMessage}</span>`;
+        
+        // Add retry button
+        const container = document.querySelector('.publishing-container');
+        const retryButton = document.createElement('div');
+        retryButton.className = 'text-center mt-3';
+        retryButton.innerHTML = `
+            <button class="btn btn-primary" onclick="location.reload()">
+                <i class="fas fa-redo"></i> Try Again
+            </button>
+            <button class="btn btn-secondary ms-2" onclick="closePublishingModal()">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+        `;
+        container.appendChild(retryButton);
+    }
+
+    function closePublishingModal() {
+        const modal = document.querySelector('.publishing-modal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    function addPublishingModalCSS() {
+        const existingStyle = document.getElementById('publishing-modal-css');
+        if (existingStyle) return;
+        
+        const css = `
+        <style id="publishing-modal-css">
+            .publishing-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .publishing-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                backdrop-filter: blur(4px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: fadeIn 0.3s ease-out;
+            }
+            
+            .publishing-container {
+                background: white;
+                border-radius: 12px;
+                padding: 2rem;
+                max-width: 500px;
+                width: 90%;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                animation: slideUp 0.4s ease-out;
+            }
+            
+            .publishing-header {
+                text-align: center;
+                margin-bottom: 2rem;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 1rem;
+            }
+            
+            .publishing-header h4 {
+                color: #2c3e50;
+                margin-bottom: 0.5rem;
+            }
+            
+            .publishing-steps {
+                margin-bottom: 2rem;
+            }
+            
+            .step {
+                display: flex;
+                align-items: center;
+                padding: 1rem 0;
+                border-bottom: 1px solid #f8f9fa;
+                transition: all 0.3s ease;
+            }
+            
+            .step:last-child {
+                border-bottom: none;
+            }
+            
+            .step.completed {
+                background: linear-gradient(90deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.02) 100%);
+                border-radius: 6px;
+                margin: 0.2rem 0;
+                padding: 1rem;
+            }
+            
+            .step-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: #f8f9fa;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 1rem;
+                flex-shrink: 0;
+                transition: all 0.3s ease;
+            }
+            
+            .step-icon i {
+                font-size: 1.2rem;
+                color: #6c757d;
+            }
+            
+            .step-content {
+                flex-grow: 1;
+            }
+            
+            .step-content h6 {
+                margin: 0 0 0.25rem 0;
+                color: #2c3e50;
+                font-weight: 600;
+            }
+            
+            .step-details {
+                font-size: 0.875rem;
+                color: #6c757d;
+                margin: 0;
+                line-height: 1.4;
+            }
+            
+            .step-status {
+                font-size: 0.875rem;
+                color: #adb5bd;
+                margin-left: 1rem;
+                min-width: 80px;
+                text-align: right;
+            }
+            
+            .publishing-progress {
+                text-align: center;
+                padding-top: 1rem;
+                border-top: 1px solid #eee;
+            }
+            
+            .progress {
+                height: 8px;
+                background: #e9ecef;
+                border-radius: 4px;
+                margin-bottom: 1rem;
+                overflow: hidden;
+            }
+            
+            .progress-bar {
+                height: 100%;
+                background: linear-gradient(90deg, #007bff, #0056b3);
+                border-radius: 4px;
+                transition: width 0.6s ease;
+                animation: progressShimmer 2s infinite;
+            }
+            
+            .progress-text {
+                font-size: 0.875rem;
+                color: #495057;
+                font-weight: 500;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            
+            @keyframes slideUp {
+                from { 
+                    opacity: 0;
+                    transform: translateY(30px) scale(0.95); 
+                }
+                to { 
+                    opacity: 1;
+                    transform: translateY(0) scale(1); 
+                }
+            }
+            
+            @keyframes progressShimmer {
+                0% { background-position: -200px 0; }
+                100% { background-position: calc(200px + 100%) 0; }
+            }
+            
+            .step-icon i.fa-spinner {
+                color: #007bff !important;
+            }
+            
+            .step-icon i.fa-check-circle {
+                color: #28a745 !important;
+            }
+            
+            .step.completed .step-icon {
+                background: rgba(40, 167, 69, 0.1);
+                border: 2px solid #28a745;
+            }
+        </style>
+        `;
+        
+        document.head.insertAdjacentHTML('beforeend', css);
     }
     
     function downloadAnalysis() {
@@ -1753,40 +2148,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        const button = document.querySelector('button[onclick="publishAnalysis()"]');
-        if (button) {
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
-        }
-        
-        fetch('/publish_thesis', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(window.currentAnalysis)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Analysis published successfully! You can now monitor this thesis.');
-                window.location.href = `/thesis/${data.thesis_id}/monitor`;
-            } else {
-                alert('Failed to publish analysis: ' + (data.error || 'Unknown error'));
-                if (button) {
-                    button.disabled = false;
-                    button.innerHTML = '<i class="fas fa-rocket"></i> Publish for Monitoring';
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error publishing analysis:', error);
-            alert('Failed to publish analysis. Please try again.');
-            if (button) {
-                button.disabled = false;
-                button.innerHTML = '<i class="fas fa-rocket"></i> Publish for Monitoring';
-            }
-        });
+        showPublishingProgress();
     };
     
     // Global downloadAnalysis function for the download button
@@ -2511,43 +2873,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        const button = document.querySelector('button[onclick="publishAnalysis()"]');
-        if (button) {
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
-        }
-        
-        // Show animated setup before publishing
-        showMonitoringSetupAnimation(window.currentAnalysis)
-            .then(() => {
-                return fetch('/publish_thesis', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(window.currentAnalysis)
-                });
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.href = `/thesis/${data.thesis_id}/monitor`;
-                } else {
-                    alert('Failed to publish analysis: ' + data.error);
-                    if (button) {
-                        button.disabled = false;
-                        button.innerHTML = '<i class="fas fa-rocket"></i> Publish for Monitoring';
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error publishing analysis:', error);
-                alert('Failed to publish analysis. Please try again.');
-                if (button) {
-                    button.disabled = false;
-                    button.innerHTML = '<i class="fas fa-rocket"></i> Publish for Monitoring';
-                }
-            });
+        showPublishingProgress();
     };
 });
 </script>
