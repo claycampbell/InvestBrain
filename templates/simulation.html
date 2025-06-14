@@ -801,10 +801,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         strokeWidth: 2
                     },
                     label: {
-                        text: event.title,
+                        text: event.title || 'Event',
                         style: {
                             color: '#fff',
-                            background: event.impact_type === 'positive' ? '#28a745' : '#dc3545'
+                            background: event.impact_type === 'positive' ? '#28a745' : event.impact_type === 'negative' ? '#dc3545' : '#ffc107'
                         }
                     }
                 }))
