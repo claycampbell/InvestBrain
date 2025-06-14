@@ -644,7 +644,7 @@
                             background: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
                             fontSize: '11px'
                         },
-                        text: event.title.length > 20 ? event.title.substring(0, 20) + '...' : event.title,
+                        text: (event.title && event.title.length > 20) ? event.title.substring(0, 20) + '...' : (event.title || 'Event'),
                         orientation: 'horizontal'
                     }
                 });
@@ -757,7 +757,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h6 class="card-title">${event.title}</h6>
+                            <h6 class="card-title">${event.title || 'Event'}</h6>
                             <p class="card-text small">${event.description}</p>
                             <small class="text-muted">
                                 <i class="fas fa-calendar"></i> ${event.date}
@@ -966,7 +966,7 @@
         }
         
         // Event-specific actions based on title keywords
-        const title = event.title.toLowerCase();
+        const title = (event.title || '').toLowerCase();
         if (title.includes('earnings') || title.includes('revenue')) {
             actions.push('Compare guidance vs street expectations');
         } else if (title.includes('margin') || title.includes('cost')) {
