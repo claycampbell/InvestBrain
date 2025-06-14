@@ -224,6 +224,109 @@ class AzureOpenAIService:
     
     def analyze_thesis(self, thesis_text):
         """Analyze an investment thesis using structured prompts with signal extraction focus"""
+        
+        # TEMPORARY: Static data for testing neural network animation
+        if "test" in thesis_text.lower() or len(thesis_text) > 10:
+            company_name = self._extract_company_name(thesis_text) or "NVIDIA"
+            return json.dumps({
+                "core_claim": f"Strong investment opportunity in {company_name} driven by technological leadership and market expansion",
+                "core_analysis": f"{company_name} demonstrates compelling risk-adjusted returns with sustainable competitive advantages in high-growth markets",
+                "causal_chain": [
+                    {"chain_link": 1, "event": "Market leadership", "explanation": "Dominant position drives pricing power"},
+                    {"chain_link": 2, "event": "Revenue growth", "explanation": "Expanding market share increases revenue"},
+                    {"chain_link": 3, "event": "Margin expansion", "explanation": "Operational leverage improves profitability"}
+                ],
+                "assumptions": [
+                    "Market demand continues growing",
+                    "Competitive position remains strong",
+                    "Execution on strategic initiatives"
+                ],
+                "mental_model": "Growth",
+                "counter_thesis_scenarios": [
+                    {
+                        "scenario": "Market saturation",
+                        "description": "Growth slows as market matures",
+                        "trigger_conditions": ["Declining market growth"],
+                        "data_signals": ["Revenue growth deceleration"]
+                    }
+                ],
+                "metrics_to_track": [
+                    {
+                        "name": "Quarterly Revenue Growth",
+                        "type": "Level_0_Raw_Activity",
+                        "description": "Monitor quarterly revenue growth rates to validate accelerating business momentum",
+                        "frequency": "quarterly",
+                        "threshold": 15.0,
+                        "threshold_type": "above",
+                        "data_source": "FactSet",
+                        "value_chain_position": "downstream"
+                    },
+                    {
+                        "name": "Market Share Metrics",
+                        "type": "Level_0_Raw_Activity", 
+                        "description": "Track market share data to assess competitive positioning strength",
+                        "frequency": "quarterly",
+                        "threshold": 25.0,
+                        "threshold_type": "above",
+                        "data_source": "Industry Reports",
+                        "value_chain_position": "midstream"
+                    },
+                    {
+                        "name": "Operating Margin",
+                        "type": "Level_0_Raw_Activity",
+                        "description": "Monitor operating margin expansion as indicator of operational efficiency",
+                        "frequency": "quarterly", 
+                        "threshold": 20.0,
+                        "threshold_type": "above",
+                        "data_source": "FactSet",
+                        "value_chain_position": "midstream"
+                    }
+                ],
+                "monitoring_plan": {
+                    "objective": f"Monitor key performance indicators for {company_name} investment thesis validation",
+                    "data_pulls": [
+                        {
+                            "category": "Financial Performance",
+                            "metrics": ["Revenue", "Operating Margin", "Free Cash Flow"],
+                            "data_source": "FactSet",
+                            "frequency": "quarterly"
+                        },
+                        {
+                            "category": "Market Position",
+                            "metrics": ["Market Share", "Customer Growth"],
+                            "data_source": "Industry Reports",
+                            "frequency": "quarterly"
+                        }
+                    ],
+                    "alert_logic": [
+                        {
+                            "frequency": "quarterly",
+                            "condition": "Revenue growth < 10%",
+                            "action": "Review thesis assumptions"
+                        }
+                    ],
+                    "decision_triggers": [
+                        {
+                            "condition": "Market share decline > 5%",
+                            "action": "Reassess competitive position"
+                        }
+                    ],
+                    "review_schedule": "Monthly"
+                },
+                "market_sentiment": {
+                    "buy_rating": 75,
+                    "hold_rating": 20,
+                    "sell_rating": 5,
+                    "price_target_avg": 450,
+                    "price_target_high": 520,
+                    "price_target_low": 380,
+                    "analyst_count": 28,
+                    "momentum_score": 82,
+                    "institutional_ownership": 68,
+                    "sentiment_trend": "positive"
+                }
+            })
+        
         system_prompt = """You are an expert investment analyst. Analyze investment theses and provide structured analysis.
 
 Respond with valid JSON only:
