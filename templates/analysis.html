@@ -1548,7 +1548,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 alert('Analysis published successfully! You can now monitor this thesis.');
-                window.location.href = `/monitoring/thesis/${data.thesis_id}`;
+                window.location.href = `/thesis/${data.thesis_id}/monitor`;
             } else {
                 alert('Failed to publish analysis: ' + data.error);
             }
@@ -2531,7 +2531,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = `/monitoring/thesis/${data.thesis_id}`;
+                    window.location.href = `/thesis/${data.thesis_id}/monitor`;
                 } else {
                     alert('Failed to publish analysis: ' + data.error);
                     if (button) {
