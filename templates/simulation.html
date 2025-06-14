@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 800);
 
         // Submit simulation request
-        fetch('/api/simulation/run', {
+        fetch(`/api/thesis/${thesisId}/simulate`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
