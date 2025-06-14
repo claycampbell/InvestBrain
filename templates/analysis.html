@@ -1539,7 +1539,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showPublishingProgress();
     }
 
-    function showPublishingProgress() {
+    window.showPublishingProgress = function() {
         // Create publishing modal overlay
         const modal = document.createElement('div');
         modal.className = 'publishing-modal';
@@ -1611,13 +1611,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.appendChild(modal);
         
         // Add CSS for publishing modal
-        addPublishingModalCSS();
+        window.addPublishingModalCSS();
         
         // Start the publishing animation
-        startPublishingAnimation();
+        window.startPublishingAnimation();
     }
 
-    function startPublishingAnimation() {
+    window.startPublishingAnimation = function() {
         const steps = [
             {
                 id: 'step-1',
@@ -1713,7 +1713,7 @@ document.addEventListener('DOMContentLoaded', function() {
         executeStep(0);
     }
 
-    function actuallyPublishThesis() {
+    window.actuallyPublishThesis = function() {
         fetch('/publish_thesis', {
             method: 'POST',
             headers: {
@@ -1741,7 +1741,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function showPublishingError(errorMessage) {
+    window.showPublishingError = function(errorMessage) {
         const progressText = document.querySelector('.progress-text');
         progressText.innerHTML = `<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Error: ${errorMessage}</span>`;
         
@@ -1760,14 +1760,14 @@ document.addEventListener('DOMContentLoaded', function() {
         container.appendChild(retryButton);
     }
 
-    function closePublishingModal() {
+    window.closePublishingModal = function() {
         const modal = document.querySelector('.publishing-modal');
         if (modal) {
             modal.remove();
         }
     }
 
-    function addPublishingModalCSS() {
+    window.addPublishingModalCSS = function() {
         const existingStyle = document.getElementById('publishing-modal-css');
         if (existingStyle) return;
         
