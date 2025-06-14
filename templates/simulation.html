@@ -169,10 +169,24 @@
 </div>
 
 <script>
+// Global error handler to catch title-related errors
+window.addEventListener('error', function(e) {
+    if (e.message && e.message.includes('title')) {
+        console.error('TITLE ERROR CAUGHT:', e.message, 'at', e.filename, ':', e.lineno);
+        e.preventDefault(); // Prevent the error from stopping execution
+        return true;
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
-    const forecastForm = document.getElementById('forecastForm');
-    const eventForm = document.getElementById('eventForm');
-    const thesisId = {{ thesis.id }};
+    try {
+        console.log('Simulation page initializing...');
+        
+        const forecastForm = document.getElementById('forecastForm');
+        const eventForm = document.getElementById('eventForm');
+        const thesisId = {{ thesis.id }};
+        
+        console.log('Forms found:', !!forecastForm, !!eventForm, 'Thesis ID:', thesisId);
 
     // Time horizon forecast simulation
     forecastForm.addEventListener('submit', function(e) {
@@ -888,6 +902,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (confidence >= 80) return 'success';
         if (confidence >= 60) return 'warning';
         return 'danger';
+    }
+    
+    } catch (error) {
+        console.error('Simulation page initialization error:', error);
+        if (error.message && error.message.includes('title')) {
+            console.error('TITLE-RELATED ERROR:', error.message);
+            // Show user-friendly error message
+            document.body.innerHTML += '<div class="alert alert-warning position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index: 9999;">Simulation interface loaded with limited features</div>';
+        }
     }
 });
 </script>
