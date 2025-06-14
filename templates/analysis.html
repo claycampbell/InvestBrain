@@ -1674,7 +1674,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function executeStep(stepIndex) {
             if (stepIndex >= steps.length) {
                 // All steps complete, publish the thesis
-                actuallyPublishThesis();
+                window.actuallyPublishThesis();
                 return;
             }
             
@@ -1732,12 +1732,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.location.href = `/thesis/${data.thesis_id}/monitor`;
                 }, 1500);
             } else {
-                showPublishingError(data.error);
+                window.showPublishingError(data.error);
             }
         })
         .catch(error => {
             console.error('Error publishing analysis:', error);
-            showPublishingError('Network error occurred. Please try again.');
+            window.showPublishingError('Network error occurred. Please try again.');
         });
     }
 
@@ -1753,7 +1753,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="btn btn-primary" onclick="location.reload()">
                 <i class="fas fa-redo"></i> Try Again
             </button>
-            <button class="btn btn-secondary ms-2" onclick="closePublishingModal()">
+            <button class="btn btn-secondary ms-2" onclick="window.closePublishingModal()">
                 <i class="fas fa-times"></i> Cancel
             </button>
         `;
@@ -2148,7 +2148,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        showPublishingProgress();
+        window.showPublishingProgress();
     };
     
     // Global downloadAnalysis function for the download button
@@ -2873,7 +2873,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        showPublishingProgress();
+        window.showPublishingProgress();
     };
 });
 </script>
