@@ -747,14 +747,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderPerformanceChart(chartData, events) {
-        const performanceData = chartData.performance_data || {};
-        const timeline = chartData.timeline || [];
-        
-        if (!performanceData.market_performance || !performanceData.thesis_performance) {
-            document.getElementById('performanceChart').innerHTML = 
-                '<div class="text-center py-4 text-muted">Performance data unavailable</div>';
-            return;
-        }
+        try {
+            const performanceData = chartData.performance_data || {};
+            const timeline = chartData.timeline || [];
+            
+            // Validate events array
+            const validEvents = Array.isArray(events) ? events.filter(event => 
+                event && 
+                typeof event === 'object' && 
+                event.hasOwnProperty('title') && 
+                event.hasOwnProperty('timeline_position')
+            ) : [];
+            
+            console.log('Rendering chart with events:', validEvents.length);
+            
+            if (!performanceData.market_performance || !performanceData.thesis_performance) {
+                document.getElementById('performanceChart').innerHTML = 
+                    '<div class="text-center py-4 text-muted">Performance data unavailable</div>';
+                return;
+            }
 
         const options = {
             chart: {
@@ -791,12 +802,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 hover: { size: 6 }
             },
             annotations: {
-                points: events.map((event, index) => ({
+                points: validEvents.map((event, index) => ({
                     x: Math.round((event.timeline_position || 0) * timeline.length),
                     y: performanceData.thesis_performance[Math.round((event.timeline_position || 0) * timeline.length)] || 100,
                     marker: {
                         size: 8,
-                        fillColor: event.impact_type === 'positive' ? '#28a745' : event.impact_type === 'negative' ? '#dc3545' : '#ffc107',
+                        fillColor: (event.impact_type === 'positive') ? '#28a745' : (event.impact_type === 'negative') ? '#dc3545' : '#ffc107',
                         strokeColor: '#fff',
                         strokeWidth: 2
                     },
@@ -804,7 +815,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         text: event.title || 'Event',
                         style: {
                             color: '#fff',
-                            background: event.impact_type === 'positive' ? '#28a745' : event.impact_type === 'negative' ? '#dc3545' : '#ffc107'
+                            background: (event.impact_type === 'positive') ? '#28a745' : (event.impact_type === 'negative') ? '#dc3545' : '#ffc107'
                         }
                     }
                 }))
@@ -822,8 +833,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
 
-        const chart = new ApexCharts(document.getElementById('performanceChart'), options);
-        chart.render();
+            const chart = new ApexCharts(document.getElementById('performanceChart'), options);
+            chart.render();
+            
+        } catch (error) {
+            console.error('Chart rendering error:', error);
+            document.getElementById('performanceChart').innerHTML = 
+                '<div class="text-center py-4 text-warning"><i class="fas fa-exclamation-triangle"></i> Chart unavailable</div>';
+        }
     }
 
     function getConfidenceBadge(confidence) {
