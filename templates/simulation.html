@@ -256,17 +256,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function displaySimulationResults(data, type) {
+        console.log('Step 1: displaySimulationResults called with data:', data);
+        console.log('Step 2: Events in data:', data.events);
+        
         const resultsDiv = document.getElementById('simulationResults');
         const contentDiv = document.getElementById('resultsContent');
         
         if (data.error) {
+            console.log('Step 3: Error display mode');
             contentDiv.innerHTML = generateErrorDisplay(data);
         } else {
-            contentDiv.innerHTML = generateLLMSimulationResults(data, type);
-            
-            // Render performance chart if data available
-            if (data.chart_data && data.chart_data.performance_data) {
-                renderPerformanceChart(data.chart_data, data.events || []);
+            console.log('Step 4: Success display mode');
+            try {
+                contentDiv.innerHTML = generateLLMSimulationResults(data, type);
+                console.log('Step 5: HTML generated successfully');
+                
+                // Render performance chart if data available
+                if (data.chart_data && data.chart_data.performance_data) {
+                    console.log('Step 6: About to render chart with events:', data.events);
+                    renderPerformanceChart(data.chart_data, data.events || []);
+                } else {
+                    console.log('Step 6: No chart data available');
+                }
+            } catch (error) {
+                console.error('Step 5 ERROR: Failed to generate results HTML:', error);
+                contentDiv.innerHTML = '<div class="alert alert-danger">Error displaying results</div>';
             }
         }
         
@@ -275,9 +289,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function generateLLMSimulationResults(data, type) {
+        console.log('HTML Gen Step 1: Starting generateLLMSimulationResults');
+        
         const scenario = data.scenario_analysis || {};
+        console.log('HTML Gen Step 2: scenario extracted:', scenario);
+        
         const metadata = data.simulation_metadata || {};
+        console.log('HTML Gen Step 3: metadata extracted:', metadata);
+        
         const events = data.events || [];
+        console.log('HTML Gen Step 4: events extracted:', events.length, 'events');
+        
+        // Check each event for title property
+        events.forEach((event, index) => {
+            console.log(`HTML Gen Step 4.${index}: Event ${index}:`, {
+                hasTitle: event && event.hasOwnProperty('title'),
+                title: event ? event.title : 'undefined event',
+                eventType: typeof event
+            });
+        });
         
         return `
             <div class="row">
@@ -748,24 +778,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderPerformanceChart(chartData, events) {
         try {
+            console.log('Chart Step 1: renderPerformanceChart called with events:', events);
+            
             const performanceData = chartData.performance_data || {};
             const timeline = chartData.timeline || [];
             
-            // Validate events array
-            const validEvents = Array.isArray(events) ? events.filter(event => 
-                event && 
-                typeof event === 'object' && 
-                event.hasOwnProperty('title') && 
-                event.hasOwnProperty('timeline_position')
-            ) : [];
+            console.log('Chart Step 2: Basic data extracted');
             
-            console.log('Rendering chart with events:', validEvents.length);
+            // Validate events array
+            console.log('Chart Step 3: Starting event validation');
+            const validEvents = Array.isArray(events) ? events.filter((event, index) => {
+                console.log(`Chart Step 3.${index}: Checking event ${index}:`, event);
+                const isValid = event && 
+                    typeof event === 'object' && 
+                    event.hasOwnProperty('title') && 
+                    event.hasOwnProperty('timeline_position');
+                console.log(`Chart Step 3.${index}: Event ${index} valid:`, isValid);
+                return isValid;
+            }) : [];
+            
+            console.log('Chart Step 4: Event validation complete. Valid events:', validEvents.length);
             
             if (!performanceData.market_performance || !performanceData.thesis_performance) {
+                console.log('Chart Step 5: No performance data, returning early');
                 document.getElementById('performanceChart').innerHTML = 
                     '<div class="text-center py-4 text-muted">Performance data unavailable</div>';
                 return;
             }
+            
+            console.log('Chart Step 5: Performance data available, creating chart options');
 
         const options = {
             chart: {
