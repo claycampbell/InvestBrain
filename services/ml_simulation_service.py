@@ -22,7 +22,7 @@ class MLSimulationService:
     def __init__(self):
         self.ai_service = AzureOpenAIService()
         
-    def generate_thesis_simulation(self, thesis, time_horizon: int, scenario: str, 
+    def generate_thesis_simulation(self, thesis, signals, time_horizon: int, scenario: str, 
                                  volatility: str, include_events: bool) -> Dict[str, Any]:
         """
         Generate thesis simulation using intelligent analysis + ML price modeling
@@ -37,9 +37,15 @@ class MLSimulationService:
                 thesis_params, time_horizon, scenario, volatility
             )
             
-            # Step 3: Generate market events using intelligent analysis
+            # Step 3: Generate data-triggered events based on real monitoring signals
             events = []
-            if include_events:
+            triggered_alerts = []
+            if include_events and signals:
+                events, triggered_alerts = self._generate_signal_based_events(
+                    signals, performance_data, time_horizon, scenario
+                )
+            elif include_events:
+                # Fallback to general events if no signals available
                 events = self._generate_intelligent_events(thesis_params, time_horizon, scenario)
             
             # Step 4: Generate scenario analysis using intelligent analysis
@@ -58,8 +64,14 @@ class MLSimulationService:
                     'timeline': timeline
                 },
                 'events': events,
+                'triggered_alerts': triggered_alerts,
                 'scenario_analysis': scenario_analysis,
                 'thesis_parameters': thesis_params,
+                'signal_monitoring': {
+                    'active_signals': len([s for s in signals if s.status == 'active']) if signals else 0,
+                    'total_signals': len(signals) if signals else 0,
+                    'signals_with_thresholds': len([s for s in signals if s.threshold_value is not None]) if signals else 0
+                },
                 'simulation_metadata': {
                     'thesis_id': getattr(thesis, 'id', 'test'),
                     'thesis_title': getattr(thesis, 'title', 'Investment Thesis Analysis'),
@@ -68,8 +80,8 @@ class MLSimulationService:
                     'time_horizon': time_horizon,
                     'include_events': include_events,
                     'generated_at': datetime.utcnow().isoformat(),
-                    'data_source': 'ML Mathematical Analysis',
-                    'ml_model': 'Geometric Brownian Motion with Thesis Parameters'
+                    'data_source': 'Real Signal Data + ML Analysis',
+                    'ml_model': 'Signal-Based Event Generation'
                 }
             }
             
@@ -487,6 +499,269 @@ Return JSON format:
         
         logging.info(f"Generated intelligent parameters: price=${params['starting_price']}, return={params['expected_annual_return']:.1%}")
         return params
+    
+    def _generate_signal_based_events(self, signals, performance_data, time_horizon: int, scenario: str):
+        """
+        Generate realistic data-triggered events based on actual monitoring signals
+        """
+        events = []
+        triggered_alerts = []
+        
+        if not signals or not performance_data:
+            return events, triggered_alerts
+        
+        # Calculate time points for event generation
+        total_days = time_horizon * 252  # Trading days
+        event_points = [int(i * total_days / 8) for i in range(1, 8)]  # 7 potential event points
+        
+        # Track simulated metric values throughout the period
+        simulated_metrics = {}
+        
+        for signal in signals:
+            if not signal.threshold_value:
+                continue
+                
+            signal_name = signal.signal_name
+            threshold = float(signal.threshold_value)
+            threshold_type = signal.threshold_type or 'above'
+            signal_type = signal.signal_type
+            
+            # Generate realistic metric progression based on signal type
+            metric_values = self._simulate_metric_progression(
+                signal, performance_data, total_days, scenario
+            )
+            simulated_metrics[signal_name] = metric_values
+            
+            # Check for threshold breaches
+            for day_idx, value in enumerate(metric_values):
+                if self._check_threshold_breach(value, threshold, threshold_type):
+                    # Calculate when this occurs in the timeline
+                    event_day = day_idx
+                    timeline_position = event_day / total_days
+                    
+                    # Create event based on signal
+                    event = self._create_signal_event(
+                        signal, value, threshold, timeline_position, scenario
+                    )
+                    
+                    # Create alert
+                    alert = self._create_signal_alert(
+                        signal, value, threshold, event_day
+                    )
+                    
+                    events.append(event)
+                    triggered_alerts.append(alert)
+                    
+                    # Only trigger once per signal to avoid spam
+                    break
+        
+        # Add market correlation events based on performance
+        correlation_events = self._generate_correlation_events(
+            performance_data, event_points, scenario
+        )
+        events.extend(correlation_events)
+        
+        # Sort events by timeline position
+        events.sort(key=lambda x: x.get('timeline_position', 0))
+        
+        return events[:12], triggered_alerts  # Limit to 12 events for clarity
+    
+    def _simulate_metric_progression(self, signal, performance_data, total_days: int, scenario: str):
+        """
+        Simulate how a specific metric evolves over time based on market performance
+        """
+        signal_name = signal.signal_name.lower()
+        base_value = float(signal.current_value or 100)
+        
+        # Different patterns based on signal type
+        if 'revenue' in signal_name or 'growth' in signal_name:
+            # Revenue metrics tend to be more stable with quarterly jumps
+            return self._simulate_revenue_metric(base_value, total_days, scenario)
+        elif 'margin' in signal_name or 'profitability' in signal_name:
+            # Margin metrics fluctuate with market conditions
+            return self._simulate_margin_metric(base_value, total_days, scenario)
+        elif 'innovation' in signal_name or 'tech' in signal_name:
+            # Technology metrics can be more volatile
+            return self._simulate_innovation_metric(base_value, total_days, scenario)
+        else:
+            # General metric progression
+            return self._simulate_general_metric(base_value, total_days, scenario)
+    
+    def _simulate_revenue_metric(self, base_value, total_days: int, scenario: str):
+        """Simulate revenue-based metrics with quarterly growth patterns"""
+        values = []
+        current_value = base_value
+        quarterly_growth = {'bull': 0.08, 'base': 0.05, 'bear': 0.02}.get(scenario, 0.05)
+        
+        for day in range(total_days):
+            # Quarterly jumps
+            if day % 63 == 0 and day > 0:  # Every quarter
+                current_value *= (1 + quarterly_growth + np.random.normal(0, 0.01))
+            else:
+                # Daily noise
+                current_value *= (1 + np.random.normal(0, 0.002))
+            
+            values.append(max(0, current_value))
+        
+        return values
+    
+    def _simulate_margin_metric(self, base_value, total_days: int, scenario: str):
+        """Simulate margin-based metrics that correlate with market conditions"""
+        values = []
+        current_value = base_value
+        trend_factor = {'bull': 0.0001, 'base': 0, 'bear': -0.0001}.get(scenario, 0)
+        
+        for day in range(total_days):
+            # Margin compression/expansion based on scenario
+            current_value += trend_factor + np.random.normal(0, 0.001)
+            current_value = max(0, min(100, current_value))  # Keep within 0-100%
+            values.append(current_value)
+        
+        return values
+    
+    def _simulate_innovation_metric(self, base_value, total_days: int, scenario: str):
+        """Simulate innovation metrics with breakthrough events"""
+        values = []
+        current_value = base_value
+        breakthrough_prob = 0.002  # 0.2% chance per day
+        
+        for day in range(total_days):
+            # Potential breakthrough events
+            if np.random.random() < breakthrough_prob:
+                current_value *= (1 + np.random.uniform(0.05, 0.15))  # 5-15% jump
+            else:
+                current_value *= (1 + np.random.normal(0, 0.005))
+            
+            values.append(max(0, current_value))
+        
+        return values
+    
+    def _simulate_general_metric(self, base_value, total_days: int, scenario: str):
+        """Simulate general metrics with market correlation"""
+        values = []
+        current_value = base_value
+        drift = {'bull': 0.0002, 'base': 0, 'bear': -0.0002}.get(scenario, 0)
+        
+        for day in range(total_days):
+            current_value += drift + np.random.normal(0, 0.003)
+            values.append(max(0, current_value))
+        
+        return values
+    
+    def _check_threshold_breach(self, value, threshold, threshold_type):
+        """Check if a value breaches the threshold"""
+        if threshold_type == 'above':
+            return value > threshold
+        elif threshold_type == 'below':
+            return value < threshold
+        elif threshold_type == 'change_percent':
+            # For percentage change, assume we're checking if absolute change exceeds threshold
+            return abs(value - threshold) > (threshold * 0.05)  # 5% threshold
+        return False
+    
+    def _create_signal_event(self, signal, value, threshold, timeline_position, scenario):
+        """Create an event when a signal threshold is breached"""
+        signal_name = signal.signal_name
+        event_types = {
+            'revenue': 'Revenue Milestone',
+            'growth': 'Growth Target',
+            'margin': 'Profitability Alert',
+            'innovation': 'Technology Breakthrough',
+            'competition': 'Competitive Development'
+        }
+        
+        # Determine event type based on signal name
+        event_type = 'Data Alert'
+        for key, value_type in event_types.items():
+            if key.lower() in signal_name.lower():
+                event_type = value_type
+                break
+        
+        # Create realistic event description
+        if signal.threshold_type == 'above':
+            description = f"{signal_name} exceeded target threshold of {threshold:.2f}, reaching {value:.2f}"
+            impact_type = 'positive'
+        elif signal.threshold_type == 'below':
+            description = f"{signal_name} fell below critical threshold of {threshold:.2f}, dropping to {value:.2f}"
+            impact_type = 'negative'
+        else:
+            description = f"{signal_name} triggered alert at {value:.2f} (threshold: {threshold:.2f})"
+            impact_type = 'neutral'
+        
+        return {
+            'title': f"{event_type}: {signal_name}",
+            'description': description,
+            'timeline_position': timeline_position,
+            'impact_type': impact_type,
+            'impact_magnitude': min(abs(value - threshold) / threshold * 100, 25),  # Cap at 25%
+            'data_source': signal.signal_type,
+            'signal_id': signal.id,
+            'triggered_value': value,
+            'threshold_value': threshold,
+            'alert_priority': 'high' if impact_type == 'negative' else 'medium'
+        }
+    
+    def _create_signal_alert(self, signal, value, threshold, event_day):
+        """Create an alert for the triggered signal"""
+        days_into_period = event_day
+        
+        return {
+            'signal_id': signal.id,
+            'signal_name': signal.signal_name,
+            'alert_type': 'threshold_breach',
+            'triggered_value': value,
+            'threshold_value': threshold,
+            'threshold_type': signal.threshold_type,
+            'days_into_simulation': days_into_period,
+            'alert_message': f"Alert: {signal.signal_name} breached threshold",
+            'recommended_action': self._get_recommended_action(signal, value, threshold),
+            'priority': 'high' if signal.threshold_type == 'below' else 'medium'
+        }
+    
+    def _get_recommended_action(self, signal, current_value, threshold):
+        """Get recommended action based on signal breach"""
+        signal_name = signal.signal_name.lower()
+        
+        if 'revenue' in signal_name:
+            if current_value > threshold:
+                return "Monitor for sustained growth and consider position sizing increase"
+            else:
+                return "Investigate revenue decline causes and reassess thesis validity"
+        elif 'margin' in signal_name:
+            if current_value < threshold:
+                return "Analyze margin compression factors and competitive positioning"
+            else:
+                return "Positive margin expansion confirms operational efficiency"
+        elif 'innovation' in signal_name:
+            return "Evaluate breakthrough impact on competitive moat and market position"
+        else:
+            return "Review signal implications and adjust monitoring parameters"
+    
+    def _generate_correlation_events(self, performance_data, event_points, scenario):
+        """Generate market correlation events based on performance"""
+        events = []
+        
+        if len(performance_data) < 2:
+            return events
+        
+        # Calculate performance changes at key points
+        for i, point in enumerate(event_points[:3]):  # Limit to 3 correlation events
+            if point < len(performance_data):
+                performance_change = (performance_data[point] - performance_data[0]) / performance_data[0]
+                
+                if abs(performance_change) > 0.1:  # Significant move (>10%)
+                    event = {
+                        'title': 'Market Correlation Event',
+                        'description': f"Thesis performance {'outperformed' if performance_change > 0 else 'underperformed'} market by {abs(performance_change)*100:.1f}%",
+                        'timeline_position': point / len(performance_data),
+                        'impact_type': 'positive' if performance_change > 0 else 'negative',
+                        'impact_magnitude': min(abs(performance_change) * 100, 20),
+                        'data_source': 'Market Analysis',
+                        'correlation_factor': min(abs(performance_change), 0.3)
+                    }
+                    events.append(event)
+        
+        return events
     
     def _extract_key_drivers(self, thesis_text: str) -> List[str]:
         """Extract likely key drivers from thesis text"""

@@ -902,7 +902,22 @@ def simulation_page(thesis_id):
     """Thesis simulation testing page"""
     try:
         thesis = ThesisAnalysis.query.get_or_404(thesis_id)
-        return render_template('simulation.html', thesis=thesis)
+        signals = SignalMonitoring.query.filter_by(thesis_analysis_id=thesis_id).all()
+        
+        # Convert signals to serializable format for frontend
+        signals_data = []
+        for signal in signals:
+            signals_data.append({
+                'id': signal.id,
+                'signal_name': signal.signal_name,
+                'signal_type': signal.signal_type,
+                'threshold_value': signal.threshold_value,
+                'threshold_type': signal.threshold_type,
+                'status': signal.status,
+                'current_value': signal.current_value
+            })
+        
+        return render_template('simulation.html', thesis=thesis, signals=signals_data)
     except Exception as e:
         logging.error(f"Error loading simulation page: {str(e)}")
         return render_template('404.html'), 404
@@ -927,9 +942,13 @@ def simulate_thesis(thesis_id):
         from services.ml_simulation_service import MLSimulationService
         sim_service = MLSimulationService()
         
-        # Generate LLM-driven simulation
+        # Get monitoring signals for the thesis
+        signals = SignalMonitoring.query.filter_by(thesis_analysis_id=thesis_id).all()
+        
+        # Generate LLM-driven simulation with real signal data
         result = sim_service.generate_thesis_simulation(
             thesis=thesis,
+            signals=signals,
             time_horizon=time_horizon,
             scenario=scenario,
             volatility=volatility,
