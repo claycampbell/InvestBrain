@@ -1418,74 +1418,241 @@ document.addEventListener('DOMContentLoaded', function() {
         return `
             <div class="card mb-4">
                 <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-chart-line text-success"></i> Monitoring Strategy</h6>
+                    <h6 class="mb-0"><i class="fas fa-chart-line text-success"></i> Comprehensive Monitoring Strategy</h6>
                 </div>
                 <div class="card-body">
                     ${monitoringPlan.objective ? `
-                        <div class="alert alert-info border-0 mb-3">
-                            <strong>Objective:</strong> ${monitoringPlan.objective}
+                        <div class="alert alert-primary border-0 mb-4">
+                            <i class="fas fa-bullseye me-2"></i><strong>Monitoring Objective:</strong><br>
+                            ${monitoringPlan.objective}
                         </div>
                     ` : ''}
                     
-                    ${monitoringPlan.data_pulls && monitoringPlan.data_pulls.length > 0 ? `
-                        <div class="mb-3">
-                            <strong class="small d-block mb-2">Data Collection Strategy:</strong>
-                            <div class="row">
-                                ${monitoringPlan.data_pulls.slice(0, 3).map(pull => `
-                                    <div class="col-12 mb-2">
-                                        <div class="border rounded p-2">
-                                            <div class="small">
-                                                <strong>${pull.category || 'Data Category'}</strong>
-                                                <span class="badge bg-secondary ms-2">${pull.frequency || 'Regular'}</span>
-                                            </div>
-                                            ${pull.metrics ? `
-                                                <div class="small text-muted mt-1">
-                                                    ${pull.metrics.slice(0, 3).join(', ')}
-                                                </div>
-                                            ` : ''}
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
+                    ${generateValidationFramework(monitoringPlan.validation_framework)}
                     
-                    ${monitoringPlan.alert_logic && monitoringPlan.alert_logic.length > 0 ? `
-                        <div class="mb-3">
-                            <strong class="small d-block mb-2">Alert Triggers:</strong>
-                            ${monitoringPlan.alert_logic.slice(0, 3).map(alert => `
-                                <div class="small border-start border-warning ps-2 mb-2">
-                                    <strong>${alert.condition || 'Alert condition'}</strong>
-                                    <div class="text-muted">${alert.action || 'Take action'}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : ''}
+                    ${generateDataAcquisitionPlan(monitoringPlan.data_acquisition)}
                     
-                    ${monitoringPlan.decision_triggers && monitoringPlan.decision_triggers.length > 0 ? `
-                        <div class="mb-3">
-                            <strong class="small d-block mb-2">Decision Points:</strong>
-                            ${monitoringPlan.decision_triggers.slice(0, 2).map(trigger => `
-                                <div class="alert alert-warning py-2 px-3 mb-2">
-                                    <div class="small">
-                                        <strong>If:</strong> ${trigger.condition || 'Condition met'}
-                                        <br><strong>Then:</strong> ${trigger.action || 'Take action'}
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : ''}
+                    ${generateAlertSystem(monitoringPlan.alert_system)}
+                    
+                    ${generateDecisionFramework(monitoringPlan.decision_framework)}
+                    
+                    ${generateCounterThesisMonitoring(monitoringPlan.counter_thesis_monitoring)}
                     
                     ${monitoringPlan.review_schedule ? `
-                        <div class="text-center mt-3 pt-3 border-top">
-                            <small class="text-muted">
-                                <i class="fas fa-calendar-alt"></i> ${monitoringPlan.review_schedule}
-                            </small>
+                        <div class="mt-4 pt-3 border-top">
+                            <h6 class="text-primary mb-2"><i class="fas fa-calendar-check"></i> Review Schedule</h6>
+                            <div class="small text-muted bg-light p-2 rounded">
+                                ${monitoringPlan.review_schedule}
+                            </div>
                         </div>
                     ` : ''}
                 </div>
             </div>
         `;
+    }
+
+    function generateValidationFramework(framework) {
+        if (!framework) return '';
+        
+        return `
+            <div class="mb-4">
+                <h6 class="text-primary mb-3"><i class="fas fa-check-double"></i> Thesis Validation Framework</h6>
+                
+                ${framework.core_claim_metrics && framework.core_claim_metrics.length > 0 ? `
+                    <div class="mb-3">
+                        <strong class="small d-block mb-2 text-success">Core Claim Validation:</strong>
+                        ${framework.core_claim_metrics.map(metric => `
+                            <div class="border rounded p-2 mb-2 bg-light">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <strong class="small">${metric.metric}</strong>
+                                        <div class="text-muted small">${metric.validation_logic}</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-success">${metric.target_threshold}</span>
+                                        <div class="small text-muted">${metric.measurement_frequency}</div>
+                                    </div>
+                                </div>
+                                <div class="small text-info mt-1">
+                                    <i class="fas fa-database"></i> ${metric.data_source}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                
+                ${framework.assumption_tests && framework.assumption_tests.length > 0 ? `
+                    <div class="mb-3">
+                        <strong class="small d-block mb-2 text-warning">Assumption Testing:</strong>
+                        ${framework.assumption_tests.map(test => `
+                            <div class="border rounded p-2 mb-2">
+                                <div class="small">
+                                    <strong>${test.assumption}</strong>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-6">
+                                        <div class="small text-success">
+                                            <i class="fas fa-check"></i> Success: ${test.success_threshold}
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="small text-danger">
+                                            <i class="fas fa-times"></i> Failure: ${test.failure_threshold}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="small text-muted mt-1">Test via: ${test.test_metric}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                
+                ${framework.causal_chain_tracking && framework.causal_chain_tracking.length > 0 ? `
+                    <div class="mb-3">
+                        <strong class="small d-block mb-2 text-info">Causal Chain Tracking:</strong>
+                        ${framework.causal_chain_tracking.map((step, index) => `
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="badge bg-info rounded-circle me-2" style="width: 20px; height: 20px; font-size: 10px;">${index + 1}</div>
+                                <div class="flex-grow-1">
+                                    <div class="small"><strong>${step.chain_step}</strong></div>
+                                    <div class="small text-muted">Monitor: ${step.leading_indicator} (${step.threshold})</div>
+                                </div>
+                                <span class="badge bg-secondary small">${step.frequency}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    function generateDataAcquisitionPlan(dataAcquisition) {
+        if (!dataAcquisition || !Array.isArray(dataAcquisition) || dataAcquisition.length === 0) return '';
+        
+        return `
+            <div class="mb-4">
+                <h6 class="text-primary mb-3"><i class="fas fa-database"></i> Data Acquisition Plan</h6>
+                ${dataAcquisition.slice(0, 4).map(category => `
+                    <div class="border rounded p-3 mb-2">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <strong class="small">${category.category}</strong>
+                                <span class="badge bg-primary ms-2">${category.frequency}</span>
+                            </div>
+                            <span class="badge bg-secondary">${category.automation_level || 'TBD'}</span>
+                        </div>
+                        <div class="small text-muted mb-2">
+                            <strong>Metrics:</strong> ${Array.isArray(category.metrics) ? category.metrics.join(', ') : 'Multiple metrics'}
+                        </div>
+                        ${category.query_template ? `
+                            <div class="small">
+                                <strong>Query:</strong> <code class="small bg-light p-1 rounded">${category.query_template}</code>
+                            </div>
+                        ` : ''}
+                        <div class="small text-info mt-1">
+                            <i class="fas fa-server"></i> ${category.data_source}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function generateAlertSystem(alertSystem) {
+        if (!alertSystem || !Array.isArray(alertSystem) || alertSystem.length === 0) return '';
+        
+        return `
+            <div class="mb-4">
+                <h6 class="text-primary mb-3"><i class="fas fa-bell"></i> Alert System</h6>
+                ${alertSystem.slice(0, 5).map(alert => `
+                    <div class="border-start border-${getSeverityColor(alert.severity)} ps-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong class="small">${alert.trigger_name}</strong>
+                                <div class="small text-muted mt-1">${alert.condition}</div>
+                                <div class="small text-primary mt-1"><strong>Action:</strong> ${alert.action}</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-${getSeverityColor(alert.severity)}">${alert.severity}</span>
+                                <div class="small text-muted">${alert.notification_method || 'dashboard'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function generateDecisionFramework(decisionFramework) {
+        if (!decisionFramework || !Array.isArray(decisionFramework) || decisionFramework.length === 0) return '';
+        
+        return `
+            <div class="mb-4">
+                <h6 class="text-primary mb-3"><i class="fas fa-chess"></i> Decision Framework</h6>
+                ${decisionFramework.slice(0, 4).map(decision => `
+                    <div class="alert alert-${getActionColor(decision.action)} py-2 px-3 mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="small"><strong>${decision.scenario}</strong></div>
+                                <div class="small mt-1"><strong>When:</strong> ${decision.condition}</div>
+                                <div class="small mt-1"><strong>Reasoning:</strong> ${decision.reasoning}</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-${getActionColor(decision.action)} text-uppercase">${decision.action}</span>
+                                ${decision.confidence_threshold ? `
+                                    <div class="small text-muted">Confidence: ${decision.confidence_threshold}</div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function generateCounterThesisMonitoring(counterThesisMonitoring) {
+        if (!counterThesisMonitoring || !Array.isArray(counterThesisMonitoring) || counterThesisMonitoring.length === 0) return '';
+        
+        return `
+            <div class="mb-4">
+                <h6 class="text-primary mb-3"><i class="fas fa-shield-alt"></i> Counter-Thesis Risk Monitoring</h6>
+                ${counterThesisMonitoring.slice(0, 3).map(risk => `
+                    <div class="border rounded p-2 mb-2 bg-light border-warning">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong class="small text-warning">${risk.risk_scenario}</strong>
+                                <div class="small text-muted mt-1">
+                                    <strong>Early Warning:</strong> ${risk.early_warning_metric}
+                                </div>
+                                <div class="small text-danger mt-1">
+                                    <strong>Mitigation:</strong> ${risk.mitigation_action}
+                                </div>
+                            </div>
+                            <span class="badge bg-warning text-dark">${risk.threshold}</span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function getSeverityColor(severity) {
+        switch(severity) {
+            case 'critical': return 'danger';
+            case 'high': return 'warning';
+            case 'medium': return 'info';
+            case 'low': return 'secondary';
+            default: return 'primary';
+        }
+    }
+
+    function getActionColor(action) {
+        switch(action?.toLowerCase()) {
+            case 'buy': case 'increase': return 'success';
+            case 'sell': case 'decrease': return 'danger';
+            case 'hold': return 'warning';
+            default: return 'info';
+        }
     }
     
     // Add CSS for timeline styling

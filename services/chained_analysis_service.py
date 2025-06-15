@@ -223,58 +223,154 @@ Identify 5-6 specific trackable signals that are closest to raw economic activit
 
     def _create_monitoring_plan(self, thesis_text: str, core_analysis: Dict, signals: List) -> Dict[str, Any]:
         """Step 3: Create comprehensive prescriptive monitoring plan"""
-        system_prompt = """You are an expert at creating prescriptive monitoring strategies with specific thresholds and actions.
+        system_prompt = """You are an expert at creating prescriptive monitoring strategies that identify critical thesis validation points.
+
+Your task is to create a monitoring plan that:
+1. VALIDATES the core thesis claim through direct measurement
+2. TRACKS key assumptions with specific failure/success thresholds
+3. MONITORS causal chain progression with leading indicators
+4. ESTABLISHES counter-thesis risk detection systems
+
+Extract company names, specific metrics, and quantitative targets from the thesis.
 
 Respond with valid JSON:
 {
-  "objective": "Specific monitoring objective with clear success/failure criteria",
-  "data_pulls": [
+  "objective": "Monitor [specific company/sector] thesis: [specific claim] with [quantified success criteria]",
+  "validation_framework": {
+    "core_claim_metrics": [
+      {
+        "metric": "Specific metric that directly validates core claim",
+        "target_threshold": "Numerical target from thesis",
+        "measurement_frequency": "daily|weekly|monthly|quarterly",
+        "data_source": "FactSet|Xpressfeed|Manual",
+        "validation_logic": "How this metric proves/disproves the thesis"
+      }
+    ],
+    "assumption_tests": [
+      {
+        "assumption": "Specific assumption from thesis",
+        "test_metric": "Metric to validate this assumption",
+        "success_threshold": "Numerical threshold for validation",
+        "failure_threshold": "Numerical threshold for invalidation",
+        "data_source": "FactSet|Xpressfeed"
+      }
+    ],
+    "causal_chain_tracking": [
+      {
+        "chain_step": "Specific step from causal chain",
+        "leading_indicator": "Metric that shows this step progressing",
+        "threshold": "Numerical threshold",
+        "frequency": "Monitoring frequency"
+      }
+    ]
+  },
+  "data_acquisition": [
     {
-      "category": "Category name",
+      "category": "Category name (Financial Performance, Market Position, etc.)",
       "metrics": ["Specific metric 1", "Specific metric 2"],
-      "data_source": "FactSet|Xpressfeed", 
-      "query_template": "SELECT specific_data FROM table WHERE conditions",
-      "frequency": "daily|weekly|monthly|quarterly"
-    }
-  ],
-  "alert_logic": [
-    {
+      "data_source": "FactSet|Xpressfeed",
+      "query_template": "SELECT [specific_fields] FROM [specific_table] WHERE [conditions]",
       "frequency": "daily|weekly|monthly|quarterly",
-      "condition": "Specific threshold condition with numbers",
-      "action": "Specific action to take when triggered"
+      "automation_level": "full|partial|manual"
     }
   ],
-  "decision_triggers": [
+  "alert_system": [
     {
-      "condition": "Specific exit/entry condition with thresholds",
-      "action": "buy|sell|hold with specific reasoning"
+      "trigger_name": "Descriptive name",
+      "condition": "Specific numerical condition (e.g., Revenue growth < 5% for 2 consecutive quarters)",
+      "severity": "low|medium|high|critical",
+      "action": "Specific action to take",
+      "notification_method": "email|dashboard|report"
     }
   ],
-  "review_schedule": "Detailed review timing and escalation procedures"
+  "decision_framework": [
+    {
+      "scenario": "Thesis validation scenario",
+      "condition": "Specific quantified condition",
+      "action": "buy|sell|hold|increase|decrease",
+      "reasoning": "Why this action based on thesis logic",
+      "confidence_threshold": "Numerical confidence level required"
+    }
+  ],
+  "counter_thesis_monitoring": [
+    {
+      "risk_scenario": "Specific counter-thesis risk",
+      "early_warning_metric": "Metric that shows this risk materializing",
+      "threshold": "Numerical threshold for concern",
+      "mitigation_action": "Specific action to take"
+    }
+  ],
+  "review_schedule": "Detailed review timing with specific escalation procedures and decision points"
 }"""
         
-        signal_names = [s.get('name', '') for s in signals[:4]]
+        # Extract detailed context for monitoring plan
         core_claim = core_analysis.get('core_claim', '')
+        assumptions = core_analysis.get('assumptions', [])
+        causal_chain = core_analysis.get('causal_chain', [])
+        counter_thesis = core_analysis.get('counter_thesis_scenarios', [])
         
-        user_prompt = f"""Create a prescriptive monitoring plan for: {thesis_text}
+        # Identify key metrics from signals
+        signal_details = []
+        for signal in signals[:6]:
+            signal_details.append({
+                'name': signal.get('name', ''),
+                'threshold': signal.get('threshold', ''),
+                'description': signal.get('description', ''),
+                'data_source': signal.get('data_source', '')
+            })
+        
+        user_prompt = f"""Analyze this investment thesis and create a comprehensive monitoring strategy:
 
-Core claim: {core_claim}
-Key signals to monitor: {', '.join(signal_names)}
+THESIS: {thesis_text}
 
-Create:
-- 4-5 data pull categories with specific metrics and SQL query templates
-- 5-6 alert conditions with exact thresholds and corresponding actions
-- 3-4 decision triggers with specific buy/sell/hold conditions
-- Include specific data sources (FactSet/Xpressfeed) and frequencies"""
+CORE CLAIM: {core_claim}
+
+KEY ASSUMPTIONS: {assumptions[:5]}
+
+CAUSAL CHAIN: {[step.get('event', '') for step in causal_chain[:4]] if isinstance(causal_chain, list) else []}
+
+IDENTIFIED SIGNALS: {signal_details}
+
+COUNTER-THESIS RISKS: {[scenario.get('scenario', '') for scenario in counter_thesis[:3]] if isinstance(counter_thesis, list) else []}
+
+Create a monitoring plan that:
+1. Directly measures thesis success/failure through quantified metrics
+2. Tests each key assumption with specific thresholds
+3. Tracks causal chain progression with leading indicators
+4. Monitors counter-thesis risks with early warning systems
+5. Provides clear decision triggers with numerical thresholds
+
+Focus on metrics that can be tracked via FactSet/Xpressfeed APIs with specific query templates."""
         
         response = self.azure_openai.generate_completion([
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
-        ], max_tokens=1500, temperature=0.7)
+        ], max_tokens=2000, temperature=0.3)
         
-        return self._parse_json_response(response, "monitoring_plan")
+        parsed_plan = self._parse_json_response(response, "monitoring_plan")
+        # Ensure we return a dictionary for monitoring plans
+        if isinstance(parsed_plan, dict):
+            return parsed_plan
+        else:
+            return self._get_fallback_monitoring_plan()
 
-    def _parse_json_response(self, response: str, step_name: str) -> Dict[str, Any]:
+    def _get_fallback_monitoring_plan(self) -> Dict[str, Any]:
+        """Provide fallback monitoring plan structure"""
+        return {
+            "objective": "Monitor thesis performance and validate key assumptions through systematic tracking",
+            "validation_framework": {
+                "core_claim_metrics": [],
+                "assumption_tests": [],
+                "causal_chain_tracking": []
+            },
+            "data_acquisition": [],
+            "alert_system": [],
+            "decision_framework": [],
+            "counter_thesis_monitoring": [],
+            "review_schedule": "Monthly comprehensive review with quarterly deep analysis"
+        }
+
+    def _parse_json_response(self, response: str, step_name: str):
         """Parse JSON response with fallback handling"""
         try:
             parsed = json.loads(response)
@@ -295,7 +391,7 @@ Create:
             logging.warning(f"Failed to parse JSON for {step_name}")
             return self._get_fallback_structure(step_name)
     
-    def _get_fallback_structure(self, step_name: str) -> Dict[str, Any]:
+    def _get_fallback_structure(self, step_name: str):
         """Provide fallback structure when JSON parsing fails"""
         if step_name == "signals":
             return []
