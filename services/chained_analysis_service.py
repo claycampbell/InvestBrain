@@ -34,13 +34,18 @@ class ChainedAnalysisService:
                 logging.warning(f"Step 2 failed, using fallback: {str(e)}")
                 signals = self._get_fallback_signals(thesis_text)
             
-            # Step 3: Monitoring plan
+            # Step 3: Monitoring plan - use detailed fallback for reliability
             try:
+                # First try AI generation
                 monitoring_plan = self._create_monitoring_plan(thesis_text, core_analysis, signals)
-                logging.info("Step 3 completed: Monitoring plan created")
+                # Validate response quality
+                if not monitoring_plan or not isinstance(monitoring_plan, dict) or len(str(monitoring_plan)) < 500:
+                    raise ValueError("LLM response too short or invalid")
+                logging.info("Step 3 completed: Monitoring plan created via AI")
             except Exception as e:
-                logging.warning(f"Step 3 failed, creating detailed fallback: {str(e)}")
+                logging.warning(f"Step 3 AI generation failed, using comprehensive fallback: {str(e)}")
                 monitoring_plan = self._create_detailed_monitoring_fallback(thesis_text, core_analysis, signals)
+                logging.info("Step 3 completed: Detailed monitoring plan created from analysis data")
             
             # Step 4: Generate AI-powered market sentiment
             try:
@@ -355,7 +360,7 @@ Focus on metrics that can be tracked via FactSet/Xpressfeed APIs with specific q
             response = self.azure_openai.generate_completion([
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
-            ], max_tokens=2000, temperature=0.3)
+            ], max_tokens=3000, temperature=0.2)
         finally:
             signal.alarm(0)  # Cancel timeout
         
