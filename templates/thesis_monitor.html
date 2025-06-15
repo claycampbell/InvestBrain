@@ -558,6 +558,12 @@
     }
 
     function displaySimulationResults(data) {
+        // Ultimate safety wrapper to prevent any undefined property access
+        const safeData = data || {};
+        const safeChartData = safeData.chart_data || {};
+        const safePerformanceData = safeChartData.performance_data || {};
+        const safeEvents = safeData.events || [];
+        
         try {
             document.getElementById('simulationEmpty').classList.add('d-none');
             document.getElementById('simulationResults').classList.remove('d-none');
@@ -569,10 +575,10 @@
                 simulationChart.destroy();
             }
 
-        // Extract chart data from nested structure
-        const chartData = data.chart_data || data;
-        const performanceData = chartData.performance_data || data.performance_data || [];
-        const timeline = chartData.timeline || data.timeline || [];
+        // Extract chart data using safe wrappers
+        const chartData = safeChartData;
+        const performanceData = safePerformanceData;
+        const timeline = safeChartData.timeline || [];
         
         console.log('Chart data structure:', {
             hasChartData: !!data.chart_data,
@@ -674,22 +680,26 @@
                                  Math.floor(index * timeline.length / data.events.length);
                 const validIndex = Math.max(0, Math.min(monthIndex, timeline.length - 1));
                 
-                const safeTitle = event.title && event.title.length > 20 ? event.title.substring(0, 20) + '...' : event.title;
+                const safeTitle = event && event.title && event.title.length > 20 ? event.title.substring(0, 20) + '...' : (event && event.title) || 'Event';
                 
-                annotations.xaxis.push({
-                    x: timelineData[validIndex],
-                    borderColor: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
-                    label: {
-                        borderColor: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
-                        style: {
-                            color: '#fff',
-                            background: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
-                            fontSize: '11px'
-                        },
-                        text: safeTitle,
-                        orientation: 'horizontal'
-                    }
-                });
+                // Final safety check before adding annotation
+                if (event && timelineData && timelineData[validIndex] && safeTitle) {
+                    const impactColor = (event.impact_type === 'positive') ? '#10b981' : '#ef4444';
+                    annotations.xaxis.push({
+                        x: timelineData[validIndex],
+                        borderColor: impactColor,
+                        label: {
+                            borderColor: impactColor,
+                            style: {
+                                color: '#fff',
+                                background: impactColor,
+                                fontSize: '11px'
+                            },
+                            text: safeTitle,
+                            orientation: 'horizontal'
+                        }
+                    });
+                }
             });
             }
         } catch (error) {
@@ -1118,7 +1128,7 @@
         }
         
         // Event-specific actions based on title keywords
-        const title = (event.title || '').toLowerCase();
+        const title = (event && event.title || '').toLowerCase();
         if (title.includes('earnings') || title.includes('revenue')) {
             actions.push('Compare guidance vs street expectations');
         } else if (title.includes('margin') || title.includes('cost')) {
