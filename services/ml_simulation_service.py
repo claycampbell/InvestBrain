@@ -23,7 +23,8 @@ class MLSimulationService:
         self.ai_service = AzureOpenAIService()
         
     def generate_thesis_simulation(self, thesis, time_horizon: int, scenario: str, 
-                                 volatility: str, include_events: bool) -> Dict[str, Any]:
+                                 volatility: str, include_events: bool, 
+                                 monitoring_plan: Optional[Dict] = None) -> Dict[str, Any]:
         """
         Generate thesis simulation using intelligent analysis + ML price modeling
         """
@@ -37,10 +38,15 @@ class MLSimulationService:
                 thesis_params, time_horizon, scenario, volatility
             )
             
-            # Step 3: Generate market events using intelligent analysis
+            # Step 3: Generate market events using monitoring plan or intelligent analysis
             events = []
             if include_events:
-                events = self._generate_intelligent_events(thesis_params, time_horizon, scenario)
+                if monitoring_plan:
+                    events = self._generate_monitoring_based_events(
+                        thesis_params, time_horizon, scenario, monitoring_plan, performance_data
+                    )
+                else:
+                    events = self._generate_intelligent_events(thesis_params, time_horizon, scenario)
             
             # Step 4: Generate scenario analysis using intelligent analysis
             scenario_analysis = self._generate_intelligent_scenario_analysis(
@@ -357,6 +363,147 @@ Return JSON array only:
             logging.error(f"LLM event generation failed: {str(e)}")
         
         return []
+    
+    def _generate_monitoring_based_events(self, thesis_params: Dict, time_horizon: int, 
+                                        scenario: str, monitoring_plan: Dict, 
+                                        performance_data: Dict) -> List[Dict[str, Any]]:
+        """
+        Generate events based on the comprehensive monitoring plan data
+        """
+        events = []
+        total_months = time_horizon * 12
+        
+        # Extract events from monitoring plan components
+        validation_events = self._extract_validation_events(monitoring_plan, total_months)
+        alert_events = self._extract_alert_events(monitoring_plan, total_months)
+        decision_events = self._extract_decision_events(monitoring_plan, total_months)
+        counter_thesis_events = self._extract_counter_thesis_events(monitoring_plan, total_months)
+        
+        # Combine all events
+        all_events = validation_events + alert_events + decision_events + counter_thesis_events
+        
+        # Sort by month and limit to reasonable number
+        all_events.sort(key=lambda x: x['month'])
+        
+        # Add performance impact values and format for simulation
+        thesis_performance = performance_data.get('thesis_performance', [100])
+        for event in all_events[:6]:  # Limit to 6 events max
+            month = event['month']
+            
+            if thesis_performance and month <= len(thesis_performance):
+                event['impact_value'] = thesis_performance[month - 1]
+            else:
+                event['impact_value'] = 100
+            
+            event['date'] = self._month_to_date_string(month)
+            event['magnitude'] = self._get_event_magnitude(event.get('impact_type', 'neutral'))
+            event['market_context'] = f"Monitoring framework trigger: {event.get('event_category', 'general')}"
+        
+        return all_events[:6]
+    
+    def _extract_validation_events(self, monitoring_plan: Dict, total_months: int) -> List[Dict]:
+        """Extract events from validation framework"""
+        events = []
+        framework = monitoring_plan.get('validation_framework', {})
+        
+        # Core claim metrics events
+        core_metrics = framework.get('core_claim_metrics', [])
+        for i, metric in enumerate(core_metrics[:2]):
+            month = (i + 1) * (total_months // 4)  # Spread across timeline
+            events.append({
+                'month': month,
+                'title': f"Core Validation: {metric.get('metric', 'Performance')}",
+                'description': f"Validating {metric.get('metric')} against {metric.get('target_threshold')} threshold using {metric.get('data_source')} data",
+                'impact_type': 'positive',
+                'signals_affected': [metric.get('metric', 'Core Signal')],
+                'event_category': 'validation'
+            })
+        
+        # Assumption testing events
+        assumption_tests = framework.get('assumption_tests', [])
+        for i, test in enumerate(assumption_tests[:2]):
+            month = (i + 2) * (total_months // 5)
+            events.append({
+                'month': month,
+                'title': f"Assumption Test: {test.get('test_metric', 'Market Test')}",
+                'description': f"Testing key assumption via {test.get('test_metric')} - Success threshold: {test.get('success_threshold')}",
+                'impact_type': 'neutral',
+                'signals_affected': [test.get('test_metric', 'Assumption Signal')],
+                'event_category': 'assumption'
+            })
+        
+        return events
+    
+    def _extract_alert_events(self, monitoring_plan: Dict, total_months: int) -> List[Dict]:
+        """Extract events from alert system"""
+        events = []
+        alert_system = monitoring_plan.get('alert_system', [])
+        
+        for i, alert in enumerate(alert_system[:3]):
+            month = (i + 1) * (total_months // 3)
+            impact_type = 'negative' if alert.get('severity') == 'high' else 'neutral'
+            
+            events.append({
+                'month': month,
+                'title': f"Alert: {alert.get('trigger_name', 'Performance Alert')}",
+                'description': f"Triggered condition: {alert.get('condition')} | Required action: {alert.get('action')}",
+                'impact_type': impact_type,
+                'signals_affected': [alert.get('trigger_name', 'Alert Signal')],
+                'event_category': 'alert'
+            })
+        
+        return events
+    
+    def _extract_decision_events(self, monitoring_plan: Dict, total_months: int) -> List[Dict]:
+        """Extract events from decision framework"""
+        events = []
+        decision_framework = monitoring_plan.get('decision_framework', [])
+        
+        for i, decision in enumerate(decision_framework[:2]):
+            month = (i + 1) * (total_months // 2)
+            action = decision.get('action', 'review')
+            impact_type = 'positive' if action == 'buy' else 'negative' if action == 'sell' else 'neutral'
+            
+            events.append({
+                'month': month,
+                'title': f"Decision Point: {decision.get('scenario', 'Performance Review')}",
+                'description': f"Analysis indicates: {action.upper()} signal based on {decision.get('condition')} (Confidence: {decision.get('confidence_threshold')})",
+                'impact_type': impact_type,
+                'signals_affected': ['Decision Framework'],
+                'event_category': 'decision'
+            })
+        
+        return events
+    
+    def _extract_counter_thesis_events(self, monitoring_plan: Dict, total_months: int) -> List[Dict]:
+        """Extract events from counter-thesis monitoring"""
+        events = []
+        counter_monitoring = monitoring_plan.get('counter_thesis_monitoring', [])
+        
+        for i, risk in enumerate(counter_monitoring[:2]):
+            month = (total_months // 3) * (i + 2)  # Later in timeline
+            
+            events.append({
+                'month': month,
+                'title': f"Risk Alert: {risk.get('risk_scenario', 'Counter-Thesis Risk')}",
+                'description': f"Early warning detected via {risk.get('early_warning_metric')} below {risk.get('threshold')} threshold. {risk.get('mitigation_action')}",
+                'impact_type': 'negative',
+                'signals_affected': [risk.get('early_warning_metric', 'Risk Signal')],
+                'event_category': 'risk'
+            })
+        
+        return events
+    
+    def _get_event_magnitude(self, impact_type: str) -> str:
+        """Map impact type to magnitude"""
+        magnitude_map = {
+            'positive': 'moderate',
+            'negative': 'significant', 
+            'neutral': 'low',
+            'validation': 'moderate',
+            'warning': 'moderate'
+        }
+        return magnitude_map.get(impact_type, 'moderate')
     
     def _generate_llm_scenario_analysis(self, thesis, scenario: str, time_horizon: int,
                                       performance_data: Dict, events: List[Dict], 

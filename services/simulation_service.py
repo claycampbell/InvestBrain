@@ -22,7 +22,8 @@ class SimulationService:
         self.ai_service = AzureOpenAIService()
         
     def generate_simulation(self, thesis, time_horizon: int, scenario: str, 
-                          volatility: str, include_events: bool, simulation_type: str) -> Dict[str, Any]:
+                          volatility: str, include_events: bool, simulation_type: str,
+                          monitoring_plan: Optional[Dict] = None) -> Dict[str, Any]:
         """
         Generate comprehensive thesis simulation with performance data and events
         """
@@ -50,15 +51,22 @@ class SimulationService:
         events = []
         if include_events:
             try:
-                # Use thesis performance data for event positioning
-                if isinstance(performance_data, dict):
-                    event_data = performance_data.get('thesis_performance', performance_data.get('market_performance', []))
+                # Use thesis-specific monitoring plan for events if available
+                if monitoring_plan:
+                    events = self._generate_monitoring_based_events(
+                        thesis, time_horizon, scenario, monitoring_plan, performance_data
+                    )
+                    print(f"Generated {len(events)} monitoring-based events")
                 else:
-                    event_data = performance_data if isinstance(performance_data, list) else []
-                events = self._generate_event_scenarios(
-                    thesis, time_horizon, scenario, event_data
-                )
-                print(f"Generated {len(events)} events: {[e.get('title', 'No title') for e in events]}")
+                    # Fallback to generic event generation
+                    if isinstance(performance_data, dict):
+                        event_data = performance_data.get('thesis_performance', performance_data.get('market_performance', []))
+                    else:
+                        event_data = performance_data if isinstance(performance_data, list) else []
+                    events = self._generate_event_scenarios(
+                        thesis, time_horizon, scenario, event_data
+                    )
+                    print(f"Generated {len(events)} generic events")
             except Exception as e:
                 print(f"Event generation failed: {e}")
                 events = []
@@ -462,6 +470,141 @@ JSON format: [{{"month": 6, "title": "Event Title", "description": "Brief descri
         
         # Sort events by date
         events.sort(key=lambda x: x['date'])
+        return events
+    
+    def _generate_monitoring_based_events(self, thesis, time_horizon: int, scenario: str, 
+                                        monitoring_plan: Dict, performance_data: Any) -> List[Dict[str, Any]]:
+        """
+        Generate events based on the comprehensive monitoring plan data
+        """
+        events = []
+        total_months = time_horizon * 12
+        
+        # Extract events from monitoring plan components
+        validation_events = self._extract_validation_events(monitoring_plan, total_months)
+        alert_events = self._extract_alert_events(monitoring_plan, total_months)
+        decision_events = self._extract_decision_events(monitoring_plan, total_months)
+        counter_thesis_events = self._extract_counter_thesis_events(monitoring_plan, total_months)
+        
+        # Combine all events
+        all_events = validation_events + alert_events + decision_events + counter_thesis_events
+        
+        # Sort by month and limit to reasonable number
+        all_events.sort(key=lambda x: x['month'])
+        
+        # Add performance impact values
+        for event in all_events[:8]:  # Limit to 8 events max
+            month = event['month']
+            if isinstance(performance_data, dict):
+                perf_data = performance_data.get('thesis_performance', performance_data.get('market_performance', []))
+            else:
+                perf_data = performance_data if isinstance(performance_data, list) else []
+            
+            if perf_data and month <= len(perf_data):
+                event['impact_value'] = perf_data[month - 1]
+            else:
+                event['impact_value'] = 100
+            
+            event['date'] = self._month_to_date(month, time_horizon)
+        
+        return all_events[:8]
+    
+    def _extract_validation_events(self, monitoring_plan: Dict, total_months: int) -> List[Dict]:
+        """Extract events from validation framework"""
+        events = []
+        framework = monitoring_plan.get('validation_framework', {})
+        
+        # Core claim metrics events
+        core_metrics = framework.get('core_claim_metrics', [])
+        for i, metric in enumerate(core_metrics[:2]):
+            month = (i + 1) * (total_months // 4)  # Spread across timeline
+            events.append({
+                'month': month,
+                'title': f"Core Metric Validation: {metric.get('metric', 'Performance')}",
+                'description': f"Validating {metric.get('metric')} against {metric.get('target_threshold')} threshold via {metric.get('data_source')}",
+                'impact_type': 'validation',
+                'notification_triggered': True,
+                'signals_affected': [metric.get('metric', 'Core Signal')],
+                'event_category': 'validation'
+            })
+        
+        # Assumption testing events
+        assumption_tests = framework.get('assumption_tests', [])
+        for i, test in enumerate(assumption_tests[:2]):
+            month = (i + 2) * (total_months // 5)
+            events.append({
+                'month': month,
+                'title': f"Assumption Test: {test.get('test_metric', 'Market Test')}",
+                'description': f"Testing assumption via {test.get('test_metric')} - Success: {test.get('success_threshold')}, Failure: {test.get('failure_threshold')}",
+                'impact_type': 'assumption_test',
+                'notification_triggered': True,
+                'signals_affected': [test.get('test_metric', 'Assumption Signal')],
+                'event_category': 'assumption'
+            })
+        
+        return events
+    
+    def _extract_alert_events(self, monitoring_plan: Dict, total_months: int) -> List[Dict]:
+        """Extract events from alert system"""
+        events = []
+        alert_system = monitoring_plan.get('alert_system', [])
+        
+        for i, alert in enumerate(alert_system[:3]):
+            month = (i + 1) * (total_months // 3)
+            severity_color = 'danger' if alert.get('severity') == 'high' else 'warning'
+            
+            events.append({
+                'month': month,
+                'title': f"Alert Triggered: {alert.get('trigger_name', 'Performance Alert')}",
+                'description': f"Condition: {alert.get('condition')} | Action: {alert.get('action')}",
+                'impact_type': severity_color,
+                'notification_triggered': True,
+                'signals_affected': [alert.get('trigger_name', 'Alert Signal')],
+                'event_category': 'alert'
+            })
+        
+        return events
+    
+    def _extract_decision_events(self, monitoring_plan: Dict, total_months: int) -> List[Dict]:
+        """Extract events from decision framework"""
+        events = []
+        decision_framework = monitoring_plan.get('decision_framework', [])
+        
+        for i, decision in enumerate(decision_framework[:2]):
+            month = (i + 1) * (total_months // 2)
+            action = decision.get('action', 'review')
+            impact_type = 'success' if action == 'buy' else 'danger' if action == 'sell' else 'warning'
+            
+            events.append({
+                'month': month,
+                'title': f"Decision Point: {decision.get('scenario', 'Performance Review')}",
+                'description': f"Condition: {decision.get('condition')} | Recommended Action: {action.upper()} | Confidence: {decision.get('confidence_threshold')}",
+                'impact_type': impact_type,
+                'notification_triggered': True,
+                'signals_affected': ['Decision Framework'],
+                'event_category': 'decision'
+            })
+        
+        return events
+    
+    def _extract_counter_thesis_events(self, monitoring_plan: Dict, total_months: int) -> List[Dict]:
+        """Extract events from counter-thesis monitoring"""
+        events = []
+        counter_monitoring = monitoring_plan.get('counter_thesis_monitoring', [])
+        
+        for i, risk in enumerate(counter_monitoring[:2]):
+            month = (total_months // 3) * (i + 2)  # Later in timeline
+            
+            events.append({
+                'month': month,
+                'title': f"Risk Monitor: {risk.get('risk_scenario', 'Counter-Thesis Risk')}",
+                'description': f"Early warning via {risk.get('early_warning_metric')} threshold {risk.get('threshold')} | Mitigation: {risk.get('mitigation_action')}",
+                'impact_type': 'warning',
+                'notification_triggered': True,
+                'signals_affected': [risk.get('early_warning_metric', 'Risk Signal')],
+                'event_category': 'risk'
+            })
+        
         return events
     
     def _extract_thesis_keywords(self, thesis) -> List[str]:

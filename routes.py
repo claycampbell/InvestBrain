@@ -927,13 +927,17 @@ def simulate_thesis(thesis_id):
         from services.ml_simulation_service import MLSimulationService
         sim_service = MLSimulationService()
         
-        # Generate LLM-driven simulation
+        # Get monitoring plan for thesis-specific events
+        monitoring_plan = thesis.monitoring_plan if hasattr(thesis, 'monitoring_plan') and thesis.monitoring_plan else None
+        
+        # Generate LLM-driven simulation with monitoring plan
         result = sim_service.generate_thesis_simulation(
             thesis=thesis,
             time_horizon=time_horizon,
             scenario=scenario,
             volatility=volatility,
-            include_events=include_events
+            include_events=include_events,
+            monitoring_plan=monitoring_plan
         )
         
         # Check if simulation returned an error due to missing Azure OpenAI credentials
