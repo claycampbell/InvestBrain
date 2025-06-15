@@ -631,16 +631,32 @@ JSON only:"""
             llm_events = llm_analysis.get('REALISTIC_EVENTS', [])
             
             for event_data in llm_events[:8]:  # Limit to 8 events
+                # Safe numeric conversion with intelligent parsing
+                def safe_float(value, default):
+                    try:
+                        if isinstance(value, (int, float)):
+                            return float(value)
+                        if isinstance(value, str):
+                            # Remove percentage signs and convert
+                            clean_value = value.strip().replace('%', '')
+                            # Handle common text values
+                            if clean_value.lower() in ['high', 'medium', 'low']:
+                                return {'high': 0.8, 'medium': 0.5, 'low': 0.2}[clean_value.lower()]
+                            return float(clean_value) / 100 if '%' in value else float(clean_value)
+                        return default
+                    except (ValueError, TypeError):
+                        return default
+                
                 event = {
-                    'timeline_position': float(event_data.get('timeline_position', 0.3)),
+                    'timeline_position': safe_float(event_data.get('timeline_position'), 0.3),
                     'title': str(event_data.get('title', 'Market Event')),
                     'description': str(event_data.get('description', 'Thesis-related event occurred')),
                     'impact_type': str(event_data.get('impact_type', 'neutral')),
-                    'impact_magnitude': float(event_data.get('impact_magnitude', 0.05)),
+                    'impact_magnitude': safe_float(event_data.get('impact_magnitude'), 0.05),
                     'data_source': str(event_data.get('data_source', 'LLM Analysis')),
                     'alert_priority': str(event_data.get('alert_priority', 'medium')),
-                    'triggered_value': float(event_data.get('triggered_value', 15.0)),
-                    'threshold_value': float(event_data.get('threshold_value', 12.0))
+                    'triggered_value': safe_float(event_data.get('triggered_value'), 15.0),
+                    'threshold_value': safe_float(event_data.get('threshold_value'), 12.0)
                 }
                 events.append(event)
                 
