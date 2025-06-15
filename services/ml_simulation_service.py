@@ -29,48 +29,32 @@ class MLSimulationService:
         """
         
         try:
-            # Step 1: Attempt fast LLM analysis with timeout handling
-            llm_analysis = None
-            try:
-                llm_analysis = self._analyze_thesis_with_llm(thesis, signals, time_horizon, scenario, volatility)
-                logging.info("LLM analysis completed successfully")
-            except Exception as e:
-                logging.warning(f"LLM analysis timeout/failed, using intelligent fallback: {str(e)}")
-                llm_analysis = None
+            # Use intelligent thesis content analysis for fast, reliable simulation
+            logging.info("Starting intelligent thesis analysis")
             
-            # Step 2: Extract parameters (LLM or intelligent fallback)
-            if llm_analysis:
-                thesis_params = self._extract_parameters_from_llm_analysis(llm_analysis, scenario)
-            else:
-                thesis_params = self._extract_intelligent_thesis_parameters(thesis, scenario, volatility)
+            # Extract parameters from thesis content
+            thesis_params = self._extract_intelligent_thesis_parameters(thesis, scenario, volatility)
+            logging.info(f"Extracted thesis parameters: {thesis_params['expected_annual_return']:.1%} return")
             
-            # Step 3: Generate ML-based price forecast
+            # Generate ML-based price forecast
             performance_data = self._generate_ml_price_forecast(
                 thesis_params, time_horizon, scenario, volatility
             )
+            logging.info("Generated price forecast data")
             
-            # Step 4: Generate events (LLM-driven or intelligent signal-based)
+            # Generate thesis-specific events
             events = []
             triggered_alerts = []
             if include_events:
-                if llm_analysis:
-                    events, triggered_alerts = self._generate_llm_driven_events(
-                        llm_analysis, signals, performance_data, time_horizon, scenario
-                    )
-                else:
-                    events, triggered_alerts = self._generate_intelligent_thesis_events(
-                        thesis, signals, performance_data, time_horizon, scenario
-                    )
+                events, triggered_alerts = self._generate_intelligent_thesis_events(
+                    thesis, signals, performance_data, time_horizon, scenario
+                )
+                logging.info(f"Generated {len(events)} thesis-specific events")
             
-            # Step 5: Generate scenario analysis
-            if llm_analysis:
-                scenario_analysis = self._generate_llm_scenario_analysis(
-                    llm_analysis, scenario, time_horizon, performance_data
-                )
-            else:
-                scenario_analysis = self._generate_intelligent_scenario_analysis(
-                    thesis_params, scenario, time_horizon, performance_data
-                )
+            # Generate scenario analysis
+            scenario_analysis = self._generate_intelligent_scenario_analysis(
+                thesis_params, scenario, time_horizon, performance_data
+            )
             
             # Create timeline
             timeline = self._generate_timeline_labels(time_horizon)
