@@ -516,44 +516,53 @@ Return JSON format:
         
         # Track simulated metric values throughout the period
         simulated_metrics = {}
+        events_generated = 0
         
         for signal in signals:
-            if not signal.threshold_value:
-                continue
+            if events_generated >= 6:  # Limit to 6 signal-based events
+                break
                 
             signal_name = signal.signal_name
-            threshold = float(signal.threshold_value)
+            threshold = float(signal.threshold_value or 10.0)  # Default threshold if none
             threshold_type = signal.threshold_type or 'above'
             signal_type = signal.signal_type
             
-            # Generate realistic metric progression based on signal type
-            metric_values = self._simulate_metric_progression(
-                signal, performance_data, total_days, scenario
+            # Generate realistic metric progression that will breach thresholds
+            metric_values = self._simulate_metric_progression_with_breach(
+                signal, performance_data, total_days, scenario, threshold, threshold_type
             )
             simulated_metrics[signal_name] = metric_values
             
-            # Check for threshold breaches
+            # Find threshold breach point
+            breach_day = None
+            breach_value = None
+            
             for day_idx, value in enumerate(metric_values):
                 if self._check_threshold_breach(value, threshold, threshold_type):
-                    # Calculate when this occurs in the timeline
-                    event_day = day_idx
-                    timeline_position = event_day / total_days
-                    
-                    # Create event based on signal
-                    event = self._create_signal_event(
-                        signal, value, threshold, timeline_position, scenario
-                    )
-                    
-                    # Create alert
-                    alert = self._create_signal_alert(
-                        signal, value, threshold, event_day
-                    )
-                    
-                    events.append(event)
-                    triggered_alerts.append(alert)
-                    
-                    # Only trigger once per signal to avoid spam
+                    breach_day = day_idx
+                    breach_value = value
                     break
+            
+            # If no natural breach, force one at a strategic time
+            if breach_day is None:
+                breach_day = min(int(total_days * (0.2 + events_generated * 0.15)), total_days - 1)
+                breach_value = threshold * (1.1 if threshold_type == 'above' else 0.9)
+            
+            timeline_position = breach_day / total_days
+            
+            # Create event based on signal
+            event = self._create_signal_event(
+                signal, breach_value, threshold, timeline_position, scenario
+            )
+            
+            # Create alert
+            alert = self._create_signal_alert(
+                signal, breach_value, threshold, breach_day
+            )
+            
+            events.append(event)
+            triggered_alerts.append(alert)
+            events_generated += 1
         
         # Add market correlation events based on performance
         correlation_events = self._generate_correlation_events(
@@ -564,8 +573,39 @@ Return JSON format:
         # Sort events by timeline position
         events.sort(key=lambda x: x.get('timeline_position', 0))
         
-        return events[:12], triggered_alerts  # Limit to 12 events for clarity
+        return events[:10], triggered_alerts  # Limit to 10 events for clarity
     
+    def _simulate_metric_progression_with_breach(self, signal, performance_data, total_days: int, 
+                                               scenario: str, threshold: float, threshold_type: str):
+        """
+        Simulate metric progression that will breach thresholds to generate events
+        """
+        signal_name = signal.signal_name.lower()
+        base_value = float(signal.current_value or 10.0)
+        
+        # Create realistic progression that will breach threshold
+        values = []
+        breach_target = int(total_days * 0.3)  # Breach around 30% into simulation
+        
+        for day in range(total_days):
+            if day < breach_target:
+                # Progress towards threshold
+                progress = day / breach_target
+                if threshold_type == 'above':
+                    value = base_value + (threshold - base_value) * progress * 0.9
+                else:  # below
+                    value = base_value - (base_value - threshold) * progress * 0.9
+            else:
+                # Breach threshold with some volatility
+                if threshold_type == 'above':
+                    value = threshold * (1.05 + np.random.normal(0, 0.02))
+                else:  # below
+                    value = threshold * (0.95 + np.random.normal(0, 0.02))
+                
+            values.append(max(value, 0.1))  # Ensure positive values
+            
+        return values
+
     def _simulate_metric_progression(self, signal, performance_data, total_days: int, scenario: str):
         """
         Simulate how a specific metric evolves over time based on market performance
