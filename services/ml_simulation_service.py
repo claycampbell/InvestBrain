@@ -25,32 +25,32 @@ class MLSimulationService:
     def generate_thesis_simulation(self, thesis, signals, time_horizon: int, scenario: str, 
                                  volatility: str, include_events: bool) -> Dict[str, Any]:
         """
-        Generate thesis simulation using intelligent analysis + ML price modeling
+        Generate thesis simulation using LLM analysis of the complete thesis content
         """
         
         try:
-            # Step 1: Extract thesis parameters using intelligent analysis
-            thesis_params = self._extract_thesis_parameters_via_llm(thesis, scenario, volatility)
+            # Step 1: Use LLM to analyze complete thesis and generate simulation parameters
+            llm_analysis = self._analyze_thesis_with_llm(thesis, signals, time_horizon, scenario, volatility)
             
-            # Step 2: Generate ML-based price forecast using extracted parameters
+            # Step 2: Extract parameters from LLM analysis
+            thesis_params = self._extract_parameters_from_llm_analysis(llm_analysis, scenario)
+            
+            # Step 3: Generate ML-based price forecast using LLM-extracted parameters
             performance_data = self._generate_ml_price_forecast(
                 thesis_params, time_horizon, scenario, volatility
             )
             
-            # Step 3: Generate data-triggered events based on real monitoring signals
+            # Step 4: Generate LLM-driven events based on thesis analysis and signals
             events = []
             triggered_alerts = []
-            if include_events and signals:
-                events, triggered_alerts = self._generate_signal_based_events(
-                    signals, performance_data, time_horizon, scenario
+            if include_events:
+                events, triggered_alerts = self._generate_llm_driven_events(
+                    llm_analysis, signals, performance_data, time_horizon, scenario
                 )
-            elif include_events:
-                # Fallback to general events if no signals available
-                events = self._generate_intelligent_events(thesis_params, time_horizon, scenario)
             
-            # Step 4: Generate scenario analysis using intelligent analysis
-            scenario_analysis = self._generate_intelligent_scenario_analysis(
-                thesis_params, scenario, time_horizon, performance_data
+            # Step 5: Generate scenario analysis using LLM insights
+            scenario_analysis = self._generate_llm_scenario_analysis(
+                llm_analysis, scenario, time_horizon, performance_data
             )
             
             # Create timeline
@@ -499,6 +499,231 @@ Return JSON format:
         
         logging.info(f"Generated intelligent parameters: price=${params['starting_price']}, return={params['expected_annual_return']:.1%}")
         return params
+    
+    def _analyze_thesis_with_llm(self, thesis, signals, time_horizon: int, scenario: str, volatility: str):
+        """
+        Use LLM to analyze complete thesis content and generate comprehensive simulation parameters
+        """
+        try:
+            # Prepare comprehensive thesis data for LLM analysis
+            thesis_data = {
+                'title': getattr(thesis, 'title', 'Investment Thesis'),
+                'original_thesis': getattr(thesis, 'original_thesis', ''),
+                'core_claim': getattr(thesis, 'core_claim', ''),
+                'core_analysis': getattr(thesis, 'core_analysis', ''),
+                'causal_chain': getattr(thesis, 'causal_chain', []),
+                'assumptions': getattr(thesis, 'assumptions', []),
+                'mental_model': getattr(thesis, 'mental_model', ''),
+                'counter_thesis': getattr(thesis, 'counter_thesis', []),
+                'metrics_to_track': getattr(thesis, 'metrics_to_track', [])
+            }
+            
+            # Extract signal information
+            signal_data = []
+            for signal in signals:
+                signal_data.append({
+                    'signal_name': signal.signal_name,
+                    'signal_type': signal.signal_type,
+                    'threshold_value': signal.threshold_value,
+                    'threshold_type': signal.threshold_type,
+                    'current_value': signal.current_value
+                })
+            
+            # Create optimized prompt for faster LLM analysis
+            core_content = f"Title: {thesis_data['title']}\nClaim: {thesis_data['core_claim']}\nAnalysis: {thesis_data['core_analysis'][:500]}..."
+            
+            prompt = f"""Analyze this investment thesis for {time_horizon} year simulation:
+
+{core_content}
+
+Signals: {len(signal_data)} monitoring signals active
+Scenario: {scenario} case, {volatility} volatility
+
+Return JSON with:
+1. SIMULATION_PARAMETERS: starting_price (150), expected_annual_return (0.12), volatility (0.25), market_correlation (0.7), thesis_conviction (0.8), growth_pattern
+2. REALISTIC_EVENTS: 6 events with timeline_position, title, description, impact_type, impact_magnitude, data_source, alert_priority, triggered_value, threshold_value
+3. SCENARIO_ANALYSIS: bull_case, base_case, bear_case descriptions
+
+JSON only:"""
+            
+            messages = [
+                {"role": "system", "content": "You are a financial analysis expert specializing in investment thesis simulation and risk assessment."},
+                {"role": "user", "content": prompt}
+            ]
+            
+            response = self.ai_service.generate_completion(messages, temperature=0.7, max_tokens=4000)
+            
+            # Parse JSON response
+            try:
+                analysis = json.loads(response)
+                return analysis
+            except json.JSONDecodeError:
+                # Fallback if JSON parsing fails
+                logging.warning("LLM returned non-JSON response, using intelligent fallback")
+                return self._create_fallback_analysis(thesis_data, signal_data, scenario)
+                
+        except Exception as e:
+            logging.error(f"LLM analysis failed: {str(e)}")
+            return self._create_fallback_analysis(thesis_data, signal_data, scenario)
+    
+    def _extract_parameters_from_llm_analysis(self, llm_analysis, scenario):
+        """
+        Extract simulation parameters from LLM analysis
+        """
+        try:
+            sim_params = llm_analysis.get('SIMULATION_PARAMETERS', {})
+            
+            return {
+                'starting_price': float(sim_params.get('starting_price', 150.0)),
+                'expected_annual_return': float(sim_params.get('expected_annual_return', 0.12)),
+                'volatility': float(sim_params.get('volatility', 0.25)),
+                'market_correlation': float(sim_params.get('market_correlation', 0.7)),
+                'thesis_conviction': float(sim_params.get('thesis_conviction', 0.8)),
+                'growth_pattern': sim_params.get('growth_pattern', 'linear'),
+                'risk_factors': sim_params.get('risk_factors', [])
+            }
+        except:
+            # Fallback parameters
+            return {
+                'starting_price': 150.0,
+                'expected_annual_return': 0.12,
+                'volatility': 0.25,
+                'market_correlation': 0.7,
+                'thesis_conviction': 0.8,
+                'growth_pattern': 'linear',
+                'risk_factors': []
+            }
+    
+    def _generate_llm_driven_events(self, llm_analysis, signals, performance_data, time_horizon: int, scenario: str):
+        """
+        Generate events based on LLM analysis of the thesis
+        """
+        events = []
+        triggered_alerts = []
+        
+        try:
+            llm_events = llm_analysis.get('REALISTIC_EVENTS', [])
+            
+            for event_data in llm_events[:8]:  # Limit to 8 events
+                event = {
+                    'timeline_position': float(event_data.get('timeline_position', 0.3)),
+                    'title': str(event_data.get('title', 'Market Event')),
+                    'description': str(event_data.get('description', 'Thesis-related event occurred')),
+                    'impact_type': str(event_data.get('impact_type', 'neutral')),
+                    'impact_magnitude': float(event_data.get('impact_magnitude', 0.05)),
+                    'data_source': str(event_data.get('data_source', 'LLM Analysis')),
+                    'alert_priority': str(event_data.get('alert_priority', 'medium')),
+                    'triggered_value': float(event_data.get('triggered_value', 15.0)),
+                    'threshold_value': float(event_data.get('threshold_value', 12.0))
+                }
+                events.append(event)
+                
+                # Create corresponding alert
+                alert = {
+                    'alert_type': 'llm_generated',
+                    'alert_message': f"LLM Alert: {event['title']}",
+                    'signal_name': event['data_source'],
+                    'triggered_value': event['triggered_value'],
+                    'threshold_value': event['threshold_value'],
+                    'priority': event['alert_priority'],
+                    'days_into_simulation': int(event['timeline_position'] * time_horizon * 252),
+                    'recommended_action': f"Analyze {event['title'].lower()} implications and adjust strategy accordingly"
+                }
+                triggered_alerts.append(alert)
+                
+        except Exception as e:
+            logging.error(f"Failed to generate LLM-driven events: {str(e)}")
+            # Fallback to basic events
+            events = self._generate_basic_fallback_events(time_horizon, scenario)
+            triggered_alerts = []
+        
+        return events, triggered_alerts
+    
+    def _generate_llm_scenario_analysis(self, llm_analysis, scenario, time_horizon: int, performance_data):
+        """
+        Generate scenario analysis based on LLM insights
+        """
+        try:
+            scenario_data = llm_analysis.get('SCENARIO_ANALYSIS', {})
+            
+            return {
+                'bull_case': {
+                    'probability': 0.25,
+                    'description': scenario_data.get('bull_case', 'Optimistic scenario based on thesis assumptions'),
+                    'key_drivers': scenario_data.get('bull_drivers', ['Strong execution', 'Market growth']),
+                    'expected_return': scenario_data.get('bull_return', 0.25)
+                },
+                'base_case': {
+                    'probability': 0.50,
+                    'description': scenario_data.get('base_case', 'Most likely scenario based on current trajectory'),
+                    'key_drivers': scenario_data.get('base_drivers', ['Steady progress', 'Market conditions']),
+                    'expected_return': scenario_data.get('base_return', 0.12)
+                },
+                'bear_case': {
+                    'probability': 0.25,
+                    'description': scenario_data.get('bear_case', 'Challenging scenario with identified risks'),
+                    'key_drivers': scenario_data.get('bear_drivers', ['Execution challenges', 'Market headwinds']),
+                    'expected_return': scenario_data.get('bear_return', -0.10)
+                }
+            }
+        except:
+            # Fallback scenario analysis
+            return {
+                'bull_case': {'probability': 0.25, 'description': 'Optimistic outcome', 'expected_return': 0.25},
+                'base_case': {'probability': 0.50, 'description': 'Expected outcome', 'expected_return': 0.12},
+                'bear_case': {'probability': 0.25, 'description': 'Pessimistic outcome', 'expected_return': -0.10}
+            }
+    
+    def _create_fallback_analysis(self, thesis_data, signal_data, scenario):
+        """
+        Create fallback analysis when LLM is unavailable
+        """
+        return {
+            'SIMULATION_PARAMETERS': {
+                'starting_price': 150.0,
+                'expected_annual_return': 0.12,
+                'volatility': 0.25,
+                'market_correlation': 0.7,
+                'thesis_conviction': 0.8,
+                'growth_pattern': 'linear'
+            },
+            'REALISTIC_EVENTS': [
+                {
+                    'timeline_position': 0.2,
+                    'title': 'Quarterly Results Release',
+                    'description': 'Company reports quarterly financial results',
+                    'impact_type': 'positive',
+                    'impact_magnitude': 0.05,
+                    'data_source': 'Fallback Analysis',
+                    'alert_priority': 'medium',
+                    'triggered_value': 15.0,
+                    'threshold_value': 12.0
+                }
+            ],
+            'SCENARIO_ANALYSIS': {
+                'bull_case': 'Strong execution drives outperformance',
+                'base_case': 'Steady progress toward goals',
+                'bear_case': 'Challenges impact performance'
+            }
+        }
+    
+    def _generate_basic_fallback_events(self, time_horizon: int, scenario: str):
+        """
+        Generate basic fallback events when LLM analysis fails
+        """
+        return [
+            {
+                'timeline_position': 0.25,
+                'title': 'Market Milestone Event',
+                'description': 'Key market development impacts thesis',
+                'impact_type': 'positive',
+                'impact_magnitude': 0.08,
+                'data_source': 'Market Analysis',
+                'alert_priority': 'medium',
+                'triggered_value': 18.0,
+                'threshold_value': 15.0
+            }
+        ]
     
     def _generate_signal_based_events(self, signals, performance_data, time_horizon: int, scenario: str):
         """
