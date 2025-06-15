@@ -25,8 +25,8 @@ class AzureOpenAIService:
                 api_key=api_key,
                 api_version=api_version,
                 azure_endpoint=endpoint,
-                timeout=30,  # Reduced timeout for faster response
-                max_retries=1
+                timeout=60,
+                max_retries=0
             )
             
             logging.info("Azure OpenAI client initialized successfully")

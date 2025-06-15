@@ -558,27 +558,20 @@
     }
 
     function displaySimulationResults(data) {
-        // Ultimate safety wrapper to prevent any undefined property access
-        const safeData = data || {};
-        const safeChartData = safeData.chart_data || {};
-        const safePerformanceData = safeChartData.performance_data || {};
-        const safeEvents = safeData.events || [];
+        document.getElementById('simulationEmpty').classList.add('d-none');
+        document.getElementById('simulationResults').classList.remove('d-none');
+
+        // Create or update chart
+        const ctx = document.getElementById('simulationChart');
         
-        try {
-            document.getElementById('simulationEmpty').classList.add('d-none');
-            document.getElementById('simulationResults').classList.remove('d-none');
+        if (simulationChart) {
+            simulationChart.destroy();
+        }
 
-            // Create or update chart
-            const ctx = document.getElementById('simulationChart');
-            
-            if (simulationChart) {
-                simulationChart.destroy();
-            }
-
-        // Extract chart data using safe wrappers
-        const chartData = safeChartData;
-        const performanceData = safePerformanceData;
-        const timeline = safeChartData.timeline || [];
+        // Extract chart data from nested structure
+        const chartData = data.chart_data || data;
+        const performanceData = chartData.performance_data || data.performance_data || [];
+        const timeline = chartData.timeline || data.timeline || [];
         
         console.log('Chart data structure:', {
             hasChartData: !!data.chart_data,
@@ -599,49 +592,32 @@
             return date.getTime();
         });
         
-        try {
-            if (performanceData.market_performance && performanceData.thesis_performance) {
-                // Ensure data arrays have matching lengths
-                const minLength = Math.min(
-                    performanceData.market_performance.length,
-                    performanceData.thesis_performance.length,
-                    timelineData.length
-                );
-                
-                series.push({
-                    name: 'Market Performance',
-                    data: performanceData.market_performance.slice(0, minLength).map((value, index) => [
-                        timelineData[index],
-                        typeof value === 'number' ? value : 100
-                    ])
-                });
-                
-                series.push({
-                    name: 'Thesis Performance', 
-                    data: performanceData.thesis_performance.slice(0, minLength).map((value, index) => [
-                        timelineData[index],
-                        typeof value === 'number' ? value : 100
-                    ])
-                });
-            } else {
-                // Single series with validated data
-                const singleData = Array.isArray(performanceData) ? performanceData : [100, 105, 110, 108, 112];
-                const validData = singleData.slice(0, Math.min(singleData.length, timelineData.length));
-                
-                series.push({
-                    name: 'Performance Index',
-                    data: validData.map((value, index) => [
-                        timelineData[index] || Date.now() + (index * 86400000),
-                        typeof value === 'number' ? value : 100
-                    ])
-                });
-            }
-        } catch (seriesError) {
-            console.error('Series data preparation error:', seriesError);
-            // Safe fallback series
+        if (performanceData.market_performance && performanceData.thesis_performance) {
+            // Two-series visualization: Market vs Thesis
             series.push({
-                name: 'Performance',
-                data: [[Date.now(), 100], [Date.now() + 86400000, 105], [Date.now() + 172800000, 110]]
+                name: 'Market Performance',
+                data: performanceData.market_performance.map((value, index) => [
+                    timelineData[index],
+                    value
+                ])
+            });
+            
+            series.push({
+                name: 'Thesis Performance', 
+                data: performanceData.thesis_performance.map((value, index) => [
+                    timelineData[index],
+                    value
+                ])
+            });
+        } else {
+            // Single series fallback
+            const singleData = Array.isArray(performanceData) ? performanceData : [];
+            series.push({
+                name: data.chart_config?.primary_metric || 'Performance Index',
+                data: singleData.map((value, index) => [
+                    timelineData[index],
+                    value
+                ])
             });
         }
 
@@ -650,77 +626,44 @@
             xaxis: []
         };
         
-        console.log('Event data received:', safeEvents);
+        console.log('Event data received:', data.events);
         
-        // Complete error prevention wrapper
-        try {
-            if (safeEvents && safeEvents.length > 0) {
-            safeEvents.forEach((rawEvent, index) => {
-                // Bulletproof event handling to prevent any property access errors
-                let event;
-                try {
-                    console.log(`Processing event ${index}:`, rawEvent);
-                    event = {
-                        title: (rawEvent && rawEvent.title && typeof rawEvent.title === 'string') ? rawEvent.title : `Event ${index + 1}`,
-                        impact_type: (rawEvent && rawEvent.impact_type && typeof rawEvent.impact_type === 'string') ? rawEvent.impact_type : 'neutral',
-                        month: (rawEvent && typeof rawEvent.month === 'number') ? rawEvent.month : null
-                    };
-                    console.log(`Safe event ${index} created:`, event);
-                } catch (e) {
-                    console.error(`Error processing event ${index}:`, e);
-                    // Fallback for any errors
-                    event = {
-                        title: `Event ${index + 1}`,
-                        impact_type: 'neutral',
-                        month: null
-                    };
-                }
-                
+        if (data.events && data.events.length > 0) {
+            data.events.forEach((event, index) => {
                 const monthIndex = event.month ? Math.min(event.month - 1, timeline.length - 1) : 
-                                 Math.floor(index * timeline.length / Math.max(1, safeEvents.length));
+                                 Math.floor(index * timeline.length / data.events.length);
                 const validIndex = Math.max(0, Math.min(monthIndex, timeline.length - 1));
                 
-                const safeTitle = event && event.title && event.title.length > 20 ? event.title.substring(0, 20) + '...' : (event && event.title) || 'Event';
-                
-                // Final safety check before adding annotation
-                if (event && timelineData && timelineData[validIndex] && safeTitle) {
-                    const impactColor = (event.impact_type === 'positive') ? '#10b981' : '#ef4444';
-                    annotations.xaxis.push({
-                        x: timelineData[validIndex],
-                        borderColor: impactColor,
-                        label: {
-                            borderColor: impactColor,
-                            style: {
-                                color: '#fff',
-                                background: impactColor,
-                                fontSize: '11px'
-                            },
-                            text: safeTitle,
-                            orientation: 'horizontal'
-                        }
-                    });
-                }
+                annotations.xaxis.push({
+                    x: timelineData[validIndex],
+                    borderColor: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
+                    label: {
+                        borderColor: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
+                        style: {
+                            color: '#fff',
+                            background: event.impact_type === 'positive' ? '#10b981' : '#ef4444',
+                            fontSize: '11px'
+                        },
+                        text: event.title.length > 20 ? event.title.substring(0, 20) + '...' : event.title,
+                        orientation: 'horizontal'
+                    }
+                });
             });
-            }
-        } catch (error) {
-            console.error('Event processing error (likely titlle typo):', error);
-            // Fallback: Create empty annotations to prevent chart errors
-            annotations.xaxis = [];
         }
 
-        // Create ApexCharts configuration with validated data
+        // Create ApexCharts configuration
         const chartOptions = {
-            series: series.length > 0 ? series : [{
-                name: 'Performance',
-                data: [[Date.now(), 100], [Date.now() + 86400000, 105]]
-            }],
+            series: series,
             chart: {
-                type: 'line',
+                type: 'area',
                 height: 400,
-                zoom: { enabled: true },
-                toolbar: { show: true },
-                animations: { enabled: false },
-                background: 'transparent'
+                zoom: {
+                    enabled: true,
+                    autoScaleYaxis: true
+                },
+                toolbar: {
+                    show: true
+                }
             },
             dataLabels: {
                 enabled: false
@@ -752,7 +695,7 @@
             },
             yaxis: {
                 title: {
-                    text: (data.chart_config && data.chart_config.y_axis_label) || 'Cumulative Performance (%)'
+                    text: data.chart_config.y_axis_label || 'Cumulative Performance (%)'
                 }
             },
             legend: {
@@ -784,43 +727,8 @@
             }
         };
 
-        // Validate chart configuration before rendering
-        console.log('Final chart options:', JSON.stringify(chartOptions, null, 2));
-        
-        if (chartOptions && chartOptions.series && chartOptions.series.length > 0) {
-            try {
-                // Validate DOM element exists
-                if (!ctx) {
-                    throw new Error('Chart container element not found');
-                }
-                
-                // Validate series data structure
-                const validSeries = chartOptions.series.every(series => 
-                    series.data && Array.isArray(series.data) && series.data.length > 0
-                );
-                
-                if (!validSeries) {
-                    throw new Error('Invalid series data structure');
-                }
-                
-                simulationChart = new ApexCharts(ctx, chartOptions);
-                simulationChart.render();
-                
-            } catch (initError) {
-                console.error('Chart initialization failed:', initError.message);
-                throw initError;
-            }
-        } else {
-            // Fallback chart with basic data
-            const fallbackOptions = {
-                chart: { type: 'line', height: 400 },
-                series: [{ name: 'Performance', data: [100, 105, 110, 108, 112] }],
-                xaxis: { categories: ['Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5'] },
-                title: { text: 'Simulation Results' }
-            };
-            simulationChart = new ApexCharts(ctx, fallbackOptions);
-            simulationChart.render();
-        }
+        simulationChart = new ApexCharts(ctx, chartOptions);
+        simulationChart.render();
 
         // Generate signal-specific charts
         generateSignalCharts(data, timelineData);
@@ -832,68 +740,13 @@
         } else {
             document.getElementById('eventTimeline').classList.add('d-none');
         }
-        
-        } catch (error) {
-            console.error('Chart rendering error details:', error.message, error.stack);
-            // Create a simple visualization instead of fallback message
-            const ctx = document.getElementById('simulationChart');
-            ctx.innerHTML = `
-                <div class="text-center p-4">
-                    <h5>Simulation Results</h5>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h6 class="card-title">Performance Summary</h6>
-                                    <p>Expected Return: 12.0%</p>
-                                    <p>Risk Level: Medium</p>
-                                    <p>Time Horizon: 1 Year</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h6 class="card-title">Events Generated</h6>
-                                    <p>Total Events: ${data.events ? data.events.length : 0}</p>
-                                    <p>Risk Events: ${data.events ? data.events.filter(e => e.impact_type === 'negative').length : 0}</p>
-                                    <p>Positive Events: ${data.events ? data.events.filter(e => e.impact_type === 'positive').length : 0}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('simulationResults').classList.remove('d-none');
-        }
     }
 
     function displayEventTimeline(events) {
         const eventList = document.getElementById('eventList');
         eventList.innerHTML = '';
 
-        events.forEach((rawEvent, index) => {
-            // Bulletproof event handling for timeline display
-            let event;
-            try {
-                event = {
-                    title: (rawEvent && rawEvent.title && typeof rawEvent.title === 'string') ? rawEvent.title : `Event ${index + 1}`,
-                    description: (rawEvent && rawEvent.description && typeof rawEvent.description === 'string') ? rawEvent.description : 'No description available',
-                    impact_type: (rawEvent && rawEvent.impact_type && typeof rawEvent.impact_type === 'string') ? rawEvent.impact_type : 'neutral',
-                    date: (rawEvent && rawEvent.date && typeof rawEvent.date === 'string') ? rawEvent.date : 'Date not available',
-                    notification_triggered: Boolean(rawEvent && rawEvent.notification_triggered)
-                };
-            } catch (e) {
-                // Complete fallback for any errors
-                event = {
-                    title: `Event ${index + 1}`,
-                    description: 'Event data unavailable',
-                    impact_type: 'neutral',
-                    date: 'Date not available',
-                    notification_triggered: false
-                };
-            }
-            
+        events.forEach((event, index) => {
             const eventCard = document.createElement('div');
             eventCard.className = 'card mb-3 border-left-warning';
             
@@ -930,9 +783,9 @@
                     <div class="mt-3 border-top pt-2">
                         <small class="text-muted"><strong>Recommended Actions:</strong></small>
                         <div class="mt-1">
-                            ${event ? generateRecommendedActions(event).map(action => 
+                            ${generateRecommendedActions(event).map(action => 
                                 `<div class="small mb-1"><i class="fas fa-arrow-right text-primary me-1"></i> ${action}</div>`
-                            ).join('') : '<div class="small text-muted">No recommendations available</div>'}
+                            ).join('')}
                         </div>
                     </div>
                 </div>
@@ -1081,24 +934,8 @@
         return data;
     }
 
-    function generateRecommendedActions(rawEvent) {
+    function generateRecommendedActions(event) {
         const actions = [];
-        
-        // Bulletproof event handling to prevent any property access errors
-        let event;
-        try {
-            event = {
-                title: (rawEvent && rawEvent.title && typeof rawEvent.title === 'string') ? rawEvent.title : '',
-                impact_type: (rawEvent && rawEvent.impact_type && typeof rawEvent.impact_type === 'string') ? rawEvent.impact_type : 'neutral',
-                signals_affected: rawEvent && rawEvent.signals_affected ? rawEvent.signals_affected : []
-            };
-        } catch (e) {
-            event = {
-                title: '',
-                impact_type: 'neutral',
-                signals_affected: []
-            };
-        }
         
         // Base actions based on impact type
         if (event.impact_type === 'positive') {
@@ -1129,7 +966,7 @@
         }
         
         // Event-specific actions based on title keywords
-        const title = (event && event.title || '').toLowerCase();
+        const title = event.title.toLowerCase();
         if (title.includes('earnings') || title.includes('revenue')) {
             actions.push('Compare guidance vs street expectations');
         } else if (title.includes('margin') || title.includes('cost')) {
