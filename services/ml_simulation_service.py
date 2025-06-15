@@ -25,33 +25,52 @@ class MLSimulationService:
     def generate_thesis_simulation(self, thesis, signals, time_horizon: int, scenario: str, 
                                  volatility: str, include_events: bool) -> Dict[str, Any]:
         """
-        Generate thesis simulation using LLM analysis of the complete thesis content
+        Generate thesis simulation using hybrid LLM + intelligent fallback approach
         """
         
         try:
-            # Step 1: Use LLM to analyze complete thesis and generate simulation parameters
-            llm_analysis = self._analyze_thesis_with_llm(thesis, signals, time_horizon, scenario, volatility)
+            # Step 1: Attempt fast LLM analysis with timeout handling
+            llm_analysis = None
+            try:
+                llm_analysis = self._analyze_thesis_with_llm(thesis, signals, time_horizon, scenario, volatility)
+                logging.info("LLM analysis completed successfully")
+            except Exception as e:
+                logging.warning(f"LLM analysis timeout/failed, using intelligent fallback: {str(e)}")
+                llm_analysis = None
             
-            # Step 2: Extract parameters from LLM analysis
-            thesis_params = self._extract_parameters_from_llm_analysis(llm_analysis, scenario)
+            # Step 2: Extract parameters (LLM or intelligent fallback)
+            if llm_analysis:
+                thesis_params = self._extract_parameters_from_llm_analysis(llm_analysis, scenario)
+            else:
+                thesis_params = self._extract_intelligent_thesis_parameters(thesis, scenario, volatility)
             
-            # Step 3: Generate ML-based price forecast using LLM-extracted parameters
+            # Step 3: Generate ML-based price forecast
             performance_data = self._generate_ml_price_forecast(
                 thesis_params, time_horizon, scenario, volatility
             )
             
-            # Step 4: Generate LLM-driven events based on thesis analysis and signals
+            # Step 4: Generate events (LLM-driven or intelligent signal-based)
             events = []
             triggered_alerts = []
             if include_events:
-                events, triggered_alerts = self._generate_llm_driven_events(
-                    llm_analysis, signals, performance_data, time_horizon, scenario
-                )
+                if llm_analysis:
+                    events, triggered_alerts = self._generate_llm_driven_events(
+                        llm_analysis, signals, performance_data, time_horizon, scenario
+                    )
+                else:
+                    events, triggered_alerts = self._generate_intelligent_thesis_events(
+                        thesis, signals, performance_data, time_horizon, scenario
+                    )
             
-            # Step 5: Generate scenario analysis using LLM insights
-            scenario_analysis = self._generate_llm_scenario_analysis(
-                llm_analysis, scenario, time_horizon, performance_data
-            )
+            # Step 5: Generate scenario analysis
+            if llm_analysis:
+                scenario_analysis = self._generate_llm_scenario_analysis(
+                    llm_analysis, scenario, time_horizon, performance_data
+                )
+            else:
+                scenario_analysis = self._generate_intelligent_scenario_analysis(
+                    thesis_params, scenario, time_horizon, performance_data
+                )
             
             # Create timeline
             timeline = self._generate_timeline_labels(time_horizon)
@@ -144,7 +163,7 @@ Return JSON:
         # Extract parameters
         starting_price = params['starting_price']
         annual_return = params['expected_annual_return']
-        daily_vol = params['daily_volatility']
+        daily_vol = params.get('daily_volatility', params.get('volatility', 0.25))
         market_corr = params['market_correlation']
         
         # Adjust parameters based on scenario
@@ -551,7 +570,7 @@ JSON only:"""
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.ai_service.generate_completion(messages, temperature=0.7, max_tokens=4000)
+            response = self.ai_service.generate_completion(messages, temperature=0.7, max_tokens=2000)
             
             # Parse JSON response
             try:
@@ -564,7 +583,14 @@ JSON only:"""
                 
         except Exception as e:
             logging.error(f"LLM analysis failed: {str(e)}")
-            return self._create_fallback_analysis(thesis_data, signal_data, scenario)
+            # Create fallback using available data
+            fallback_thesis = {
+                'title': getattr(thesis, 'title', 'Investment Thesis'),
+                'core_claim': getattr(thesis, 'core_claim', ''),
+                'core_analysis': getattr(thesis, 'core_analysis', '')
+            }
+            fallback_signals = [{'signal_name': s.signal_name, 'signal_type': s.signal_type} for s in signals]
+            return self._create_fallback_analysis(fallback_thesis, fallback_signals, scenario)
     
     def _extract_parameters_from_llm_analysis(self, llm_analysis, scenario):
         """
@@ -724,6 +750,130 @@ JSON only:"""
                 'threshold_value': 15.0
             }
         ]
+    
+    def _extract_intelligent_thesis_parameters(self, thesis, scenario: str, volatility: str):
+        """
+        Extract intelligent parameters by analyzing thesis content without LLM
+        """
+        title = getattr(thesis, 'title', '')
+        core_claim = getattr(thesis, 'core_claim', '')
+        core_analysis = getattr(thesis, 'core_analysis', '')
+        mental_model = getattr(thesis, 'mental_model', '')
+        
+        # Analyze thesis content for key indicators
+        thesis_text = f"{title} {core_claim} {core_analysis} {mental_model}".lower()
+        
+        # Determine expected return based on thesis confidence and content
+        if 'high growth' in thesis_text or 'disruptive' in thesis_text or 'innovation' in thesis_text:
+            base_return = 0.18
+        elif 'stable' in thesis_text or 'dividend' in thesis_text or 'mature' in thesis_text:
+            base_return = 0.08
+        else:
+            base_return = 0.12
+            
+        # Adjust for scenario
+        scenario_multiplier = {'bull': 1.5, 'base': 1.0, 'bear': 0.3}.get(scenario, 1.0)
+        expected_return = base_return * scenario_multiplier
+        
+        # Determine volatility based on content
+        if 'volatile' in thesis_text or 'risky' in thesis_text or 'startup' in thesis_text:
+            vol = 0.35
+        elif 'stable' in thesis_text or 'established' in thesis_text:
+            vol = 0.18
+        else:
+            vol = 0.25
+            
+        # Determine conviction based on analysis depth
+        conviction = min(0.9, 0.5 + len(core_analysis) / 1000)
+        
+        return {
+            'starting_price': 150.0,
+            'expected_annual_return': expected_return,
+            'volatility': vol,
+            'market_correlation': 0.7,
+            'thesis_conviction': conviction,
+            'growth_pattern': 'exponential' if 'growth' in thesis_text else 'linear',
+            'risk_factors': self._extract_risk_factors(thesis_text)
+        }
+    
+    def _generate_intelligent_thesis_events(self, thesis, signals, performance_data, time_horizon: int, scenario: str):
+        """
+        Generate thesis-specific events by analyzing actual thesis content and signals
+        """
+        events = []
+        triggered_alerts = []
+        
+        title = getattr(thesis, 'title', '')
+        core_claim = getattr(thesis, 'core_claim', '')
+        assumptions = getattr(thesis, 'assumptions', [])
+        counter_thesis = getattr(thesis, 'counter_thesis', [])
+        
+        # Generate events based on actual thesis assumptions
+        event_templates = []
+        
+        # Events from assumptions
+        if isinstance(assumptions, list):
+            for i, assumption in enumerate(assumptions[:3]):
+                if isinstance(assumption, dict) and 'assumption' in assumption:
+                    event_templates.append({
+                        'title': f"Assumption Validation: {assumption['assumption'][:50]}...",
+                        'description': f"Market data validates key assumption: {assumption['assumption']}",
+                        'timeline_position': 0.2 + i * 0.2,
+                        'impact_type': 'positive',
+                        'source': 'Thesis Assumptions'
+                    })
+        
+        # Events from counter-thesis risks
+        if isinstance(counter_thesis, list):
+            for i, counter in enumerate(counter_thesis[:2]):
+                if isinstance(counter, dict) and 'scenario' in counter:
+                    event_templates.append({
+                        'title': f"Risk Materialization: {counter['scenario'][:50]}...",
+                        'description': f"Counter-thesis risk partially materializes: {counter['scenario']}",
+                        'timeline_position': 0.4 + i * 0.3,
+                        'impact_type': 'negative',
+                        'source': 'Counter-Thesis Analysis'
+                    })
+        
+        # Events from monitoring signals
+        for i, signal in enumerate(signals[:3]):
+            event_templates.append({
+                'title': f"{signal.signal_name} Threshold Breach",
+                'description': f"Monitoring signal {signal.signal_name} breaches threshold, validating thesis direction",
+                'timeline_position': 0.15 + i * 0.25,
+                'impact_type': 'positive' if signal.threshold_type == 'above' else 'neutral',
+                'source': f"Signal: {signal.signal_name}"
+            })
+        
+        # Convert templates to full events
+        for template in event_templates[:8]:
+            event = {
+                'timeline_position': template['timeline_position'],
+                'title': template['title'],
+                'description': template['description'],
+                'impact_type': template['impact_type'],
+                'impact_magnitude': 0.06 if template['impact_type'] == 'positive' else 0.04,
+                'data_source': template['source'],
+                'alert_priority': 'high' if 'risk' in template['title'].lower() else 'medium',
+                'triggered_value': 16.0,
+                'threshold_value': 15.0
+            }
+            events.append(event)
+            
+            # Create corresponding alert
+            alert = {
+                'alert_type': 'thesis_derived',
+                'alert_message': f"Thesis Event: {event['title']}",
+                'signal_name': event['data_source'],
+                'triggered_value': event['triggered_value'],
+                'threshold_value': event['threshold_value'],
+                'priority': event['alert_priority'],
+                'days_into_simulation': int(event['timeline_position'] * time_horizon * 252),
+                'recommended_action': f"Review {event['title'].lower()} and adjust monitoring focus"
+            }
+            triggered_alerts.append(alert)
+        
+        return events, triggered_alerts
     
     def _generate_signal_based_events(self, signals, performance_data, time_horizon: int, scenario: str):
         """
