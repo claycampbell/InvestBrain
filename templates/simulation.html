@@ -23,7 +23,7 @@
         <div class="col-12">
             <div class="card border-primary">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-bullseye"></i> {{ thesis.title }}</h5>
+                    <h5 class="mb-0"><i class="fas fa-bullseye"></i> {{ thesis.title if thesis.title else 'Investment Thesis Analysis' }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -270,58 +270,94 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function displaySimulationResults(data, type) {
-        console.log('Step 1: displaySimulationResults called with data:', data);
-        console.log('Step 2: Events in data:', data.events);
-        
-        const resultsDiv = document.getElementById('simulationResults');
-        const contentDiv = document.getElementById('resultsContent');
-        
-        if (data.error) {
-            console.log('Step 3: Error display mode');
-            contentDiv.innerHTML = generateErrorDisplay(data);
-        } else {
-            console.log('Step 4: Success display mode');
-            try {
-                contentDiv.innerHTML = generateLLMSimulationResults(data, type);
-                console.log('Step 5: HTML generated successfully');
-                
-                // Render performance chart if data available
-                if (data.chart_data && data.chart_data.performance_data) {
-                    console.log('Step 6: About to render chart with events:', data.events);
-                    renderPerformanceChart(data.chart_data, data.events || []);
-                } else {
-                    console.log('Step 6: No chart data available');
-                }
-            } catch (error) {
-                console.error('Step 5 ERROR: Failed to generate results HTML:', error);
-                contentDiv.innerHTML = '<div class="alert alert-danger">Error displaying results</div>';
+        try {
+            console.log('SAFE: Starting displaySimulationResults');
+            
+            const resultsDiv = document.getElementById('simulationResults');
+            const contentDiv = document.getElementById('resultsContent');
+            
+            if (!resultsDiv || !contentDiv) {
+                console.error('SAFE: Missing DOM elements');
+                return;
             }
+            
+            // Sanitize data before processing
+            const safeData = sanitizeSimulationData(data);
+            console.log('SAFE: Data sanitized', safeData.events?.length || 0, 'events');
+            
+            if (safeData.error) {
+                contentDiv.innerHTML = generateErrorDisplay(safeData);
+            } else {
+                contentDiv.innerHTML = generateSafeSimulationResults(safeData, type);
+                
+                // Only render chart if we have safe data
+                if (safeData.chart_data && safeData.chart_data.performance_data) {
+                    renderSafePerformanceChart(safeData.chart_data, safeData.events || []);
+                }
+            }
+            
+            resultsDiv.style.display = 'block';
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+            
+        } catch (error) {
+            console.error('SAFE: displaySimulationResults failed:', error);
+            document.getElementById('resultsContent').innerHTML = 
+                '<div class="alert alert-warning">Simulation results unavailable</div>';
+        }
+    }
+
+    function sanitizeSimulationData(data) {
+        if (!data || typeof data !== 'object') {
+            return { error: true, message: 'Invalid simulation data' };
         }
         
-        resultsDiv.style.display = 'block';
-        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        // Ensure events array is safe
+        let safeEvents = [];
+        if (Array.isArray(data.events)) {
+            safeEvents = data.events.map((event, index) => {
+                if (!event || typeof event !== 'object') {
+                    return {
+                        title: `Event ${index + 1}`,
+                        description: 'Event data unavailable',
+                        timeline_position: 0,
+                        impact_type: 'neutral'
+                    };
+                }
+                return {
+                    title: String(event.title || `Event ${index + 1}`),
+                    description: String(event.description || 'No description'),
+                    timeline_position: Number(event.timeline_position || 0),
+                    impact_type: String(event.impact_type || 'neutral'),
+                    impact_magnitude: Number(event.impact_magnitude || 0),
+                    data_source: String(event.data_source || 'Unknown'),
+                    alert_priority: String(event.alert_priority || 'medium'),
+                    triggered_value: Number(event.triggered_value || 0),
+                    threshold_value: Number(event.threshold_value || 0)
+                };
+            });
+        }
+        
+        return {
+            ...data,
+            events: safeEvents,
+            triggered_alerts: Array.isArray(data.triggered_alerts) ? data.triggered_alerts : [],
+            scenario_analysis: data.scenario_analysis || {},
+            simulation_metadata: data.simulation_metadata || {}
+        };
+    }
+
+    function generateSafeSimulationResults(data, type) {
+        const scenario = data.scenario_analysis || {};
+        const metadata = data.simulation_metadata || {};
+        const events = data.events || [];
+        
+        return generateLLMSimulationResults(data, type);
     }
 
     function generateLLMSimulationResults(data, type) {
-        console.log('HTML Gen Step 1: Starting generateLLMSimulationResults');
-        
         const scenario = data.scenario_analysis || {};
-        console.log('HTML Gen Step 2: scenario extracted:', scenario);
-        
         const metadata = data.simulation_metadata || {};
-        console.log('HTML Gen Step 3: metadata extracted:', metadata);
-        
         const events = data.events || [];
-        console.log('HTML Gen Step 4: events extracted:', events.length, 'events');
-        
-        // Check each event for title property
-        events.forEach((event, index) => {
-            console.log(`HTML Gen Step 4.${index}: Event ${index}:`, {
-                hasTitle: event && event.hasOwnProperty('title'),
-                title: event ? event.title : 'undefined event',
-                eventType: typeof event
-            });
-        });
         
         return `
             <div class="row">
@@ -790,37 +826,36 @@ document.addEventListener('DOMContentLoaded', function() {
         return 'warning';
     }
 
-    function renderPerformanceChart(chartData, events) {
+    function renderSafePerformanceChart(chartData, events) {
         try {
-            console.log('Chart Step 1: renderPerformanceChart called with events:', events);
-            
             const performanceData = chartData.performance_data || {};
             const timeline = chartData.timeline || [];
             
-            console.log('Chart Step 2: Basic data extracted');
-            
-            // Validate events array
-            console.log('Chart Step 3: Starting event validation');
-            const validEvents = Array.isArray(events) ? events.filter((event, index) => {
-                console.log(`Chart Step 3.${index}: Checking event ${index}:`, event);
-                const isValid = event && 
-                    typeof event === 'object' && 
-                    event.hasOwnProperty('title') && 
-                    event.hasOwnProperty('timeline_position');
-                console.log(`Chart Step 3.${index}: Event ${index} valid:`, isValid);
-                return isValid;
-            }) : [];
-            
-            console.log('Chart Step 4: Event validation complete. Valid events:', validEvents.length);
+            // Ultra-safe event processing - guarantee no title errors
+            const safeEvents = (Array.isArray(events) ? events : []).map((event, index) => ({
+                title: String(event?.title || `Event ${index + 1}`),
+                timeline_position: Number(event?.timeline_position || 0),
+                impact_type: String(event?.impact_type || 'neutral'),
+                triggered_value: Number(event?.triggered_value || 0),
+                threshold_value: Number(event?.threshold_value || 0)
+            }));
             
             if (!performanceData.market_performance || !performanceData.thesis_performance) {
-                console.log('Chart Step 5: No performance data, returning early');
                 document.getElementById('performanceChart').innerHTML = 
                     '<div class="text-center py-4 text-muted">Performance data unavailable</div>';
                 return;
             }
+
+            renderActualChart(performanceData, timeline, safeEvents);
             
-            console.log('Chart Step 5: Performance data available, creating chart options');
+        } catch (error) {
+            console.error('Safe chart rendering failed:', error);
+            document.getElementById('performanceChart').innerHTML = 
+                '<div class="text-center py-4 text-warning">Chart unavailable</div>';
+        }
+    }
+
+    function renderActualChart(performanceData, timeline, safeEvents) {
 
         const options = {
             chart: {
@@ -857,9 +892,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 hover: { size: 6 }
             },
             annotations: {
-                points: validEvents.map((event, index) => ({
-                    x: Math.round((event.timeline_position || 0) * timeline.length),
-                    y: performanceData.thesis_performance[Math.round((event.timeline_position || 0) * timeline.length)] || 100,
+                points: safeEvents.map((event, index) => ({
+                    x: Math.round(event.timeline_position * timeline.length),
+                    y: performanceData.thesis_performance[Math.round(event.timeline_position * timeline.length)] || 100,
                     marker: {
                         size: 8,
                         fillColor: (event.impact_type === 'positive') ? '#28a745' : (event.impact_type === 'negative') ? '#dc3545' : '#ffc107',
@@ -867,7 +902,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         strokeWidth: 2
                     },
                     label: {
-                        text: event.title || 'Event',
+                        text: event.title,
                         style: {
                             color: '#fff',
                             background: (event.impact_type === 'positive') ? '#28a745' : (event.impact_type === 'negative') ? '#dc3545' : '#ffc107'

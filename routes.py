@@ -902,6 +902,15 @@ def simulation_page(thesis_id):
     """Thesis simulation testing page"""
     try:
         thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        
+        # Ensure thesis has required properties with safe defaults
+        if not hasattr(thesis, 'title') or thesis.title is None:
+            thesis.title = f"Investment Thesis Analysis #{thesis.id}"
+        if not hasattr(thesis, 'core_claim') or thesis.core_claim is None:
+            thesis.core_claim = "No core claim available"
+        if not hasattr(thesis, 'mental_model') or thesis.mental_model is None:
+            thesis.mental_model = "Unknown"
+            
         signals = SignalMonitoring.query.filter_by(thesis_analysis_id=thesis_id).all()
         
         # Convert signals to serializable format for frontend
