@@ -37,26 +37,52 @@ class ThesisSimulation {
 
             const data = await response.json();
             
-            // Sanitize event data to prevent title access errors
+            // Completely bulletproof event data sanitization
             if (data.events && Array.isArray(data.events)) {
-                data.events = data.events.map((event, index) => {
+                data.events = data.events.map((rawEvent, index) => {
+                    // Create completely safe event object with all possible property variations
+                    const safeEvent = {
+                        title: 'Event ' + (index + 1),
+                        description: 'No description available',
+                        impact_type: 'neutral',
+                        impact_magnitude: 0,
+                        timeline_position: 0
+                    };
+                    
+                    // Safely extract properties with multiple fallbacks
                     try {
-                        return {
-                            title: (event && event.title) ? String(event.title) : `Event ${index + 1}`,
-                            description: (event && event.description) ? String(event.description) : 'No description available',
-                            impact_type: (event && event.impact_type) ? String(event.impact_type) : 'neutral',
-                            impact_magnitude: (event && typeof event.impact_magnitude === 'number') ? event.impact_magnitude : 0,
-                            timeline_position: (event && typeof event.timeline_position === 'number') ? event.timeline_position : 0
-                        };
+                        if (rawEvent && typeof rawEvent === 'object') {
+                            // Handle title with multiple property name variations
+                            if (rawEvent.title && typeof rawEvent.title === 'string') {
+                                safeEvent.title = String(rawEvent.title);
+                            } else if (rawEvent.name && typeof rawEvent.name === 'string') {
+                                safeEvent.title = String(rawEvent.name);
+                            }
+                            
+                            // Handle description
+                            if (rawEvent.description && typeof rawEvent.description === 'string') {
+                                safeEvent.description = String(rawEvent.description);
+                            }
+                            
+                            // Handle impact_type
+                            if (rawEvent.impact_type && typeof rawEvent.impact_type === 'string') {
+                                safeEvent.impact_type = String(rawEvent.impact_type);
+                            }
+                            
+                            // Handle numeric properties
+                            if (typeof rawEvent.impact_magnitude === 'number') {
+                                safeEvent.impact_magnitude = rawEvent.impact_magnitude;
+                            }
+                            
+                            if (typeof rawEvent.timeline_position === 'number') {
+                                safeEvent.timeline_position = rawEvent.timeline_position;
+                            }
+                        }
                     } catch (e) {
-                        return {
-                            title: `Event ${index + 1}`,
-                            description: 'Event data unavailable',
-                            impact_type: 'neutral',
-                            impact_magnitude: 0,
-                            timeline_position: 0
-                        };
+                        console.warn('Event sanitization warning:', e);
                     }
+                    
+                    return safeEvent;
                 });
             } else {
                 data.events = [];
