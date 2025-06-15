@@ -650,12 +650,12 @@
             xaxis: []
         };
         
-        console.log('Event data received:', data.events);
+        console.log('Event data received:', safeEvents);
         
         // Complete error prevention wrapper
         try {
-            if (data.events && data.events.length > 0) {
-            data.events.forEach((rawEvent, index) => {
+            if (safeEvents && safeEvents.length > 0) {
+            safeEvents.forEach((rawEvent, index) => {
                 // Bulletproof event handling to prevent any property access errors
                 let event;
                 try {
@@ -677,7 +677,7 @@
                 }
                 
                 const monthIndex = event.month ? Math.min(event.month - 1, timeline.length - 1) : 
-                                 Math.floor(index * timeline.length / data.events.length);
+                                 Math.floor(index * timeline.length / Math.max(1, safeEvents.length));
                 const validIndex = Math.max(0, Math.min(monthIndex, timeline.length - 1));
                 
                 const safeTitle = event && event.title && event.title.length > 20 ? event.title.substring(0, 20) + '...' : (event && event.title) || 'Event';
@@ -708,7 +708,7 @@
             annotations.xaxis = [];
         }
 
-        // Create ApexCharts configuration with safe defaults
+        // Create ApexCharts configuration with validated data
         const chartOptions = {
             series: series.length > 0 ? series : [{
                 name: 'Performance',
@@ -719,7 +719,8 @@
                 height: 400,
                 zoom: { enabled: true },
                 toolbar: { show: true },
-                animations: { enabled: false }
+                animations: { enabled: false },
+                background: 'transparent'
             },
             dataLabels: {
                 enabled: false
