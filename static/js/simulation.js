@@ -36,6 +36,32 @@ class ThesisSimulation {
             }
 
             const data = await response.json();
+            
+            // Sanitize event data to prevent title access errors
+            if (data.events && Array.isArray(data.events)) {
+                data.events = data.events.map((event, index) => {
+                    try {
+                        return {
+                            title: (event && event.title) ? String(event.title) : `Event ${index + 1}`,
+                            description: (event && event.description) ? String(event.description) : 'No description available',
+                            impact_type: (event && event.impact_type) ? String(event.impact_type) : 'neutral',
+                            impact_magnitude: (event && typeof event.impact_magnitude === 'number') ? event.impact_magnitude : 0,
+                            timeline_position: (event && typeof event.timeline_position === 'number') ? event.timeline_position : 0
+                        };
+                    } catch (e) {
+                        return {
+                            title: `Event ${index + 1}`,
+                            description: 'Event data unavailable',
+                            impact_type: 'neutral',
+                            impact_magnitude: 0,
+                            timeline_position: 0
+                        };
+                    }
+                });
+            } else {
+                data.events = [];
+            }
+            
             this.results = data;
             this.displayResults();
 
@@ -107,12 +133,16 @@ class ThesisSimulation {
                         <div class="col-md-6">
                             <h6>Generated Events (${events.length})</h6>
                             <div class="event-list">
-                                ${events.map((event, index) => `
-                                    <div class="event-item mb-2 p-2 border rounded">
-                                        <strong>Event ${index + 1}:</strong> ${this.safeText(event.title)}<br>
-                                        <small class="text-muted">${this.safeText(event.description)}</small>
-                                    </div>
-                                `).join('')}
+                                ${events.map((event, index) => {
+                                    const eventTitle = this.safeText(event && event.title ? event.title : `Event ${index + 1}`);
+                                    const eventDesc = this.safeText(event && event.description ? event.description : 'No description available');
+                                    return `
+                                        <div class="event-item mb-2 p-2 border rounded">
+                                            <strong>${eventTitle}</strong><br>
+                                            <small class="text-muted">${eventDesc}</small>
+                                        </div>
+                                    `;
+                                }).join('')}
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -139,8 +169,13 @@ class ThesisSimulation {
     }
 
     safeText(text) {
-        if (!text) return 'N/A';
-        return String(text).substring(0, 200) + (String(text).length > 200 ? '...' : '');
+        try {
+            if (text === null || text === undefined || text === '') return 'N/A';
+            const safeString = String(text);
+            return safeString.substring(0, 200) + (safeString.length > 200 ? '...' : '');
+        } catch (e) {
+            return 'N/A';
+        }
     }
 
     renderChart() {
@@ -178,19 +213,24 @@ class ThesisSimulation {
                     title: { text: 'Performance (%)' }
                 },
                 annotations: {
-                    points: events.map((event, index) => ({
-                        x: index * 2,
-                        y: 100,
-                        marker: {
-                            size: 6,
-                            fillColor: '#28a745',
-                            strokeColor: '#fff'
-                        },
-                        label: {
-                            text: `Event ${index + 1}`,
-                            style: { background: '#28a745', color: '#fff' }
-                        }
-                    }))
+                    points: events.map((event, index) => {
+                        const eventLabel = event && event.title ? 
+                            this.safeText(event.title).substring(0, 20) + '...' : 
+                            `Event ${index + 1}`;
+                        return {
+                            x: index * 2,
+                            y: 100,
+                            marker: {
+                                size: 6,
+                                fillColor: '#28a745',
+                                strokeColor: '#fff'
+                            },
+                            label: {
+                                text: eventLabel,
+                                style: { background: '#28a745', color: '#fff' }
+                            }
+                        };
+                    })
                 },
                 stroke: { width: 2 },
                 colors: ['#6c757d', '#007bff']
