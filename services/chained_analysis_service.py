@@ -39,8 +39,8 @@ class ChainedAnalysisService:
                 monitoring_plan = self._create_monitoring_plan(thesis_text, core_analysis, signals)
                 logging.info("Step 3 completed: Monitoring plan created")
             except Exception as e:
-                logging.warning(f"Step 3 failed, using fallback: {str(e)}")
-                monitoring_plan = self._get_fallback_structure("monitoring_plan")
+                logging.warning(f"Step 3 failed, creating detailed fallback: {str(e)}")
+                monitoring_plan = self._create_detailed_monitoring_fallback(thesis_text, core_analysis, signals)
             
             # Step 4: Generate AI-powered market sentiment
             try:
@@ -342,10 +342,22 @@ Create a monitoring plan that:
 
 Focus on metrics that can be tracked via FactSet/Xpressfeed APIs with specific query templates."""
         
-        response = self.azure_openai.generate_completion([
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ], max_tokens=2000, temperature=0.3)
+        # Add timeout protection for monitoring plan generation
+        import signal
+        
+        def timeout_handler(signum, frame):
+            raise TimeoutError("Monitoring plan generation timed out")
+        
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(20)  # 20 second timeout for detailed plan
+        
+        try:
+            response = self.azure_openai.generate_completion([
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ], max_tokens=2000, temperature=0.3)
+        finally:
+            signal.alarm(0)  # Cancel timeout
         
         parsed_plan = self._parse_json_response(response, "monitoring_plan")
         # Ensure we return a dictionary for monitoring plans
@@ -369,6 +381,207 @@ Focus on metrics that can be tracked via FactSet/Xpressfeed APIs with specific q
             "counter_thesis_monitoring": [],
             "review_schedule": "Monthly comprehensive review with quarterly deep analysis"
         }
+
+    def _create_detailed_monitoring_fallback(self, thesis_text: str, core_analysis: Dict, signals: List) -> Dict[str, Any]:
+        """Create detailed monitoring plan using actual analysis data when AI generation fails"""
+        
+        # Extract key data from analysis
+        core_claim = core_analysis.get('core_claim', thesis_text[:100])
+        assumptions = core_analysis.get('assumptions', [])
+        causal_chain = core_analysis.get('causal_chain', [])
+        counter_thesis = core_analysis.get('counter_thesis_scenarios', [])
+        
+        # Extract companies/entities from thesis text
+        import re
+        companies = []
+        # Look for capitalized words that might be company names
+        potential_companies = re.findall(r'\b[A-Z][A-Za-z]{2,}\b', thesis_text)
+        companies = [comp for comp in potential_companies[:3] if comp not in ['The', 'This', 'That', 'With', 'For', 'And']]
+        
+        # Create comprehensive monitoring plan
+        return {
+            "objective": f"Monitor and validate thesis: {core_claim} - Track key performance indicators with quantified thresholds for data-driven decision making",
+            "validation_framework": {
+                "core_claim_metrics": self._build_core_claim_metrics(core_claim, signals, companies),
+                "assumption_tests": self._build_assumption_tests(assumptions, signals),
+                "causal_chain_tracking": self._build_causal_chain_tracking(causal_chain, signals)
+            },
+            "data_acquisition": self._build_data_acquisition_plan(signals, companies),
+            "alert_system": self._build_alert_system(signals, assumptions),
+            "decision_framework": self._build_decision_framework(core_claim, signals),
+            "counter_thesis_monitoring": self._build_counter_thesis_monitoring(counter_thesis, signals),
+            "review_schedule": f"Weekly signal review, monthly thesis validation assessment, quarterly strategy review with {len(signals)} tracked metrics"
+        }
+
+    def _build_core_claim_metrics(self, core_claim: str, signals: List, companies: List) -> List[Dict]:
+        """Build core claim validation metrics from actual signals"""
+        metrics = []
+        
+        for i, signal in enumerate(signals[:3]):
+            signal_name = signal.get('name', f'Signal {i+1}')
+            threshold = signal.get('threshold', 10.0)
+            data_source = signal.get('data_source', 'FactSet')
+            
+            metrics.append({
+                "metric": signal_name,
+                "target_threshold": f">{threshold}%" if 'growth' in signal_name.lower() else f"{threshold}",
+                "measurement_frequency": signal.get('frequency', 'quarterly'),
+                "data_source": data_source,
+                "validation_logic": f"Direct measurement of {signal_name.lower()} to validate core thesis claim"
+            })
+        
+        return metrics
+
+    def _build_assumption_tests(self, assumptions: List, signals: List) -> List[Dict]:
+        """Build assumption testing framework from analysis data"""
+        tests = []
+        
+        for i, assumption in enumerate(assumptions[:4]):
+            if isinstance(assumption, str) and len(assumption) > 10:
+                # Find related signal for testing
+                related_signal = signals[i % len(signals)] if signals else {}
+                signal_name = related_signal.get('name', 'Market Performance Metric')
+                threshold = related_signal.get('threshold', 15.0)
+                
+                tests.append({
+                    "assumption": assumption,
+                    "test_metric": signal_name,
+                    "success_threshold": f">{threshold}%",
+                    "failure_threshold": f"<{threshold * 0.5}%",
+                    "data_source": related_signal.get('data_source', 'FactSet')
+                })
+        
+        return tests
+
+    def _build_causal_chain_tracking(self, causal_chain: List, signals: List) -> List[Dict]:
+        """Build causal chain tracking from analysis data"""
+        tracking = []
+        
+        for i, step in enumerate(causal_chain[:4]):
+            if isinstance(step, dict) and step.get('event'):
+                related_signal = signals[i % len(signals)] if signals else {}
+                
+                tracking.append({
+                    "chain_step": step.get('event', f'Causal step {i+1}'),
+                    "leading_indicator": related_signal.get('name', f'Performance Metric {i+1}'),
+                    "threshold": f"{related_signal.get('threshold', 10)}%",
+                    "frequency": related_signal.get('frequency', 'monthly')
+                })
+        
+        return tracking
+
+    def _build_data_acquisition_plan(self, signals: List, companies: List) -> List[Dict]:
+        """Build data acquisition plan from signals"""
+        categories = {}
+        
+        # Group signals by category
+        for signal in signals:
+            category = "Financial Performance"
+            if 'market' in signal.get('name', '').lower():
+                category = "Market Position"
+            elif 'revenue' in signal.get('name', '').lower():
+                category = "Revenue Analytics"
+            
+            if category not in categories:
+                categories[category] = []
+            categories[category].append(signal)
+        
+        acquisition_plan = []
+        for category, category_signals in categories.items():
+            metrics = [s.get('name', 'Metric') for s in category_signals]
+            data_source = category_signals[0].get('data_source', 'FactSet') if category_signals else 'FactSet'
+            frequency = category_signals[0].get('frequency', 'quarterly') if category_signals else 'quarterly'
+            
+            company_filter = f"symbol IN ({', '.join([f'\'{c}\'' for c in companies])})" if companies else "symbol = ?"
+            
+            acquisition_plan.append({
+                "category": category,
+                "metrics": metrics,
+                "data_source": data_source,
+                "query_template": f"SELECT {', '.join(metrics[:3])} FROM financials WHERE {company_filter}",
+                "frequency": frequency,
+                "automation_level": "full" if data_source == "FactSet" else "partial"
+            })
+        
+        return acquisition_plan
+
+    def _build_alert_system(self, signals: List, assumptions: List) -> List[Dict]:
+        """Build alert system from signals and assumptions"""
+        alerts = []
+        
+        for i, signal in enumerate(signals[:5]):
+            signal_name = signal.get('name', f'Signal {i+1}')
+            threshold = signal.get('threshold', 10.0)
+            
+            severity = "high" if i < 2 else "medium"
+            condition = f"{signal_name} {'growth' if 'growth' in signal_name.lower() else 'value'} < {threshold}% for 2 consecutive periods"
+            
+            alerts.append({
+                "trigger_name": f"{signal_name} Threshold Alert",
+                "condition": condition,
+                "severity": severity,
+                "action": f"Review {signal_name.lower()} trends and validate underlying assumptions",
+                "notification_method": "dashboard"
+            })
+        
+        return alerts
+
+    def _build_decision_framework(self, core_claim: str, signals: List) -> List[Dict]:
+        """Build decision framework from core claim and signals"""
+        decisions = []
+        
+        # Extract action from core claim
+        action = "buy"
+        if "increase" in core_claim.lower() or "grow" in core_claim.lower():
+            action = "buy"
+        elif "decrease" in core_claim.lower() or "decline" in core_claim.lower():
+            action = "sell"
+        
+        primary_signal = signals[0] if signals else {}
+        threshold = primary_signal.get('threshold', 15.0)
+        
+        decisions.extend([
+            {
+                "scenario": "Thesis Validation",
+                "condition": f"Primary metrics exceed {threshold}% for 2+ consecutive quarters",
+                "action": action,
+                "reasoning": f"Strong performance validates core thesis claim: {core_claim}",
+                "confidence_threshold": "85%"
+            },
+            {
+                "scenario": "Thesis Invalidation", 
+                "condition": f"Primary metrics decline below {threshold * 0.5}% for 2+ quarters",
+                "action": "sell" if action == "buy" else "buy",
+                "reasoning": "Sustained underperformance contradicts thesis assumptions",
+                "confidence_threshold": "75%"
+            },
+            {
+                "scenario": "Mixed Signals",
+                "condition": f"Performance between {threshold * 0.5}% and {threshold}%",
+                "action": "hold",
+                "reasoning": "Inconclusive data requires additional monitoring before decision",
+                "confidence_threshold": "60%"
+            }
+        ])
+        
+        return decisions
+
+    def _build_counter_thesis_monitoring(self, counter_thesis: List, signals: List) -> List[Dict]:
+        """Build counter-thesis monitoring from analysis data"""
+        monitoring = []
+        
+        for i, scenario in enumerate(counter_thesis[:3]):
+            if isinstance(scenario, dict) and scenario.get('scenario'):
+                related_signal = signals[i % len(signals)] if signals else {}
+                
+                monitoring.append({
+                    "risk_scenario": scenario.get('scenario', f'Counter-thesis risk {i+1}'),
+                    "early_warning_metric": related_signal.get('name', f'Warning Signal {i+1}'),
+                    "threshold": f"<{related_signal.get('threshold', 5)}%",
+                    "mitigation_action": f"Immediate review of {scenario.get('scenario', 'risk scenario')} and consider position adjustment"
+                })
+        
+        return monitoring
 
     def _parse_json_response(self, response: str, step_name: str):
         """Parse JSON response with fallback handling"""
