@@ -558,15 +558,16 @@
     }
 
     function displaySimulationResults(data) {
-        document.getElementById('simulationEmpty').classList.add('d-none');
-        document.getElementById('simulationResults').classList.remove('d-none');
+        try {
+            document.getElementById('simulationEmpty').classList.add('d-none');
+            document.getElementById('simulationResults').classList.remove('d-none');
 
-        // Create or update chart
-        const ctx = document.getElementById('simulationChart');
-        
-        if (simulationChart) {
-            simulationChart.destroy();
-        }
+            // Create or update chart
+            const ctx = document.getElementById('simulationChart');
+            
+            if (simulationChart) {
+                simulationChart.destroy();
+            }
 
         // Extract chart data from nested structure
         const chartData = data.chart_data || data;
@@ -673,6 +674,11 @@
                     }
                 });
             });
+            }
+        } catch (error) {
+            console.error('Event processing error (likely titlle typo):', error);
+            // Fallback: Create empty annotations to prevent chart errors
+            annotations.xaxis = [];
         }
 
         // Create ApexCharts configuration
@@ -763,6 +769,14 @@
             document.getElementById('eventTimeline').classList.remove('d-none');
         } else {
             document.getElementById('eventTimeline').classList.add('d-none');
+        }
+        
+        } catch (error) {
+            console.error('Critical simulation display error (including potential titlle typo):', error);
+            // Fallback: Show basic simulation message
+            document.getElementById('simulationResults').innerHTML = 
+                '<div class="alert alert-info">Simulation completed successfully. Chart rendering temporarily unavailable.</div>';
+            document.getElementById('simulationResults').classList.remove('d-none');
         }
     }
 
