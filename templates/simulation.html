@@ -256,17 +256,50 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function displaySimulationResults(data, type) {
+        console.log('displaySimulationResults called with:', data);
+        console.log('data.events:', data.events);
+        console.log('data.events type:', typeof data.events);
+        console.log('data.events isArray:', Array.isArray(data.events));
+        
         const resultsDiv = document.getElementById('simulationResults');
         const contentDiv = document.getElementById('resultsContent');
         
         if (data.error) {
             contentDiv.innerHTML = generateErrorDisplay(data);
         } else {
-            contentDiv.innerHTML = generateLLMSimulationResults(data, type);
+            // Validate events before processing
+            let events = data.events || [];
+            if (!Array.isArray(events)) {
+                console.error('data.events is not an array:', events);
+                events = [];
+            }
+            
+            // Filter out any undefined/null events
+            events = events.filter((event, index) => {
+                if (event === undefined || event === null) {
+                    console.warn(`Event at index ${index} is undefined/null`);
+                    return false;
+                }
+                if (typeof event !== 'object') {
+                    console.warn(`Event at index ${index} is not an object:`, event);
+                    return false;
+                }
+                return true;
+            });
+            
+            console.log('Filtered events for display:', events);
+            
+            // Create data copy with validated events
+            const validatedData = {
+                ...data,
+                events: events
+            };
+            
+            contentDiv.innerHTML = generateLLMSimulationResults(validatedData, type);
             
             // Render performance chart if data available
             if (data.chart_data && data.chart_data.performance_data) {
-                renderPerformanceChart(data.chart_data, data.events || []);
+                renderPerformanceChart(data.chart_data, events);
             }
         }
         
