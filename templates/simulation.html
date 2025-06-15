@@ -427,6 +427,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function generateEventTimeline(events) {
+        // Add debugging and validation
+        console.log('generateEventTimeline called with:', events);
+        
+        if (!Array.isArray(events)) {
+            console.error('Events is not an array:', events);
+            return '';
+        }
+        
+        // Filter out any null, undefined, or invalid events
+        const validEvents = events.filter(event => {
+            if (!event || typeof event !== 'object') {
+                console.warn('Invalid event filtered out:', event);
+                return false;
+            }
+            if (!event.title) {
+                console.warn('Event missing title:', event);
+                return false;
+            }
+            return true;
+        });
+        
+        console.log('Valid events after filtering:', validEvents);
+        
+        if (validEvents.length === 0) {
+            return '<div class="alert alert-info">No events to display</div>';
+        }
+        
         return `
             <div class="row mt-4">
                 <div class="col-12">
@@ -438,12 +465,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="card-body">
                             <div class="timeline">
-                                ${events.map(event => `
+                                ${validEvents.map(event => `
                                     <div class="timeline-item mb-3">
                                         <div class="d-flex">
                                             <div class="timeline-marker me-3">
-                                                <span class="badge bg-${getEventBadge(event.impact_type)} rounded-pill">
-                                                    Month ${event.month}
+                                                <span class="badge bg-${getEventBadge(event.impact_type || 'neutral')} rounded-pill">
+                                                    Month ${event.month || 'N/A'}
                                                 </span>
                                             </div>
                                             <div class="timeline-content flex-grow-1">
@@ -451,7 +478,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 <p class="mb-1">${event.description || 'Market event details'}</p>
                                                 <div class="small text-muted">
                                                     <strong>Impact:</strong> ${event.magnitude || 'Moderate'} ${event.impact_type || 'neutral'}
-                                                    ${event.signals_affected && event.signals_affected.length > 0 ? 
+                                                    ${event.signals_affected && Array.isArray(event.signals_affected) && event.signals_affected.length > 0 ? 
                                                         `<br><strong>Signals Affected:</strong> ${event.signals_affected.join(', ')}` : ''}
                                                 </div>
                                             </div>
@@ -667,8 +694,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderPerformanceChart(chartData, events) {
+        console.log('renderPerformanceChart called with:');
+        console.log('chartData:', chartData);
+        console.log('events:', events);
+        console.log('events type:', typeof events);
+        console.log('events isArray:', Array.isArray(events));
+        
         const performanceData = chartData.performance_data || {};
         const timeline = chartData.timeline || [];
+        
+        // Validate events array
+        if (!Array.isArray(events)) {
+            console.error('Events is not an array in renderPerformanceChart:', events);
+            events = [];
+        }
+        
+        // Filter and validate events before processing
+        const validEvents = events.filter((event, index) => {
+            console.log(`Checking event ${index}:`, event);
+            if (!event) {
+                console.warn(`Event ${index} is null/undefined`);
+                return false;
+            }
+            if (typeof event !== 'object') {
+                console.warn(`Event ${index} is not an object:`, typeof event);
+                return false;
+            }
+            if (!event.title) {
+                console.warn(`Event ${index} missing title:`, event);
+                return false;
+            }
+            if (!event.month) {
+                console.warn(`Event ${index} missing month:`, event);
+                return false;
+            }
+            return true;
+        });
+        
+        console.log('Valid events for chart:', validEvents);
         
         if (!performanceData.market_performance || !performanceData.thesis_performance) {
             document.getElementById('performanceChart').innerHTML = 
@@ -711,7 +774,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 hover: { size: 6 }
             },
             annotations: {
-                points: events.map(event => ({
+                points: validEvents.map(event => ({
                     x: event.month - 1,
                     y: event.impact_value || 100,
                     marker: {
@@ -721,7 +784,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         strokeWidth: 2
                     },
                     label: {
-                        text: event.title,
+                        text: event.title || 'Event',
                         style: {
                             color: '#fff',
                             background: event.impact_type === 'positive' ? '#28a745' : '#dc3545'
