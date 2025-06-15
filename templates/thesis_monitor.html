@@ -628,17 +628,22 @@
         
         console.log('Event data received:', data.events);
         
-        if (data.events && data.events.length > 0) {
+        // Complete error prevention wrapper
+        try {
+            if (data.events && data.events.length > 0) {
             data.events.forEach((rawEvent, index) => {
                 // Bulletproof event handling to prevent any property access errors
                 let event;
                 try {
+                    console.log(`Processing event ${index}:`, rawEvent);
                     event = {
                         title: (rawEvent && rawEvent.title && typeof rawEvent.title === 'string') ? rawEvent.title : `Event ${index + 1}`,
                         impact_type: (rawEvent && rawEvent.impact_type && typeof rawEvent.impact_type === 'string') ? rawEvent.impact_type : 'neutral',
                         month: (rawEvent && typeof rawEvent.month === 'number') ? rawEvent.month : null
                     };
+                    console.log(`Safe event ${index} created:`, event);
                 } catch (e) {
+                    console.error(`Error processing event ${index}:`, e);
                     // Fallback for any errors
                     event = {
                         title: `Event ${index + 1}`,
