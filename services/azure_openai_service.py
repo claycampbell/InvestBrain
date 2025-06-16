@@ -25,8 +25,8 @@ class AzureOpenAIService:
                 api_key=api_key,
                 api_version=api_version,
                 azure_endpoint=endpoint,
-                timeout=60,
-                max_retries=0
+                timeout=60.0,
+                max_retries=2
             )
             
             logging.info("Azure OpenAI client initialized successfully")
@@ -105,10 +105,10 @@ class AzureOpenAIService:
                     continue
                 else:
                     logging.error(f"Error generating completion after {attempt + 1} attempts: {error_message}")
+                    if attempt == max_retries - 1:
+                        # Instead of fallback, raise an informative error for the user
+                        raise Exception("Azure OpenAI service is temporarily unavailable due to network connectivity issues. Please check your API credentials and try again.")
                     raise
-        
-        logging.error(f"Azure OpenAI request failed after {max_retries} attempts, using fallback response")
-        return self._generate_fallback_response(messages)
     
     def _generate_fallback_response(self, messages):
         """Generate a structured fallback response when Azure OpenAI is unavailable"""
