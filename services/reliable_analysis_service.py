@@ -16,14 +16,8 @@ class ReliableAnalysisService:
         try:
             logging.info(f"Starting reliable analysis for: {thesis_text[:50]}...")
             
-            # Try Azure OpenAI with short timeout
-            try:
-                return self._try_azure_analysis(thesis_text)
-            except Exception as e:
-                logging.warning(f"Azure OpenAI failed: {str(e)}")
-                
-            # Use intelligent structured analysis
-            return self._create_structured_analysis(thesis_text)
+            # Try Azure OpenAI analysis
+            return self._try_azure_analysis(thesis_text)
             
         except Exception as e:
             logging.error(f"Analysis service error: {str(e)}")
