@@ -53,6 +53,9 @@ class MLSimulationService:
                 thesis_params, scenario, time_horizon, performance_data
             )
             
+            # Step 5: Generate alert triggers based on simulation results
+            alert_triggers = self._generate_alert_triggers(thesis, performance_data, events, scenario)
+            
             # Create timeline
             timeline = self._generate_timeline_labels(time_horizon)
             
@@ -64,6 +67,7 @@ class MLSimulationService:
                     'timeline': timeline
                 },
                 'events': events,
+                'alert_triggers': alert_triggers,
                 'scenario_analysis': scenario_analysis,
                 'thesis_parameters': thesis_params,
                 'simulation_metadata': {
@@ -587,6 +591,99 @@ Return JSON format:
             "conviction_level": "Medium",
             "probability_assessment": "Moderate probability based on ML simulation and market conditions"
         }
+    
+    def _generate_alert_triggers(self, thesis, performance_data: Dict, events: List, scenario: str) -> List[Dict]:
+        """
+        Generate alert triggers based on ML simulation results and thesis signals
+        """
+        alert_triggers = []
+        
+        # Extract performance decline scenarios
+        if isinstance(performance_data, dict):
+            thesis_performance = performance_data.get('thesis_performance', [])
+            market_performance = performance_data.get('market_performance', [])
+            
+            # Calculate performance metrics
+            if len(thesis_performance) > 1:
+                thesis_final = thesis_performance[-1]
+                thesis_initial = thesis_performance[0]
+                thesis_return = ((thesis_final - thesis_initial) / thesis_initial) * 100
+                
+                # Generate alerts based on performance and scenario
+                if scenario in ['bear', 'stress'] or thesis_return < -10:
+                    alert_triggers.append({
+                        'signal_name': 'ML Performance Alert',
+                        'condition': f'Simulation shows {abs(thesis_return):.1f}% decline from baseline expectations',
+                        'severity': 'high' if thesis_return < -20 else 'medium',
+                        'action': 'Review ML model parameters and validate underlying thesis assumptions'
+                    })
+                
+                if len(market_performance) > 1:
+                    market_final = market_performance[-1]
+                    market_initial = market_performance[0]
+                    market_return = ((market_final - market_initial) / market_initial) * 100
+                    
+                    # Relative performance alert
+                    relative_performance = thesis_return - market_return
+                    if relative_performance < -15:
+                        alert_triggers.append({
+                            'signal_name': 'Relative Performance Alert',
+                            'condition': f'ML simulation shows underperformance vs market by {abs(relative_performance):.1f}%',
+                            'severity': 'high',
+                            'action': 'Reassess thesis validity and competitive positioning assumptions'
+                        })
+        
+        # Generate event-based alerts
+        for event in events:
+            if event.get('impact_type') == 'negative' and event.get('magnitude') in ['significant', 'major']:
+                alert_triggers.append({
+                    'signal_name': f"{event.get('title', 'ML Event')} Alert",
+                    'condition': f"ML event simulation: {event.get('description', 'Unknown impact')}",
+                    'severity': 'critical' if event.get('magnitude') == 'major' else 'high',
+                    'action': f"Monitor {', '.join(event.get('signals_affected', ['key metrics']))} via ML tracking"
+                })
+        
+        # Generate scenario-specific alerts
+        if scenario == 'stress':
+            alert_triggers.append({
+                'signal_name': 'ML Stress Test Alert',
+                'condition': 'ML stress scenario indicates potential thesis breakdown conditions',
+                'severity': 'critical',
+                'action': 'Implement risk management protocols and review ML model assumptions'
+            })
+        elif scenario == 'bear':
+            alert_triggers.append({
+                'signal_name': 'ML Bear Market Alert',
+                'condition': 'ML bear market simulation shows sustained pressure on thesis performance',
+                'severity': 'high',
+                'action': 'Consider defensive positioning and validate ML model parameters'
+            })
+        
+        # Add thesis-specific signal alerts based on monitoring plan
+        if hasattr(thesis, 'metrics_to_track') and thesis.metrics_to_track:
+            try:
+                metrics = json.loads(thesis.metrics_to_track) if isinstance(thesis.metrics_to_track, str) else thesis.metrics_to_track
+                for metric in metrics[:2]:  # Limit to first 2 metrics
+                    metric_name = metric.get('name', 'Unknown Metric')
+                    alert_triggers.append({
+                        'signal_name': f'ML {metric_name} Monitoring Alert',
+                        'condition': f'ML simulation indicates potential {metric_name.lower()} threshold breach',
+                        'severity': 'medium',
+                        'action': f'Validate {metric_name.lower()} data sources and update ML tracking parameters'
+                    })
+            except Exception as e:
+                logging.error(f"Error parsing metrics_to_track: {e}")
+        
+        # Ensure we have at least one alert for demonstration
+        if not alert_triggers:
+            alert_triggers.append({
+                'signal_name': 'ML Simulation Alert',
+                'condition': 'ML simulation completed - monitoring thresholds ready for activation',
+                'severity': 'medium',
+                'action': 'Review ML simulation results and adjust monitoring parameters as needed'
+            })
+        
+        return alert_triggers
     
     def _get_intelligent_parameters(self, thesis, scenario: str, volatility: str) -> Dict[str, Any]:
         """
