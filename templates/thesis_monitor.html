@@ -366,6 +366,67 @@
 
 <script>
     // Global functions for monitoring page
+    function showSimulationModal() {
+        const modal = new bootstrap.Modal(document.getElementById('simulationModal'));
+        modal.show();
+    }
+
+    async function runSimulation() {
+        try {
+            const runBtn = document.getElementById('runSimBtn');
+            const originalText = runBtn.innerHTML;
+            
+            // Show loading state
+            runBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running...';
+            runBtn.disabled = true;
+            
+            // Get form parameters
+            const timeHorizon = document.getElementById('timeHorizon').value;
+            const scenario = document.getElementById('simulationScenario').value;
+            const volatility = document.getElementById('volatility').value;
+            const includeEvents = document.getElementById('includeEvents').checked;
+            const simulationType = document.getElementById('simulationType').value;
+            
+            // Make API request
+            const response = await fetch(`/api/thesis/{{ thesis.id }}/simulate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    time_horizon: parseInt(timeHorizon),
+                    scenario: scenario,
+                    volatility: volatility,
+                    include_events: includeEvents,
+                    simulation_type: simulationType
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.message || 'Simulation failed');
+            }
+            
+            // Close modal and display results
+            const modal = bootstrap.Modal.getInstance(document.getElementById('simulationModal'));
+            modal.hide();
+            
+            displaySimulationResults(data);
+            
+        } catch (error) {
+            console.error('Simulation error:', error);
+            showAlert('Simulation failed: ' + error.message, 'danger');
+        } finally {
+            // Reset button state
+            const runBtn = document.getElementById('runSimBtn');
+            if (runBtn) {
+                runBtn.innerHTML = '<i class="fas fa-play"></i> Run Simulation';
+                runBtn.disabled = false;
+            }
+        }
+    }
+
     async function refreshData() {
         try {
             showAlert('Refreshing monitoring data...', 'info');
@@ -568,10 +629,17 @@
             simulationChart.destroy();
         }
 
-        // Extract chart data from nested structure
+        // Extract chart data from nested structure with comprehensive fallbacks
         const chartData = data.chart_data || data;
         const performanceData = chartData.performance_data || data.performance_data || [];
         const timeline = chartData.timeline || data.timeline || [];
+        
+        // Ensure chart configuration is properly structured
+        const chartConfig = data.chart_config || {
+            title: '{{ thesis.title|e|replace("'", "\\'") }} - Simulation Results',
+            y_axis_label: 'Performance Index (%)',
+            primary_metric: 'Thesis Performance'
+        };
         
         console.log('Chart data structure:', {
             hasChartData: !!data.chart_data,
@@ -673,7 +741,8 @@
                 width: [2, 3]
             },
             title: {
-                text: data.chart_config.title || 'Thesis Performance Simulation',
+                text: (data.chart_config && data.chart_config.title) || 
+                      '{{ thesis.title|e|replace("'", "\\'") }} - Performance Simulation',
                 align: 'left',
                 style: {
                     fontSize: '16px',
