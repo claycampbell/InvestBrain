@@ -35,6 +35,49 @@
         }
     }
     
+    @keyframes slideDownBounce {
+        0% {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        60% {
+            transform: translateY(10px);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideUpFade {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+    }
+    
+    @keyframes slideOutRight {
+        0% {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+    
+    @keyframes vibrate {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-2px); }
+        75% { transform: translateX(2px); }
+    }
+    
     .btn-group-notification {
         gap: 0.5rem;
     }
@@ -782,15 +825,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="small text-muted mb-3">
                                 <strong>Recommended Action:</strong> ${alert.action || 'No action specified'}
                             </div>
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-sm btn-outline-warning" onclick="triggerSimulatedNotification('${alert.signal_name || 'Unknown Signal'}', '${alert.condition || ''}', '${alert.severity || 'medium'}', ${index})">
-                                    <i class="fas fa-bell"></i> Test Alert
+                            <div class="d-flex gap-2 mb-2">
+                                <button class="btn btn-sm btn-outline-danger" onclick="triggerWebPopupAlert('${alert.signal_name || 'Unknown Signal'}', '${alert.condition || ''}', '${alert.severity || 'medium'}', ${index})">
+                                    <i class="fas fa-exclamation-triangle"></i> Web Popup
                                 </button>
-                                <button class="btn btn-sm btn-outline-info" onclick="triggerEmailNotification('${alert.signal_name || 'Unknown Signal'}', '${alert.condition || ''}', ${index})">
+                                <button class="btn btn-sm btn-outline-info" onclick="triggerEmailAlert('${alert.signal_name || 'Unknown Signal'}', '${alert.condition || ''}', ${index})">
                                     <i class="fas fa-envelope"></i> Email Alert
                                 </button>
-                                <button class="btn btn-sm btn-outline-success" onclick="triggerDashboardUpdate('${alert.signal_name || 'Unknown Signal'}', '${alert.condition || ''}', ${index})">
-                                    <i class="fas fa-chart-line"></i> Dashboard Update
+                                <button class="btn btn-sm btn-outline-success" onclick="triggerMobilePushNotification('${alert.signal_name || 'Unknown Signal'}', '${alert.condition || ''}', '${alert.severity || 'medium'}', ${index})">
+                                    <i class="fas fa-mobile-alt"></i> Mobile Push
                                 </button>
                             </div>
                         </div>
@@ -827,101 +870,222 @@ document.addEventListener('DOMContentLoaded', function() {
         return 'warning';
     }
 
-    // Simulated notification functions
-    function triggerSimulatedNotification(signalName, condition, severity, alertIndex) {
-        // Create notification modal similar to publish thesis notification
-        const notificationModal = document.createElement('div');
-        notificationModal.className = 'modal fade';
-        notificationModal.id = `notification-modal-${alertIndex}`;
-        notificationModal.innerHTML = `
-            <div class="modal-dialog modal-dialog-centered">
+    // Web Popup Alert - Simulates browser notification popup
+    function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
+        // Create web popup notification similar to browser alerts
+        const popupAlert = document.createElement('div');
+        popupAlert.className = 'position-fixed top-0 start-50 translate-middle-x mt-4';
+        popupAlert.style.zIndex = '9999';
+        popupAlert.style.maxWidth = '400px';
+        popupAlert.innerHTML = `
+            <div class="alert alert-${severity === 'critical' ? 'danger' : severity === 'high' ? 'warning' : 'info'} border-3 shadow-lg" style="animation: slideDownBounce 0.6s ease-out;">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-exclamation-triangle fa-2x ${severity === 'critical' ? 'text-danger' : severity === 'high' ? 'text-warning' : 'text-info'}"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="alert-heading mb-1">
+                            <i class="fas fa-globe me-1"></i> Investment Alert
+                        </h6>
+                        <strong>${signalName}</strong><br>
+                        <small>${condition}</small><br>
+                        <div class="small text-muted mt-1">
+                            <i class="fas fa-clock"></i> ${new Date().toLocaleTimeString()}
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close ms-2" onclick="this.closest('.alert').remove()"></button>
+                </div>
+                <div class="mt-2 d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary" onclick="this.closest('.alert').remove()">Dismiss</button>
+                    <button class="btn btn-sm btn-primary" onclick="markAlertAsRead(${alertIndex}); this.closest('.alert').remove();">Acknowledge</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(popupAlert);
+        
+        // Auto-remove after 8 seconds
+        setTimeout(() => {
+            if (document.body.contains(popupAlert)) {
+                popupAlert.style.animation = 'slideUpFade 0.4s ease-in forwards';
+                setTimeout(() => document.body.removeChild(popupAlert), 400);
+            }
+        }, 8000);
+        
+        // Add visual feedback to alert card
+        const alertCard = document.getElementById(`alert-card-${alertIndex}`);
+        if (alertCard) {
+            alertCard.classList.add('border-danger');
+            alertCard.style.animation = 'pulse 1s ease-in-out 2';
+        }
+    }
+
+    function triggerEmailAlert(signalName, condition, alertIndex) {
+        // Create realistic email modal interface
+        const emailModal = document.createElement('div');
+        emailModal.className = 'modal fade';
+        emailModal.id = `email-modal-${alertIndex}`;
+        emailModal.innerHTML = `
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
-                    <div class="modal-header bg-${severity === 'critical' ? 'danger' : severity === 'high' ? 'warning' : 'info'} text-white">
+                    <div class="modal-header bg-info text-white">
                         <h5 class="modal-title">
-                            <i class="fas fa-bell"></i> Alert Notification
+                            <i class="fas fa-envelope"></i> Email Alert Dispatch
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="text-center mb-3">
-                            <i class="fas fa-exclamation-triangle fa-3x text-${severity === 'critical' ? 'danger' : severity === 'high' ? 'warning' : 'info'}"></i>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card bg-light">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-paper-plane"></i> Email Preview</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-2">
+                                            <strong>From:</strong> alerts@investmentthesis.ai
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>To:</strong> portfolio@investment.com, analyst@firm.com
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>Subject:</strong> 🚨 Investment Alert: ${signalName}
+                                        </div>
+                                        <hr>
+                                        <div class="email-body">
+                                            <p><strong>Investment Alert Triggered</strong></p>
+                                            <p><strong>Signal:</strong> ${signalName}</p>
+                                            <p><strong>Condition:</strong> ${condition}</p>
+                                            <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+                                            <p><strong>Recommended Action:</strong> Review portfolio allocation and consider position adjustments.</p>
+                                            <hr>
+                                            <p class="small text-muted">
+                                                This is an automated alert from your Investment Thesis Monitoring System. 
+                                                To modify alert settings, visit your dashboard.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Delivery Status</h6>
+                                <div class="list-group">
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        Primary Email
+                                        <span class="badge bg-success rounded-pill">Sent</span>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        Backup Email
+                                        <span class="badge bg-success rounded-pill">Sent</span>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        SMS Backup
+                                        <span class="badge bg-info rounded-pill">Queued</span>
+                                    </div>
+                                </div>
+                                <div class="mt-3 p-2 bg-success text-white rounded">
+                                    <i class="fas fa-check-circle"></i> Email dispatched successfully to 2 recipients
+                                </div>
+                            </div>
                         </div>
-                        <h6 class="text-center mb-3">Signal Alert Triggered</h6>
-                        <div class="alert alert-${severity === 'critical' ? 'danger' : severity === 'high' ? 'warning' : 'info'}">
-                            <strong>Signal:</strong> ${signalName}<br>
-                            <strong>Condition:</strong> ${condition}<br>
-                            <strong>Severity:</strong> ${severity.toUpperCase()}<br>
-                            <strong>Time:</strong> ${new Date().toLocaleString()}
-                        </div>
-                        <p class="text-muted small">This is a simulated notification demonstrating how real alerts would appear when monitoring conditions are met.</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Acknowledge</button>
-                        <button type="button" class="btn btn-primary" onclick="markAlertAsRead(${alertIndex})">Mark as Read</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-info">View Email Logs</button>
                     </div>
                 </div>
             </div>
         `;
         
-        document.body.appendChild(notificationModal);
-        const modal = new bootstrap.Modal(notificationModal);
+        document.body.appendChild(emailModal);
+        const modal = new bootstrap.Modal(emailModal);
         modal.show();
         
-        // Add pulsing effect to the alert card
+        // Remove modal after it's hidden
+        emailModal.addEventListener('hidden.bs.modal', function () {
+            document.body.removeChild(emailModal);
+        });
+        
+        // Add email sent indicator to alert card
         const alertCard = document.getElementById(`alert-card-${alertIndex}`);
         if (alertCard) {
-            alertCard.classList.add('border-warning');
-            alertCard.style.animation = 'pulse 1s ease-in-out 3';
+            alertCard.classList.add('border-info');
+            const emailBadge = document.createElement('span');
+            emailBadge.className = 'badge bg-info position-absolute top-0 start-0 translate-middle';
+            emailBadge.innerHTML = '<i class="fas fa-envelope"></i>';
+            alertCard.style.position = 'relative';
+            alertCard.appendChild(emailBadge);
         }
-        
-        // Remove modal after it's hidden
-        notificationModal.addEventListener('hidden.bs.modal', function () {
-            document.body.removeChild(notificationModal);
-        });
     }
 
-    function triggerEmailNotification(signalName, condition, alertIndex) {
-        // Show email notification simulation
-        const toast = document.createElement('div');
-        toast.className = 'toast-container position-fixed top-0 end-0 p-3';
-        toast.style.zIndex = '9999';
-        toast.innerHTML = `
-            <div class="toast show" role="alert">
-                <div class="toast-header bg-info text-white">
-                    <i class="fas fa-envelope me-2"></i>
-                    <strong class="me-auto">Email Alert Sent</strong>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+    function triggerMobilePushNotification(signalName, condition, severity, alertIndex) {
+        // Create mobile push notification simulation
+        const mobileNotification = document.createElement('div');
+        mobileNotification.className = 'position-fixed top-0 end-0 m-3';
+        mobileNotification.style.zIndex = '9999';
+        mobileNotification.style.maxWidth = '350px';
+        mobileNotification.innerHTML = `
+            <div class="card border-dark shadow-lg" style="animation: slideInRight 0.5s ease-out, vibrate 0.1s ease-in-out 3;">
+                <div class="card-header bg-dark text-white d-flex align-items-center">
+                    <i class="fas fa-mobile-alt me-2"></i>
+                    <strong class="flex-grow-1">Investment App</strong>
+                    <small class="text-muted">now</small>
+                    <button type="button" class="btn-close btn-close-white ms-2" onclick="this.closest('.card').parentElement.remove()"></button>
                 </div>
-                <div class="toast-body">
-                    <strong>To:</strong> investor@email.com<br>
-                    <strong>Subject:</strong> ${signalName} Alert<br>
-                    <strong>Message:</strong> ${condition}<br>
-                    <small class="text-muted">Simulated email notification</small>
+                <div class="card-body">
+                    <div class="d-flex align-items-start">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-${severity === 'critical' ? 'danger' : severity === 'high' ? 'warning' : 'info'} text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="card-title mb-1">${signalName}</h6>
+                            <p class="card-text small text-muted mb-2">${condition}</p>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="this.closest('.card').parentElement.remove()">Dismiss</button>
+                                <button class="btn btn-sm btn-primary" onclick="markAlertAsRead(${alertIndex}); this.closest('.card').parentElement.remove();">View Details</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt"></i> Secure Alert
+                        </small>
+                        <small class="text-muted">
+                            Swipe to dismiss
+                        </small>
+                    </div>
                 </div>
             </div>
         `;
         
-        document.body.appendChild(toast);
+        document.body.appendChild(mobileNotification);
         
-        // Auto-remove toast after 5 seconds
+        // Auto-remove after 10 seconds
         setTimeout(() => {
-            if (document.body.contains(toast)) {
-                document.body.removeChild(toast);
+            if (document.body.contains(mobileNotification)) {
+                mobileNotification.style.animation = 'slideOutRight 0.4s ease-in forwards';
+                setTimeout(() => {
+                    if (document.body.contains(mobileNotification)) {
+                        document.body.removeChild(mobileNotification);
+                    }
+                }, 400);
             }
-        }, 5000);
+        }, 10000);
         
-        // Add success indicator to button
-        const button = event.target.closest('button');
-        const originalHTML = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-check"></i> Sent';
-        button.classList.remove('btn-outline-info');
-        button.classList.add('btn-info');
-        
-        setTimeout(() => {
-            button.innerHTML = originalHTML;
-            button.classList.remove('btn-info');
-            button.classList.add('btn-outline-info');
-        }, 2000);
+        // Add mobile notification indicator to alert card
+        const alertCard = document.getElementById(`alert-card-${alertIndex}`);
+        if (alertCard) {
+            alertCard.classList.add('border-success');
+            const mobileBadge = document.createElement('span');
+            mobileBadge.className = 'badge bg-success position-absolute top-0 end-0 translate-middle';
+            mobileBadge.innerHTML = '<i class="fas fa-mobile-alt"></i>';
+            alertCard.style.position = 'relative';
+            alertCard.appendChild(mobileBadge);
+        }
     }
 
     function triggerDashboardUpdate(signalName, condition, alertIndex) {
