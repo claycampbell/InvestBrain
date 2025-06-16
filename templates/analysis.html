@@ -451,6 +451,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
 
+                    <!-- Monitoring Strategy -->
+                    ${generateMonitoringPlanCard(thesisData.monitoring_plan)}
+
                     <!-- Signal Classification -->
                     <div class="card mb-4">
                         <div class="card-header">
@@ -461,9 +464,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             ${generateActualSignalsDisplay(signalData)}
                         </div>
                     </div>
-
-                    <!-- Monitoring Strategy -->
-                    ${generateMonitoringPlanCard(thesisData.monitoring_plan)}
 
                     <!-- Action Controls -->
                     <div class="card border-primary">
