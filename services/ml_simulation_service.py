@@ -375,24 +375,15 @@ Return JSON array only:
         
         # Extract events from monitoring plan components
         validation_events = self._extract_validation_events(monitoring_plan, total_months)
-        print(f"DEBUG: Validation events: {validation_events}")
-        
         alert_events = self._extract_alert_events(monitoring_plan, total_months)
-        print(f"DEBUG: Alert events: {alert_events}")
-        
         decision_events = self._extract_decision_events(monitoring_plan, total_months)
-        print(f"DEBUG: Decision events: {decision_events}")
-        
         counter_thesis_events = self._extract_counter_thesis_events(monitoring_plan, total_months)
-        print(f"DEBUG: Counter thesis events: {counter_thesis_events}")
         
         # Combine all events
         all_events = validation_events + alert_events + decision_events + counter_thesis_events
         
         # Filter out any None or invalid events before sorting
-        print(f"DEBUG: All events before filtering: {all_events}")
         all_events = [event for event in all_events if event is not None and isinstance(event, dict) and 'month' in event and event['month'] is not None]
-        print(f"DEBUG: All events after filtering: {all_events}")
         
         # Sort by month and limit to reasonable number
         all_events.sort(key=lambda x: x.get('month', 0))
