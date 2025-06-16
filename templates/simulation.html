@@ -239,12 +239,22 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
+            console.log('Raw simulation response:', data);
+            console.log('Events in response:', data.events);
+            console.log('Events type:', typeof data.events, 'isArray:', Array.isArray(data.events));
+            
             clearInterval(interval);
             progressBar.style.width = '100%';
             
             setTimeout(() => {
                 modal.hide();
-                displaySimulationResults(data, type);
+                try {
+                    displaySimulationResults(data, type);
+                } catch (error) {
+                    console.error('Error in displaySimulationResults:', error);
+                    console.error('Error stack:', error.stack);
+                    alert('Error displaying simulation results: ' + error.message);
+                }
             }, 1000);
         })
         .catch(error => {
@@ -752,27 +762,23 @@ document.addEventListener('DOMContentLoaded', function() {
             events = [];
         }
         
-        // Filter and validate events before processing
-        const validEvents = events.filter((event, index) => {
-            console.log(`Checking event ${index}:`, event);
-            if (!event) {
-                console.warn(`Event ${index} is null/undefined`);
-                return false;
-            }
-            if (typeof event !== 'object') {
-                console.warn(`Event ${index} is not an object:`, typeof event);
-                return false;
-            }
-            if (!event.title) {
-                console.warn(`Event ${index} missing title:`, event);
-                return false;
-            }
-            if (!event.month) {
-                console.warn(`Event ${index} missing month:`, event);
-                return false;
-            }
-            return true;
-        });
+        // Filter and validate events before processing with comprehensive checks
+        const validEvents = [];
+        console.log('Chart rendering - events type:', typeof events, 'isArray:', Array.isArray(events));
+        
+        if (Array.isArray(events)) {
+            events.forEach((event, index) => {
+                console.log(`Chart event ${index}:`, typeof event, event);
+                
+                if (event && typeof event === 'object' && event.title && event.month) {
+                    validEvents.push(event);
+                } else {
+                    console.warn(`Chart: Invalid event ${index}:`, event);
+                }
+            });
+        } else {
+            console.error('Chart: Events is not an array:', events);
+        }
         
         console.log('Valid events for chart:', validEvents);
         
