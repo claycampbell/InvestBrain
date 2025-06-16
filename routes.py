@@ -23,15 +23,21 @@ data_validator = DataValidationService()
 def save_thesis_analysis(thesis_text, analysis_result, signals_result):
     """Save completed analysis to database for monitoring"""
     try:
+        # Ensure proper UTF-8 encoding for text fields
+        def clean_text(text):
+            if isinstance(text, str):
+                return text.encode('utf-8', errors='ignore').decode('utf-8')
+            return str(text) if text is not None else ''
+        
         # Create thesis record
         thesis_analysis = ThesisAnalysis(
-            title=analysis_result.get('core_claim', 'Untitled Thesis')[:255],
-            original_thesis=thesis_text,
-            core_claim=analysis_result.get('core_claim', ''),
-            core_analysis=analysis_result.get('core_analysis', ''),
+            title=clean_text(analysis_result.get('core_claim', 'Untitled Thesis'))[:255],
+            original_thesis=clean_text(thesis_text),
+            core_claim=clean_text(analysis_result.get('core_claim', '')),
+            core_analysis=clean_text(analysis_result.get('core_analysis', '')),
             causal_chain=analysis_result.get('causal_chain', []),
             assumptions=analysis_result.get('assumptions', []),
-            mental_model=analysis_result.get('mental_model', 'unknown'),
+            mental_model=clean_text(analysis_result.get('mental_model', 'unknown')),
             counter_thesis=analysis_result.get('counter_thesis_scenarios', []),
             metrics_to_track=analysis_result.get('metrics_to_track', []),
             monitoring_plan=analysis_result.get('monitoring_plan', {})
@@ -44,10 +50,10 @@ def save_thesis_analysis(thesis_text, analysis_result, signals_result):
         for signal in signals_result.get('raw_signals', []):
             signal_monitor = SignalMonitoring(
                 thesis_analysis_id=thesis_analysis.id,
-                signal_name=signal.get('name', 'Unknown Signal'),
-                signal_type=signal.get('level', 'unknown'),
+                signal_name=clean_text(signal.get('name', 'Unknown Signal'))[:255],
+                signal_type=clean_text(signal.get('level', 'unknown'))[:100],
                 threshold_value=signal.get('threshold', 0),
-                threshold_type=signal.get('threshold_type', 'change_percent'),
+                threshold_type=clean_text(signal.get('threshold_type', 'change_percent'))[:50],
                 status='active'
             )
             db.session.add(signal_monitor)
@@ -67,12 +73,13 @@ def save_thesis_analysis(thesis_text, analysis_result, signals_result):
             
             # Retry the save operation
             thesis_analysis = ThesisAnalysis(
-                title=analysis_result.get('core_claim', 'Untitled Thesis')[:255],
-                original_thesis=thesis_text,
-                core_claim=analysis_result.get('core_claim', ''),
+                title=clean_text(analysis_result.get('core_claim', 'Untitled Thesis'))[:255],
+                original_thesis=clean_text(thesis_text),
+                core_claim=clean_text(analysis_result.get('core_claim', '')),
+                core_analysis=clean_text(analysis_result.get('core_analysis', '')),
                 causal_chain=analysis_result.get('causal_chain', []),
                 assumptions=analysis_result.get('assumptions', []),
-                mental_model=analysis_result.get('mental_model', 'unknown'),
+                mental_model=clean_text(analysis_result.get('mental_model', 'unknown')),
                 counter_thesis=analysis_result.get('counter_thesis_scenarios', []),
                 metrics_to_track=analysis_result.get('metrics_to_track', []),
                 monitoring_plan=analysis_result.get('monitoring_plan', {})
@@ -85,10 +92,10 @@ def save_thesis_analysis(thesis_text, analysis_result, signals_result):
             for signal in signals_result.get('raw_signals', []):
                 signal_monitor = SignalMonitoring(
                     thesis_analysis_id=thesis_analysis.id,
-                    signal_name=signal.get('name', 'Unknown Signal'),
-                    signal_type=signal.get('level', 'unknown'),
+                    signal_name=clean_text(signal.get('name', 'Unknown Signal'))[:255],
+                    signal_type=clean_text(signal.get('level', 'unknown'))[:100],
                     threshold_value=signal.get('threshold', 0),
-                    threshold_type=signal.get('threshold_type', 'change_percent'),
+                    threshold_type=clean_text(signal.get('threshold_type', 'change_percent'))[:50],
                     status='active'
                 )
                 db.session.add(signal_monitor)
