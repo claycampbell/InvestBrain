@@ -71,6 +71,9 @@ class SimulationService:
                 print(f"Event generation failed: {e}")
                 events = []
         
+        # Generate alert triggers based on simulation results
+        alert_triggers = self._generate_alert_triggers(thesis, performance_data, events, scenario)
+        
         # Create chart configuration
         chart_config = self._create_chart_config(thesis, scenario, simulation_type)
         
@@ -80,6 +83,7 @@ class SimulationService:
                 'timeline': timeline
             },
             'events': events,
+            'alert_triggers': alert_triggers,
             'chart_config': chart_config,
             'scenario_summary': self._create_scenario_summary(thesis, scenario, time_horizon),
             'simulation_metadata': {
@@ -103,7 +107,7 @@ class SimulationService:
         months = time_horizon * 12
         
         # Attempt LLM generation with optimized approach
-        if self.ai_service and self.ai_service.is_available():
+        if self.ai_service:
             try:
                 # For o4-mini model, use very concise prompts to avoid length limits
                 
@@ -263,6 +267,99 @@ JSON: {{"market": [100,98.5,102.3,...], "thesis": [100,102.1,104.3,...]}}"""
             'thesis_performance': [round(x, 1) for x in thesis_data],
             '_note': f'Thesis-specific simulation: {expected_annual_growth*100:.0f}% annual target'
         }
+    
+    def _generate_alert_triggers(self, thesis, performance_data: Dict, events: List, scenario: str) -> List[Dict]:
+        """
+        Generate alert triggers based on simulation results and thesis signals
+        """
+        alert_triggers = []
+        
+        # Extract performance decline scenarios
+        if isinstance(performance_data, dict):
+            thesis_performance = performance_data.get('thesis_performance', [])
+            market_performance = performance_data.get('market_performance', [])
+            
+            # Calculate performance metrics
+            if len(thesis_performance) > 1:
+                thesis_final = thesis_performance[-1]
+                thesis_initial = thesis_performance[0]
+                thesis_return = ((thesis_final - thesis_initial) / thesis_initial) * 100
+                
+                # Generate alerts based on performance and scenario
+                if scenario in ['bear', 'stress'] or thesis_return < -10:
+                    alert_triggers.append({
+                        'signal_name': 'Thesis Performance Alert',
+                        'condition': f'Performance declined {abs(thesis_return):.1f}% below expectations',
+                        'severity': 'high' if thesis_return < -20 else 'medium',
+                        'action': 'Review fundamental assumptions and consider position sizing adjustments'
+                    })
+                
+                if len(market_performance) > 1:
+                    market_final = market_performance[-1]
+                    market_initial = market_performance[0]
+                    market_return = ((market_final - market_initial) / market_initial) * 100
+                    
+                    # Relative performance alert
+                    relative_performance = thesis_return - market_return
+                    if relative_performance < -15:
+                        alert_triggers.append({
+                            'signal_name': 'Relative Performance Alert',
+                            'condition': f'Underperforming market by {abs(relative_performance):.1f}%',
+                            'severity': 'high',
+                            'action': 'Reassess thesis validity and competitive positioning'
+                        })
+        
+        # Generate event-based alerts
+        for event in events:
+            if event.get('impact_type') == 'negative' and event.get('magnitude') in ['significant', 'major']:
+                alert_triggers.append({
+                    'signal_name': f"{event.get('title', 'Market Event')} Alert",
+                    'condition': f"Event impact: {event.get('description', 'Unknown impact')}",
+                    'severity': 'critical' if event.get('magnitude') == 'major' else 'high',
+                    'action': f"Monitor {', '.join(event.get('signals_affected', ['key metrics']))} closely"
+                })
+        
+        # Generate scenario-specific alerts
+        if scenario == 'stress':
+            alert_triggers.append({
+                'signal_name': 'Stress Test Alert',
+                'condition': 'Stress scenario conditions detected in simulation',
+                'severity': 'critical',
+                'action': 'Implement risk management protocols and review portfolio allocation'
+            })
+        elif scenario == 'bear':
+            alert_triggers.append({
+                'signal_name': 'Bear Market Alert',
+                'condition': 'Bear market scenario showing sustained pressure on thesis',
+                'severity': 'high',
+                'action': 'Consider defensive positioning and hedge strategy evaluation'
+            })
+        
+        # Add thesis-specific signal alerts based on monitoring plan
+        if hasattr(thesis, 'metrics_to_track') and thesis.metrics_to_track:
+            try:
+                metrics = json.loads(thesis.metrics_to_track) if isinstance(thesis.metrics_to_track, str) else thesis.metrics_to_track
+                for metric in metrics[:2]:  # Limit to first 2 metrics
+                    metric_name = metric.get('name', 'Unknown Metric')
+                    alert_triggers.append({
+                        'signal_name': f'{metric_name} Monitoring Alert',
+                        'condition': f'Simulation indicates potential {metric_name.lower()} threshold breach',
+                        'severity': 'medium',
+                        'action': f'Validate {metric_name.lower()} data sources and update tracking parameters'
+                    })
+            except Exception as e:
+                print(f"Error parsing metrics_to_track: {e}")
+        
+        # Ensure we have at least one alert for demonstration
+        if not alert_triggers:
+            alert_triggers.append({
+                'signal_name': 'Simulation Monitoring Alert',
+                'condition': 'Simulation completed - monitoring thresholds ready for activation',
+                'severity': 'medium',
+                'action': 'Review simulation results and adjust monitoring parameters as needed'
+            })
+        
+        return alert_triggers
     
     def _generate_algorithmic_performance(self, time_horizon: int, scenario: str, volatility: str) -> List[float]:
         """

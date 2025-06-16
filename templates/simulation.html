@@ -359,6 +359,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.chart_data && data.chart_data.performance_data) {
                 renderPerformanceChart(data.chart_data, events);
             }
+            
+            // Display alert triggers if available
+            if (data.alert_triggers && data.alert_triggers.length > 0) {
+                displayAlertTriggers(data.alert_triggers);
+            }
         }
         
         resultsDiv.style.display = 'block';
