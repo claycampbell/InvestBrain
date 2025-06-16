@@ -135,7 +135,7 @@ Return JSON:
         """
         Generate realistic price forecast using ML-inspired mathematical models
         """
-        months = time_horizon * 12
+        months = int(time_horizon) * 12
         days_per_month = 21  # Trading days
         total_days = months * days_per_month
         
