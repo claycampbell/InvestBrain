@@ -3,6 +3,54 @@
 {% block title %}Thesis Simulation - {{ thesis.title }}{% endblock %}
 
 {% block content %}
+<style>
+    .alert-card {
+        transition: all 0.3s ease;
+        border: 2px solid #dee2e6;
+    }
+    
+    .alert-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+    
+    .notification-toast {
+        animation: slideInRight 0.3s ease-out;
+    }
+    
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    .btn-group-notification {
+        gap: 0.5rem;
+    }
+    
+    .alert-severity-critical {
+        border-left: 4px solid #dc3545;
+    }
+    
+    .alert-severity-high {
+        border-left: 4px solid #ffc107;
+    }
+    
+    .alert-severity-medium {
+        border-left: 4px solid #17a2b8;
+    }
+</style>
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -720,19 +768,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 <p>The simulation has activated the following monitoring alerts:</p>
             </div>
             
-            ${triggers.map(alert => `
-                <div class="border rounded p-3 mb-3">
+            ${triggers.map((alert, index) => `
+                <div class="border rounded p-3 mb-3 alert-card" id="alert-card-${index}">
                     <div class="d-flex justify-content-between align-items-start">
-                        <div>
+                        <div class="flex-grow-1">
                             <h6 class="text-danger">${alert.signal_name || 'Unknown Signal'}</h6>
                             <p class="mb-2">${alert.condition || 'No condition specified'}</p>
-                            <div class="small text-muted">
+                            <div class="small text-muted mb-3">
                                 <strong>Recommended Action:</strong> ${alert.action || 'No action specified'}
                             </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-warning" onclick="triggerSimulatedNotification('${alert.signal_name || 'Unknown Signal'}', '${alert.condition || ''}', '${alert.severity || 'medium'}', ${index})">
+                                    <i class="fas fa-bell"></i> Test Alert
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="triggerEmailNotification('${alert.signal_name || 'Unknown Signal'}', '${alert.condition || ''}', ${index})">
+                                    <i class="fas fa-envelope"></i> Email Alert
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="triggerDashboardUpdate('${alert.signal_name || 'Unknown Signal'}', '${alert.condition || ''}', ${index})">
+                                    <i class="fas fa-chart-line"></i> Dashboard Update
+                                </button>
+                            </div>
                         </div>
-                        <span class="badge bg-${alert.severity === 'critical' ? 'danger' : alert.severity === 'high' ? 'warning' : 'info'}">
-                            ${alert.severity || 'N/A'}
-                        </span>
+                        <div class="text-end">
+                            <span class="badge bg-${alert.severity === 'critical' ? 'danger' : alert.severity === 'high' ? 'warning' : 'info'} mb-2">
+                                ${alert.severity || 'N/A'}
+                            </span>
+                            <div class="small text-muted">
+                                <i class="fas fa-clock"></i> Simulated Alert
+                            </div>
+                        </div>
                     </div>
                 </div>
             `).join('')}
@@ -756,6 +820,209 @@ document.addEventListener('DOMContentLoaded', function() {
         if (type === 'positive') return 'success';
         if (type === 'negative') return 'danger';
         return 'warning';
+    }
+
+    // Simulated notification functions
+    function triggerSimulatedNotification(signalName, condition, severity, alertIndex) {
+        // Create notification modal similar to publish thesis notification
+        const notificationModal = document.createElement('div');
+        notificationModal.className = 'modal fade';
+        notificationModal.id = `notification-modal-${alertIndex}`;
+        notificationModal.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-${severity === 'critical' ? 'danger' : severity === 'high' ? 'warning' : 'info'} text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-bell"></i> Alert Notification
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-3">
+                            <i class="fas fa-exclamation-triangle fa-3x text-${severity === 'critical' ? 'danger' : severity === 'high' ? 'warning' : 'info'}"></i>
+                        </div>
+                        <h6 class="text-center mb-3">Signal Alert Triggered</h6>
+                        <div class="alert alert-${severity === 'critical' ? 'danger' : severity === 'high' ? 'warning' : 'info'}">
+                            <strong>Signal:</strong> ${signalName}<br>
+                            <strong>Condition:</strong> ${condition}<br>
+                            <strong>Severity:</strong> ${severity.toUpperCase()}<br>
+                            <strong>Time:</strong> ${new Date().toLocaleString()}
+                        </div>
+                        <p class="text-muted small">This is a simulated notification demonstrating how real alerts would appear when monitoring conditions are met.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Acknowledge</button>
+                        <button type="button" class="btn btn-primary" onclick="markAlertAsRead(${alertIndex})">Mark as Read</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(notificationModal);
+        const modal = new bootstrap.Modal(notificationModal);
+        modal.show();
+        
+        // Add pulsing effect to the alert card
+        const alertCard = document.getElementById(`alert-card-${alertIndex}`);
+        if (alertCard) {
+            alertCard.classList.add('border-warning');
+            alertCard.style.animation = 'pulse 1s ease-in-out 3';
+        }
+        
+        // Remove modal after it's hidden
+        notificationModal.addEventListener('hidden.bs.modal', function () {
+            document.body.removeChild(notificationModal);
+        });
+    }
+
+    function triggerEmailNotification(signalName, condition, alertIndex) {
+        // Show email notification simulation
+        const toast = document.createElement('div');
+        toast.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toast.style.zIndex = '9999';
+        toast.innerHTML = `
+            <div class="toast show" role="alert">
+                <div class="toast-header bg-info text-white">
+                    <i class="fas fa-envelope me-2"></i>
+                    <strong class="me-auto">Email Alert Sent</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body">
+                    <strong>To:</strong> investor@email.com<br>
+                    <strong>Subject:</strong> ${signalName} Alert<br>
+                    <strong>Message:</strong> ${condition}<br>
+                    <small class="text-muted">Simulated email notification</small>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Auto-remove toast after 5 seconds
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
+            }
+        }, 5000);
+        
+        // Add success indicator to button
+        const button = event.target.closest('button');
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i> Sent';
+        button.classList.remove('btn-outline-info');
+        button.classList.add('btn-info');
+        
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.classList.remove('btn-info');
+            button.classList.add('btn-outline-info');
+        }, 2000);
+    }
+
+    function triggerDashboardUpdate(signalName, condition, alertIndex) {
+        // Show dashboard update simulation
+        const updateModal = document.createElement('div');
+        updateModal.className = 'modal fade';
+        updateModal.id = `dashboard-modal-${alertIndex}`;
+        updateModal.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-chart-line"></i> Dashboard Update
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Signal Status Update</h6>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-danger">${signalName}</h6>
+                                        <p class="card-text">${condition}</p>
+                                        <span class="badge bg-warning">Alert Active</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Monitoring Dashboard</h6>
+                                <div class="bg-light p-3 rounded">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Signal Status:</span>
+                                        <span class="text-danger">Triggered</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Last Updated:</span>
+                                        <span>${new Date().toLocaleString()}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Next Check:</span>
+                                        <span class="text-info">In 5 minutes</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <h6>Actions Taken</h6>
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Dashboard updated
+                                    <span class="badge bg-success rounded-pill">Complete</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Alert logged
+                                    <span class="badge bg-success rounded-pill">Complete</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Notification queued
+                                    <span class="badge bg-info rounded-pill">Pending</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle"></i>
+                            This is a simulated dashboard update showing how real monitoring alerts would update the system.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary">View Full Dashboard</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(updateModal);
+        const modal = new bootstrap.Modal(updateModal);
+        modal.show();
+        
+        // Remove modal after it's hidden
+        updateModal.addEventListener('hidden.bs.modal', function () {
+            document.body.removeChild(updateModal);
+        });
+    }
+
+    function markAlertAsRead(alertIndex) {
+        const alertCard = document.getElementById(`alert-card-${alertIndex}`);
+        if (alertCard) {
+            alertCard.style.opacity = '0.6';
+            alertCard.classList.remove('border-warning');
+            alertCard.classList.add('border-success');
+            
+            // Add "Read" indicator
+            const readBadge = document.createElement('div');
+            readBadge.className = 'position-absolute top-0 end-0 translate-middle';
+            readBadge.innerHTML = '<span class="badge bg-success"><i class="fas fa-check"></i> Read</span>';
+            alertCard.style.position = 'relative';
+            alertCard.appendChild(readBadge);
+        }
+        
+        // Close any open modal
+        const openModal = bootstrap.Modal.getInstance(document.querySelector('.modal.show'));
+        if (openModal) {
+            openModal.hide();
+        }
     }
 
     function renderPerformanceChart(chartData, events) {
