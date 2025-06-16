@@ -373,11 +373,22 @@ Return JSON array only:
         events = []
         total_months = time_horizon * 12
         
-        # Extract events from monitoring plan components
-        validation_events = self._extract_validation_events(monitoring_plan, total_months)
-        alert_events = self._extract_alert_events(monitoring_plan, total_months)
-        decision_events = self._extract_decision_events(monitoring_plan, total_months)
-        counter_thesis_events = self._extract_counter_thesis_events(monitoring_plan, total_months)
+        # Check monitoring plan format and extract events accordingly
+        if 'validation_framework' in monitoring_plan:
+            # Comprehensive monitoring plan format
+            validation_events = self._extract_validation_events(monitoring_plan, total_months)
+            alert_events = self._extract_alert_events(monitoring_plan, total_months)
+            decision_events = self._extract_decision_events(monitoring_plan, total_months)
+            counter_thesis_events = self._extract_counter_thesis_events(monitoring_plan, total_months)
+            print(f"DEBUG: Using comprehensive format, generated {len(validation_events + alert_events + decision_events + counter_thesis_events)} events")
+        else:
+            # Simple monitoring plan format
+            validation_events = self._extract_simple_validation_events(monitoring_plan, total_months)
+            alert_events = self._extract_simple_alert_events(monitoring_plan, total_months)
+            decision_events = self._extract_simple_decision_events(monitoring_plan, total_months)
+            counter_thesis_events = []
+            print(f"DEBUG: Using simple format, generated {len(validation_events + alert_events + decision_events)} events")
+            print(f"DEBUG: Simple events: validation={len(validation_events)}, alerts={len(alert_events)}, decisions={len(decision_events)}")
         
         # Combine all events
         all_events = validation_events + alert_events + decision_events + counter_thesis_events
@@ -409,6 +420,74 @@ Return JSON array only:
                 valid_events.append(event)
         
         return valid_events
+    
+    def _extract_simple_validation_events(self, monitoring_plan: Dict, total_months: int) -> List[Dict]:
+        """Extract events from simple monitoring plan data_pulls"""
+        events = []
+        data_pulls = monitoring_plan.get('data_pulls', [])
+        
+        for i, pull in enumerate(data_pulls[:2]):
+            month = max(1, min((i + 1) * max(1, total_months // 3), total_months))
+            if month > 0 and month <= total_months:
+                category = pull.get('category', 'Performance Check')
+                metrics = pull.get('metrics', [])
+                data_source = pull.get('data_source', 'Data Source')
+                
+                events.append({
+                    'month': month,
+                    'title': f"Data Validation: {category}",
+                    'description': f"Validating {', '.join(metrics)} via {data_source} - {pull.get('frequency', 'regular')} monitoring",
+                    'impact_type': 'positive',
+                    'signals_affected': metrics,
+                    'event_category': 'validation'
+                })
+        
+        return events
+    
+    def _extract_simple_alert_events(self, monitoring_plan: Dict, total_months: int) -> List[Dict]:
+        """Extract events from simple monitoring plan alert_logic"""
+        events = []
+        alert_logic = monitoring_plan.get('alert_logic', [])
+        
+        for i, alert in enumerate(alert_logic[:3]):
+            month = max(1, min((i + 1) * max(1, total_months // 3), total_months))
+            if month > 0 and month <= total_months:
+                condition = alert.get('condition', 'Performance threshold')
+                action = alert.get('action', 'Review required')
+                frequency = alert.get('frequency', 'regular')
+                
+                events.append({
+                    'month': month,
+                    'title': f"Alert: {frequency.title()} Check",
+                    'description': f"Monitoring condition: {condition} | Required action: {action}",
+                    'impact_type': 'negative',
+                    'signals_affected': ['Performance Alert'],
+                    'event_category': 'alert'
+                })
+        
+        return events
+    
+    def _extract_simple_decision_events(self, monitoring_plan: Dict, total_months: int) -> List[Dict]:
+        """Extract events from simple monitoring plan decision_triggers"""
+        events = []
+        decision_triggers = monitoring_plan.get('decision_triggers', [])
+        
+        for i, trigger in enumerate(decision_triggers[:2]):
+            month = max(1, min((i + 1) * max(1, total_months // 2), total_months))
+            if month > 0 and month <= total_months:
+                condition = trigger.get('condition', 'Performance trigger')
+                action = trigger.get('action', 'Strategic review')
+                
+                events.append({
+                    'month': month,
+                    'title': f"Decision Point: {condition.split(' ')[0]} Review",
+                    'description': f"Trigger condition: {condition} | Strategic action: {action}",
+                    'impact_type': 'neutral',
+                    'signals_affected': ['Decision Framework'],
+                    'event_category': 'decision'
+                })
+        
+        return events
     
     def _extract_validation_events(self, monitoring_plan: Dict, total_months: int) -> List[Dict]:
         """Extract events from validation framework"""
