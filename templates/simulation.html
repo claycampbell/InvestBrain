@@ -518,26 +518,38 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="card-body">
                             <div class="timeline">
-                                ${validEvents.map(event => `
-                                    <div class="timeline-item mb-3">
-                                        <div class="d-flex">
-                                            <div class="timeline-marker me-3">
-                                                <span class="badge bg-${getEventBadge(event.impact_type || 'neutral')} rounded-pill">
-                                                    Month ${event.month || 'N/A'}
-                                                </span>
-                                            </div>
-                                            <div class="timeline-content flex-grow-1">
-                                                <h6 class="mb-1">${event.title || 'Market Event'}</h6>
-                                                <p class="mb-1">${event.description || 'Market event details'}</p>
-                                                <div class="small text-muted">
-                                                    <strong>Impact:</strong> ${event.magnitude || 'Moderate'} ${event.impact_type || 'neutral'}
-                                                    ${event.signals_affected && Array.isArray(event.signals_affected) && event.signals_affected.length > 0 ? 
-                                                        `<br><strong>Signals Affected:</strong> ${event.signals_affected.join(', ')}` : ''}
+                                ${validEvents.map((event, index) => {
+                                    // Defensive programming - ensure all properties exist
+                                    const safeEvent = {
+                                        title: (event && event.title) ? String(event.title) : 'Market Event',
+                                        description: (event && event.description) ? String(event.description) : 'Market event details',
+                                        month: (event && event.month) ? String(event.month) : 'N/A',
+                                        impact_type: (event && event.impact_type) ? String(event.impact_type) : 'neutral',
+                                        magnitude: (event && event.magnitude) ? String(event.magnitude) : 'Moderate',
+                                        signals_affected: (event && Array.isArray(event.signals_affected)) ? event.signals_affected : []
+                                    };
+                                    
+                                    return `
+                                        <div class="timeline-item mb-3">
+                                            <div class="d-flex">
+                                                <div class="timeline-marker me-3">
+                                                    <span class="badge bg-${getEventBadge(safeEvent.impact_type)} rounded-pill">
+                                                        Month ${safeEvent.month}
+                                                    </span>
+                                                </div>
+                                                <div class="timeline-content flex-grow-1">
+                                                    <h6 class="mb-1">${safeEvent.title}</h6>
+                                                    <p class="mb-1">${safeEvent.description}</p>
+                                                    <div class="small text-muted">
+                                                        <strong>Impact:</strong> ${safeEvent.magnitude} ${safeEvent.impact_type}
+                                                        ${safeEvent.signals_affected.length > 0 ? 
+                                                            `<br><strong>Signals Affected:</strong> ${safeEvent.signals_affected.join(', ')}` : ''}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                `).join('')}
+                                    `;
+                                }).join('')}
                             </div>
                         </div>
                     </div>
@@ -823,23 +835,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 hover: { size: 6 }
             },
             annotations: {
-                points: validEvents.map(event => ({
-                    x: event.month - 1,
-                    y: event.impact_value || 100,
-                    marker: {
-                        size: 8,
-                        fillColor: event.impact_type === 'positive' ? '#28a745' : '#dc3545',
-                        strokeColor: '#fff',
-                        strokeWidth: 2
-                    },
-                    label: {
-                        text: event.title || 'Event',
-                        style: {
-                            color: '#fff',
-                            background: event.impact_type === 'positive' ? '#28a745' : '#dc3545'
-                        }
+                points: validEvents.map((event, index) => {
+                    // Comprehensive safety check for each event in the map
+                    if (!event || typeof event !== 'object') {
+                        console.error(`Invalid event in map at index ${index}:`, event);
+                        return null;
                     }
-                }))
+                    
+                    // Create safe property accessors
+                    const safeMonth = (event.month && typeof event.month === 'number') ? event.month : 1;
+                    const safeImpactValue = (event.impact_value && typeof event.impact_value === 'number') ? event.impact_value : 100;
+                    const safeImpactType = (event.impact_type && typeof event.impact_type === 'string') ? event.impact_type : 'neutral';
+                    const safeTitle = (event.title && typeof event.title === 'string') ? event.title : 'Event';
+                    
+                    return {
+                        x: safeMonth - 1,
+                        y: safeImpactValue,
+                        marker: {
+                            size: 8,
+                            fillColor: safeImpactType === 'positive' ? '#28a745' : '#dc3545',
+                            strokeColor: '#fff',
+                            strokeWidth: 2
+                        },
+                        label: {
+                            text: safeTitle,
+                            style: {
+                                color: '#fff',
+                                background: safeImpactType === 'positive' ? '#28a745' : '#dc3545'
+                            }
+                        }
+                    };
+                }).filter(annotation => annotation !== null)
             },
             legend: {
                 position: 'top'
