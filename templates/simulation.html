@@ -443,7 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
             
-            ${events.length > 0 ? generateEventTimeline(events) : ''}
+            ${events && Array.isArray(events) && events.length > 0 ? generateEventTimeline(events) : '<div class="alert alert-info">No events to display</div>'}
         `;
     }
     
@@ -468,17 +468,27 @@ document.addEventListener('DOMContentLoaded', function() {
             return '';
         }
         
-        // Filter out any null, undefined, or invalid events
-        const validEvents = events.filter(event => {
-            if (!event || typeof event !== 'object') {
-                console.warn('Invalid event filtered out:', event);
-                return false;
+        // Filter out any null, undefined, or invalid events with detailed debugging
+        const validEvents = [];
+        events.forEach((event, index) => {
+            console.log(`Processing event ${index}:`, typeof event, event);
+            
+            if (event === null || event === undefined) {
+                console.warn(`Event ${index} is null/undefined`);
+                return;
             }
-            if (!event.title) {
-                console.warn('Event missing title:', event);
-                return false;
+            
+            if (typeof event !== 'object') {
+                console.warn(`Event ${index} is not an object:`, typeof event, event);
+                return;
             }
-            return true;
+            
+            if (!event.hasOwnProperty('title') || event.title === null || event.title === undefined || event.title === '') {
+                console.warn(`Event ${index} missing or empty title:`, event);
+                return;
+            }
+            
+            validEvents.push(event);
         });
         
         console.log('Valid events after filtering:', validEvents);
