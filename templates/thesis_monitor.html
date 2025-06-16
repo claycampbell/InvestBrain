@@ -619,27 +619,38 @@
     }
 
     function displaySimulationResults(data) {
-        document.getElementById('simulationEmpty').classList.add('d-none');
-        document.getElementById('simulationResults').classList.remove('d-none');
+        try {
+            // Validate input data
+            if (!data) {
+                throw new Error('No simulation data received');
+            }
+            
+            document.getElementById('simulationEmpty').classList.add('d-none');
+            document.getElementById('simulationResults').classList.remove('d-none');
 
-        // Create or update chart
-        const ctx = document.getElementById('simulationChart');
-        
-        if (simulationChart) {
-            simulationChart.destroy();
-        }
+            // Create or update chart
+            const ctx = document.getElementById('simulationChart');
+            
+            if (simulationChart) {
+                simulationChart.destroy();
+            }
 
-        // Extract chart data from nested structure with comprehensive fallbacks
-        const chartData = data.chart_data || data;
-        const performanceData = chartData.performance_data || data.performance_data || [];
-        const timeline = chartData.timeline || data.timeline || [];
-        
-        // Ensure chart configuration is properly structured
-        const chartConfig = data.chart_config || {
-            title: '{{ thesis.title|e|replace("'", "\\'") }} - Simulation Results',
-            y_axis_label: 'Performance Index (%)',
-            primary_metric: 'Thesis Performance'
-        };
+            // Extract chart data from nested structure with comprehensive fallbacks
+            const chartData = data.chart_data || data;
+            const performanceData = chartData.performance_data || data.performance_data || [];
+            const timeline = chartData.timeline || data.timeline || [];
+            
+            // Validate essential data
+            if (!Array.isArray(timeline) || timeline.length === 0) {
+                throw new Error('Invalid timeline data in simulation results');
+            }
+            
+            // Ensure chart configuration is properly structured
+            const chartConfig = data.chart_config || {
+                title: '{{ thesis.title|e|replace("'", "\\'") }} - Simulation Results',
+                y_axis_label: 'Performance Index (%)',
+                primary_metric: 'Thesis Performance'
+            };
         
         console.log('Chart data structure:', {
             hasChartData: !!data.chart_data,
@@ -681,7 +692,7 @@
             // Single series fallback
             const singleData = Array.isArray(performanceData) ? performanceData : [];
             series.push({
-                name: data.chart_config?.primary_metric || 'Performance Index',
+                name: chartConfig.primary_metric,
                 data: singleData.map((value, index) => [
                     timelineData[index],
                     value
@@ -741,8 +752,7 @@
                 width: [2, 3]
             },
             title: {
-                text: (data.chart_config && data.chart_config.title) || 
-                      '{{ thesis.title|e|replace("'", "\\'") }} - Performance Simulation',
+                text: chartConfig.title,
                 align: 'left',
                 style: {
                     fontSize: '16px',
@@ -764,7 +774,7 @@
             },
             yaxis: {
                 title: {
-                    text: data.chart_config.y_axis_label || 'Cumulative Performance (%)'
+                    text: chartConfig.y_axis_label
                 }
             },
             legend: {
@@ -808,6 +818,15 @@
             document.getElementById('eventTimeline').classList.remove('d-none');
         } else {
             document.getElementById('eventTimeline').classList.add('d-none');
+        }
+        
+        } catch (error) {
+            console.error('Error displaying simulation results:', error);
+            showAlert('Failed to display simulation results: ' + error.message, 'danger');
+            
+            // Reset to empty state on error
+            document.getElementById('simulationResults').classList.add('d-none');
+            document.getElementById('simulationEmpty').classList.remove('d-none');
         }
     }
 
