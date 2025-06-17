@@ -50,6 +50,64 @@
     background-color: var(--thesis-secondary);
 }
 
+/* AI-Powered Investment Insight Sparklines */
+.sparkline-container {
+    background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+    border-radius: 8px;
+    padding: 8px;
+    margin: 8px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.sparkline-container canvas {
+    border-radius: 4px;
+}
+
+.sparkline-metric-card {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.sparkline-metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: var(--bs-primary);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #0066cc, #004499) !important;
+}
+
+/* AI Insights styling */
+.ai-insight-card {
+    border-left: 4px solid;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.ai-insight-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.ai-insight-positive {
+    border-left-color: var(--thesis-success);
+}
+
+.ai-insight-warning {
+    border-left-color: var(--thesis-danger);
+}
+
+.ai-insight-opportunity {
+    border-left-color: var(--thesis-warning);
+}
+
+.ai-insight-info {
+    border-left-color: var(--thesis-info);
+}
+
 /* Animations */
 @keyframes pulse {
     0% { opacity: 1; }
