@@ -462,12 +462,16 @@ Return JSON array only:
             if month > 0 and month <= total_months:
                 impact_type = 'negative' if alert.get('severity') == 'high' else 'neutral'
                 
+                trigger_name = alert.get('trigger_name', 'Performance Alert')
+                # Remove duplicate "Alert" if already present in trigger name
+                clean_title = trigger_name if 'Alert' in trigger_name else f"Alert: {trigger_name}"
+                
                 events.append({
                     'month': month,
-                    'title': f"Alert: {alert.get('trigger_name', 'Performance Alert')}",
+                    'title': clean_title,
                     'description': f"Triggered condition: {alert.get('condition')} | Required action: {alert.get('action')}",
                     'impact_type': impact_type,
-                    'signals_affected': [alert.get('trigger_name', 'Alert Signal')],
+                    'signals_affected': [trigger_name],
                     'event_category': 'alert'
                 })
         
@@ -637,7 +641,7 @@ Return JSON format:
         for event in events:
             if event.get('impact_type') == 'negative' and event.get('magnitude') in ['significant', 'major']:
                 alert_triggers.append({
-                    'signal_name': f"{event.get('title', 'ML Event')} Alert",
+                    'signal_name': event.get('title', 'ML Event'),
                     'condition': f"ML event simulation: {event.get('description', 'Unknown impact')}",
                     'severity': 'critical' if event.get('magnitude') == 'major' else 'high',
                     'action': f"Monitor {', '.join(event.get('signals_affected', ['key metrics']))} via ML tracking"
