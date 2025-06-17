@@ -622,6 +622,7 @@ function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
         const marketData = generateMarketContext();
         const thesisData = generateThesisContext(signalName);
         const counterThesisData = generateCounterThesisContext();
+        const combinedImpact = calculateCombinedImpact(marketData, thesisData, counterThesisData);
     
     const comprehensiveAlert = `
         📋 ${summarizeThesisTitle(globalThesisTitle)}
@@ -629,7 +630,7 @@ function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
         📊 MARKET: ${marketData.trend} (${marketData.impact})
         ⚠️ RISK: ${counterThesisData.assessment}
         
-        Combined Impact: ${calculateCombinedImpact(marketData, thesisData, counterThesisData)}
+        Combined Impact: ${combinedImpact.description} (${combinedImpact.value})
     `;
     
     messageEl.innerHTML = comprehensiveAlert.replace(/\n/g, '<br>');
