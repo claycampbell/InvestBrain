@@ -92,6 +92,113 @@ class AlternativeCompanyService:
             'signal_patterns': self._analyze_signal_patterns(signals)
         }
     
+    def _create_comprehensive_analysis_prompt(self, characteristics: Dict, thesis_analysis: Dict) -> str:
+        """Create comprehensive prompt for LLM alternative company analysis"""
+        core_claim = thesis_analysis.get('core_claim', '')
+        sector = characteristics.get('sector', 'Technology')
+        business_model = characteristics.get('business_model', 'SaaS')
+        value_drivers = characteristics.get('value_drivers', [])
+        
+        prompt = f"""
+Based on the following investment thesis, identify 5-8 real, publicly traded alternative companies that match these patterns:
+
+THESIS CORE CLAIM: {core_claim}
+
+PATTERN CHARACTERISTICS:
+- Sector: {sector}
+- Business Model: {business_model}
+- Value Drivers: {', '.join(value_drivers) if value_drivers else 'Not specified'}
+- Growth Stage: {characteristics.get('growth_stage', 'Unknown')}
+
+REQUIREMENTS:
+1. Find real companies with actual ticker symbols
+2. Focus on undervalued or overlooked companies
+3. Match the core value creation patterns
+4. Include diverse market caps (small, mid, large)
+5. Avoid obvious mega-caps, find hidden gems
+
+For each company provide:
+- Exact company name and ticker
+- Current market cap estimate
+- Business description matching thesis patterns
+- Key financial metrics
+- Why currently undervalued (2-3 specific factors)
+- Hidden strengths aligning with thesis (2-3 factors)
+- Investment score (0-100)
+
+Format as JSON array:
+[{{
+  "name": "Company Name",
+  "ticker": "TICK",
+  "market_cap": 12.5,
+  "description": "Business model description",
+  "key_metrics": {{"revenue_growth": 0.25, "margin": 0.18}},
+  "unloved_factors": ["Specific reason 1", "Specific reason 2"],
+  "hidden_strengths": ["Strength 1", "Strength 2"],
+  "composite_score": 85
+}}]
+"""
+        return prompt
+    
+    def _parse_llm_companies(self, response: str) -> List[Dict[str, Any]]:
+        """Parse LLM response to extract authentic company data"""
+        try:
+            import json
+            import re
+            
+            # Clean the response to extract JSON
+            response_cleaned = response.strip()
+            
+            # Remove markdown formatting
+            if '```json' in response_cleaned:
+                match = re.search(r'```json\s*(.*?)\s*```', response_cleaned, re.DOTALL)
+                if match:
+                    response_cleaned = match.group(1)
+            elif '```' in response_cleaned:
+                match = re.search(r'```\s*(.*?)\s*```', response_cleaned, re.DOTALL)
+                if match:
+                    response_cleaned = match.group(1)
+            
+            # Parse JSON array
+            companies_data = json.loads(response_cleaned)
+            
+            if not isinstance(companies_data, list):
+                logging.error("LLM response is not a list")
+                return []
+            
+            # Enhance and validate each company
+            enhanced_companies = []
+            for company in companies_data:
+                if not isinstance(company, dict):
+                    continue
+                    
+                enhanced_company = {
+                    'name': company.get('name', 'Unknown Company'),
+                    'ticker': company.get('ticker', 'N/A'),
+                    'market_cap': float(company.get('market_cap', 0)),
+                    'description': company.get('description', 'No description available'),
+                    'key_metrics': company.get('key_metrics', {}),
+                    'unloved_factors': company.get('unloved_factors', []),
+                    'hidden_strengths': company.get('hidden_strengths', []),
+                    'composite_score': int(company.get('composite_score', 50)),
+                    'pattern_match_score': float(company.get('composite_score', 50)) * 0.8,
+                    'undervaluation_score': float(company.get('composite_score', 50)) * 0.9,
+                    'potential_score': float(company.get('composite_score', 50)) * 0.85,
+                    'recommendation_strength': self._get_recommendation_strength(company.get('composite_score', 50)),
+                    'risk_factors': self._generate_risk_factors(company),
+                    'catalyst_timeline': self._generate_catalyst_timeline(company)
+                }
+                enhanced_companies.append(enhanced_company)
+            
+            return enhanced_companies
+            
+        except json.JSONDecodeError as e:
+            logging.error(f"Failed to parse LLM JSON response: {e}")
+            return []
+        except Exception as e:
+            logging.error(f"Error processing LLM response: {e}")
+            return []
+    
     def _generate_alternative_companies(self, characteristics: Dict, thesis_analysis: Dict) -> List[Dict[str, Any]]:
         """Generate list of alternative companies using LLM analysis"""
         try:
