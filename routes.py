@@ -11,6 +11,7 @@ from services.notification_service import NotificationService
 from services.query_parser_service import QueryParserService
 from services.data_validation_service import DataValidationService
 from services.sparkline_service import SparklineService
+from services.alternative_company_service import AlternativeCompanyService
 from config import Config
 
 # Initialize services
@@ -21,6 +22,7 @@ notification_service = NotificationService()
 query_parser = QueryParserService()
 data_validator = DataValidationService()
 sparkline_service = SparklineService()
+alternative_company_service = AlternativeCompanyService()
 
 def save_thesis_analysis(thesis_text, analysis_result, signals_result):
     """Save completed analysis to database for monitoring"""
@@ -1157,6 +1159,31 @@ def get_mini_sparkline(metric_name):
     except Exception as e:
         logging.error(f"Error generating mini sparkline: {str(e)}")
         return jsonify({'error': 'Failed to generate mini sparkline'}), 500
+
+@app.route('/api/thesis/<int:thesis_id>/alternative-companies', methods=['GET'])
+def get_alternative_companies(thesis_id):
+    """Get alternative company analysis for a thesis"""
+    try:
+        # Get thesis and signals
+        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        signals = SignalMonitoring.query.filter_by(thesis_analysis_id=thesis_id).all()
+        
+        # Convert to dictionaries
+        thesis_dict = thesis.to_dict()
+        signals_dict = [signal.to_dict() for signal in signals]
+        
+        # Generate alternative company analysis
+        alternatives_data = alternative_company_service.find_alternative_companies(thesis_dict, signals_dict)
+        
+        return jsonify({
+            'success': True,
+            'thesis_id': thesis_id,
+            'alternatives': alternatives_data
+        })
+        
+    except Exception as e:
+        logging.error(f"Error generating alternative companies for thesis {thesis_id}: {str(e)}")
+        return jsonify({'error': 'Failed to generate alternative companies', 'details': str(e)}), 500
 
 @app.errorhandler(404)
 def not_found_error(error):

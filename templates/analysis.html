@@ -200,6 +200,24 @@
                 </div>
             </div>
         </div>
+
+        <!-- Alternative Company Analysis Section -->
+        <div class="card mt-4">
+            <div class="card-header bg-gradient-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-gem me-2"></i>Alternative Company Analysis
+                </h5>
+                <small class="opacity-75">Discover undervalued companies matching your thesis patterns</small>
+            </div>
+            <div class="card-body" id="alternative-companies-container">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Finding alternative companies...</span>
+                    </div>
+                    <p class="text-muted mt-2">Analyzing thesis patterns for similar opportunities...</p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -336,6 +354,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Store thesis ID for market sentiment loading
         if (data.thesis_id) {
             window.currentThesisId = data.thesis_id;
+            // Load alternative companies analysis
+            loadAlternativeCompanies(data.thesis_id);
         }
         
         // Scroll to results
@@ -3042,6 +3062,187 @@ document.addEventListener('DOMContentLoaded', function() {
         
         window.showPublishingProgress();
     };
+
+    // Alternative Company Analysis
+    async function loadAlternativeCompanies(thesisId) {
+        try {
+            const response = await fetch(`/api/thesis/${thesisId}/alternative-companies`);
+            const data = await response.json();
+            
+            if (data.success) {
+                displayAlternativeCompanies(data.alternatives);
+            } else {
+                throw new Error(data.error || 'Failed to load alternative companies');
+            }
+        } catch (error) {
+            console.error('Alternative companies loading failed:', error);
+            displayAlternativeCompaniesError(error.message);
+        }
+    }
+
+    function displayAlternativeCompanies(alternatives) {
+        const container = document.getElementById('alternative-companies-container');
+        
+        let html = `
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6 class="mb-1">Thesis Pattern Matching</h6>
+                            <small class="text-muted">Companies matching your investment thesis characteristics</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="badge bg-success">${alternatives.total_found} Found</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analysis Criteria -->
+                    <div class="card border-0 bg-light mb-3">
+                        <div class="card-body p-2">
+                            <small class="fw-bold text-muted d-block mb-1">Analysis Criteria:</small>
+                            <div class="d-flex flex-wrap gap-1">
+                                ${alternatives.analysis_criteria.map(criteria => `
+                                    <span class="badge bg-secondary text-white" style="font-size: 0.7em;">${criteria}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+        `;
+        
+        // Display alternative companies
+        alternatives.alternative_companies.forEach((company, index) => {
+            const strengthColor = {
+                'Strong Alternative': 'success',
+                'Good Alternative': 'info', 
+                'Moderate Alternative': 'warning',
+                'Weak Alternative': 'secondary'
+            }[company.recommendation_strength] || 'secondary';
+            
+            html += `
+                <div class="col-lg-6 col-xl-4 mb-3">
+                    <div class="card h-100 border-0 shadow-sm alternative-company-card" style="transition: all 0.3s ease;">
+                        <div class="card-body">
+                            <!-- Company Header -->
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="card-title mb-1">${company.name}</h6>
+                                    <div class="text-muted small">${company.ticker} • $${company.market_cap}B</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="h5 mb-0 text-${strengthColor}">${company.composite_score}</div>
+                                    <small class="text-muted">Score</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Description -->
+                            <p class="small text-muted mb-3">${company.description}</p>
+                            
+                            <!-- Recommendation Badge -->
+                            <div class="mb-3">
+                                <span class="badge bg-${strengthColor}">${company.recommendation_strength}</span>
+                            </div>
+                            
+                            <!-- Key Metrics -->
+                            <div class="mb-3">
+                                <small class="fw-bold d-block mb-1">Key Metrics:</small>
+                                <div class="row g-2">
+                                    ${Object.entries(company.key_metrics || {}).slice(0, 3).map(([key, value]) => `
+                                        <div class="col-4">
+                                            <div class="text-center p-1 bg-light rounded">
+                                                <div class="small fw-bold">${typeof value === 'number' ? (value * 100).toFixed(0) + '%' : value}</div>
+                                                <div class="text-muted" style="font-size: 0.65em;">${key.replace('_', ' ')}</div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            
+                            <!-- Score Breakdown -->
+                            <div class="mb-3">
+                                <small class="fw-bold d-block mb-1">Score Breakdown:</small>
+                                <div class="d-flex justify-content-between small">
+                                    <span>Pattern Match: ${company.pattern_match_score}</span>
+                                    <span>Undervalued: ${company.undervaluation_score}</span>
+                                    <span>Potential: ${company.potential_score}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Expandable Details -->
+                            <button class="btn btn-outline-primary btn-sm w-100" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#details-${index}" 
+                                    aria-expanded="false">
+                                <i class="fas fa-info-circle me-1"></i>View Details
+                            </button>
+                            
+                            <div class="collapse mt-2" id="details-${index}">
+                                <!-- Unloved Factors -->
+                                <div class="mb-2">
+                                    <small class="fw-bold text-danger d-block mb-1">Why It's Unloved:</small>
+                                    <ul class="small mb-2" style="padding-left: 1rem;">
+                                        ${(company.unloved_factors || []).map(factor => `<li>${factor}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                
+                                <!-- Hidden Strengths -->
+                                <div class="mb-2">
+                                    <small class="fw-bold text-success d-block mb-1">Hidden Strengths:</small>
+                                    <ul class="small mb-2" style="padding-left: 1rem;">
+                                        ${(company.hidden_strengths || []).map(strength => `<li>${strength}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                
+                                <!-- Catalyst Timeline -->
+                                <div class="mb-2">
+                                    <small class="fw-bold d-block mb-1">Potential Catalysts:</small>
+                                    ${(company.catalyst_timeline || []).map(catalyst => `
+                                        <div class="small d-flex justify-content-between border-bottom py-1">
+                                            <span>${catalyst.timeframe}</span>
+                                            <span class="text-muted">${catalyst.catalyst}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        
+        container.innerHTML = html;
+        
+        // Add hover effects
+        document.querySelectorAll('.alternative-company-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+                this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '';
+            });
+        });
+    }
+
+    function displayAlternativeCompaniesError(errorMessage) {
+        const container = document.getElementById('alternative-companies-container');
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-exclamation-triangle text-warning fs-2 mb-3"></i>
+                <h6 class="text-muted">Alternative Companies Temporarily Unavailable</h6>
+                <p class="text-muted small mb-3">${errorMessage}</p>
+                <button class="btn btn-outline-success btn-sm" onclick="loadAlternativeCompanies(window.currentThesisId)">
+                    <i class="fas fa-refresh me-1"></i>Retry Analysis
+                </button>
+            </div>
+        `;
+    }
 });
 </script>
 {% endblock %}
