@@ -277,9 +277,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Convert time horizon string to numeric value
+        const timeHorizonNumeric = parseTimeHorizon(timeHorizon);
+        
         runSimulation('forecast', {
             thesis_id: thesisId,
-            time_horizon: timeHorizon,
+            time_horizon: timeHorizonNumeric,
             scenario_type: scenarioType
         });
     });
@@ -302,6 +305,18 @@ document.addEventListener('DOMContentLoaded', function() {
             event_severity: eventSeverity
         });
     });
+
+    function parseTimeHorizon(timeString) {
+        // Convert time horizon strings to numeric values
+        const timeMap = {
+            '3m': 0.25,
+            '6m': 0.5,
+            '1y': 1,
+            '2y': 2,
+            '3y': 3
+        };
+        return timeMap[timeString] || 1;
+    }
 
     function runSimulation(type, params) {
         // Show loading modal
