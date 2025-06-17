@@ -369,6 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const forecastForm = document.getElementById('forecastForm');
     const eventForm = document.getElementById('eventForm');
     const thesisId = {{ thesis.id }};
+    const thesisTitle = "{{ thesis.title or 'Unknown Thesis' }}";
 
     // Time horizon forecast simulation
     forecastForm.addEventListener('submit', function(e) {
@@ -619,6 +620,7 @@ function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
     const counterThesisData = generateCounterThesisContext();
     
     const comprehensiveAlert = `
+        📋 ${summarizeThesisTitle(thesisTitle)}
         🎯 THESIS: ${thesisData.status} - ${condition}
         📊 MARKET: ${marketData.trend} (${marketData.impact})
         ⚠️ RISK: ${counterThesisData.assessment}
@@ -670,8 +672,9 @@ function triggerEmailAlert(signalName, condition, alertIndex) {
     const combinedImpact = calculateCombinedImpact(marketData, thesisData, counterThesisData);
     
     // Enhanced email subject and content
-    subjectEl.textContent = `Investment Alert: ${signalName} - ${combinedImpact.level} Impact`;
+    subjectEl.textContent = `Investment Alert: ${summarizeThesisTitle(thesisTitle)} - ${combinedImpact.level} Impact`;
     messageEl.innerHTML = `
+        <strong>Thesis:</strong> ${summarizeThesisTitle(thesisTitle)}<br>
         <strong>Thesis Status:</strong> ${thesisData.status} - ${condition}<br>
         <strong>Market Context:</strong> ${marketData.trend} (${marketData.impact})<br>
         <strong>Risk Assessment:</strong> ${counterThesisData.assessment}<br>
@@ -728,7 +731,7 @@ function triggerMobilePushNotification(signalName, condition, severity, alertInd
     const combinedImpact = calculateCombinedImpact(marketData, thesisData, counterThesisData);
     
     // Concise mobile-friendly format
-    const mobileAlert = `🎯 ${thesisData.status} | 📊 ${marketData.trend} | ⚠️ ${counterThesisData.risk_level} | Impact: ${combinedImpact.level}`;
+    const mobileAlert = `📋 ${summarizeThesisTitle(thesisTitle)} | 🎯 ${thesisData.status} | 📊 ${marketData.trend} | ⚠️ ${counterThesisData.risk_level} | Impact: ${combinedImpact.level}`;
     
     messageEl.textContent = mobileAlert;
     timeEl.textContent = 'now';
@@ -843,6 +846,44 @@ function calculateCombinedImpact(marketData, thesisData, counterThesisData) {
     }
     
     return { level, description, value };
+}
+
+function summarizeThesisTitle(title) {
+    // Summarize long thesis titles for alerts
+    if (!title || title === 'Unknown Thesis') {
+        return 'Unknown Thesis';
+    }
+    
+    // Remove common prefixes and clean the title
+    let cleanTitle = title
+        .replace(/^(Investment\s+)?(Thesis\s+)?(Analysis\s+)?(:|-|\s)*\s*/i, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    
+    // If title is short enough, return as is
+    if (cleanTitle.length <= 25) {
+        return cleanTitle;
+    }
+    
+    // Extract first meaningful words (up to 4-5 words or 25 characters)
+    const words = cleanTitle.split(' ');
+    let summary = '';
+    
+    for (let i = 0; i < Math.min(words.length, 4); i++) {
+        const testSummary = summary + (summary ? ' ' : '') + words[i];
+        if (testSummary.length <= 25) {
+            summary = testSummary;
+        } else {
+            break;
+        }
+    }
+    
+    // If we couldn't fit even one word, truncate
+    if (!summary && words[0]) {
+        summary = words[0].substring(0, 22) + '...';
+    }
+    
+    return summary || 'Thesis Alert';
 }
 </script>
 {% endblock %}
