@@ -257,6 +257,216 @@
             </div>
         </div>
     </div>
+
+    <!-- Web Popup Alert Modal -->
+    <div class="modal fade" id="webPopupModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-warning">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">
+                        <i class="fas fa-desktop me-2"></i>Browser Alert Notification
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="browser-mockup">
+                        <div class="browser-header bg-light p-2 rounded-top border">
+                            <div class="d-flex align-items-center">
+                                <div class="browser-buttons me-3">
+                                    <span class="badge bg-danger rounded-circle" style="width: 12px; height: 12px;"></span>
+                                    <span class="badge bg-warning rounded-circle ms-1" style="width: 12px; height: 12px;"></span>
+                                    <span class="badge bg-success rounded-circle ms-1" style="width: 12px; height: 12px;"></span>
+                                </div>
+                                <small class="text-muted">investment-thesis-monitor.com</small>
+                            </div>
+                        </div>
+                        <div class="browser-content border p-3">
+                            <div class="alert alert-warning border-warning shadow-sm" id="webAlertContent">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-bell text-warning fs-4 me-3 mt-1"></i>
+                                    <div class="flex-grow-1">
+                                        <h6 class="alert-heading mb-2">Investment Alert Triggered</h6>
+                                        <p class="mb-2" id="webAlertMessage">Loading alert details...</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted" id="webAlertTime">Just now</small>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-warning me-2">View Details</button>
+                                                <button class="btn btn-sm btn-warning">Acknowledge</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            This alert will auto-dismiss in <span id="webCountdown">8</span> seconds
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Alert Modal -->
+    <div class="modal fade" id="emailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-envelope me-2"></i>Email Alert Preview
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="email-mockup">
+                        <!-- Email Header -->
+                        <div class="email-header bg-light border-bottom p-3">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <div class="d-flex align-items-center">
+                                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iIzAwN2JmZiIvPgo8cGF0aCBkPSJNOCAxMkwyNCAxMk0xNiA4TDE2IDI0IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K" class="me-2" alt="Company Logo">
+                                        <div>
+                                            <strong>Investment Thesis Monitor</strong><br>
+                                            <small class="text-muted">alerts@thesis-monitor.com</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <small class="text-muted" id="emailTimestamp">Today, 2:45 PM</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Email Content -->
+                        <div class="email-content p-4">
+                            <h4 class="text-danger mb-3" id="emailSubject">🚨 Investment Alert: Critical Threshold Breached</h4>
+                            
+                            <div class="alert alert-danger border-0" style="background: #fff5f5;">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <h6 class="mb-2">Alert Details</h6>
+                                        <p class="mb-1" id="emailAlertMessage">Loading alert details...</p>
+                                        <p class="mb-0"><strong>Severity:</strong> <span class="badge bg-danger" id="emailSeverity">High</span></p>
+                                    </div>
+                                    <div class="col-md-4 text-center">
+                                        <div class="bg-white p-3 rounded border">
+                                            <h5 class="text-danger mb-1" id="emailValue">-12.5%</h5>
+                                            <small class="text-muted">Current Value</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="border-start border-primary ps-3 mb-4">
+                                <h6 class="text-primary">Recommended Actions</h6>
+                                <ul class="mb-0" id="emailActions">
+                                    <li>Review thesis assumptions and update risk assessment</li>
+                                    <li>Consider position sizing adjustments</li>
+                                    <li>Monitor related signals for confirmation</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="text-center">
+                                <a href="#" class="btn btn-primary me-2">View Full Dashboard</a>
+                                <a href="#" class="btn btn-outline-secondary">Acknowledge Alert</a>
+                            </div>
+                        </div>
+                        
+                        <!-- Email Footer -->
+                        <div class="email-footer bg-light p-3 border-top">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <small class="text-muted">
+                                        Investment Thesis Intelligence System<br>
+                                        Automated monitoring for your investment decisions
+                                    </small>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Delivered
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Push Notification Modal -->
+    <div class="modal fade" id="mobileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-info">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-mobile-alt me-2"></i>Mobile Push Notification
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mobile-mockup mx-auto" style="max-width: 300px;">
+                        <!-- Phone Frame -->
+                        <div class="phone-frame bg-dark rounded-4 p-3">
+                            <!-- Status Bar -->
+                            <div class="status-bar d-flex justify-content-between align-items-center text-white mb-3">
+                                <div class="d-flex align-items-center">
+                                    <small>9:41</small>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-signal me-1"></i>
+                                    <i class="fas fa-wifi me-1"></i>
+                                    <i class="fas fa-battery-three-quarters"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Notification -->
+                            <div class="notification bg-white rounded-3 p-3 shadow-sm" id="mobileNotification">
+                                <div class="d-flex align-items-start">
+                                    <div class="notification-icon bg-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-chart-line text-white"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <strong style="font-size: 14px;">Thesis Monitor</strong>
+                                            <small class="text-muted" id="mobileTime">2m</small>
+                                        </div>
+                                        <p class="mb-1" style="font-size: 13px;" id="mobileMessage">Loading notification...</p>
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <small class="text-primary">Tap to view details</small>
+                                            <div class="swipe-indicator">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-chevron-left me-1"></i>Swipe
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Vibration Effect -->
+                        <div class="text-center mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-mobile-alt me-1"></i>
+                                Device will vibrate: <span id="vibrationPattern">📳 📳</span>
+                            </small>
+                        </div>
+                        
+                        <!-- Auto Dismiss -->
+                        <div class="text-center mt-2">
+                            <small class="text-muted">
+                                Auto-dismiss in <span id="mobileCountdown">10</span> seconds
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -866,6 +1076,143 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         alertDiv.style.display = 'block';
+    }
+
+    // Alert notification functions
+    function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
+        const modal = new bootstrap.Modal(document.getElementById('webPopupModal'));
+        const messageEl = document.getElementById('webAlertMessage');
+        const timeEl = document.getElementById('webAlertTime');
+        const countdownEl = document.getElementById('webCountdown');
+        
+        // Populate with real alert data
+        messageEl.textContent = `${signalName}: ${condition}`;
+        timeEl.textContent = new Date().toLocaleTimeString();
+        
+        // Add visual feedback to the alert card
+        const alertCard = document.getElementById(`alert-card-${alertIndex}`);
+        if (alertCard) {
+            alertCard.style.border = '2px solid #ffc107';
+            alertCard.style.backgroundColor = '#fff3cd';
+        }
+        
+        modal.show();
+        
+        // Auto-dismiss countdown
+        let countdown = 8;
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            countdownEl.textContent = countdown;
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                modal.hide();
+                // Reset alert card styling
+                if (alertCard) {
+                    alertCard.style.border = '';
+                    alertCard.style.backgroundColor = '';
+                }
+            }
+        }, 1000);
+    }
+
+    function triggerEmailAlert(signalName, condition, alertIndex) {
+        const modal = new bootstrap.Modal(document.getElementById('emailModal'));
+        const subjectEl = document.getElementById('emailSubject');
+        const messageEl = document.getElementById('emailAlertMessage');
+        const severityEl = document.getElementById('emailSeverity');
+        const valueEl = document.getElementById('emailValue');
+        const timestampEl = document.getElementById('emailTimestamp');
+        const actionsEl = document.getElementById('emailActions');
+        
+        // Populate with real alert data
+        subjectEl.textContent = `🚨 Investment Alert: ${signalName}`;
+        messageEl.textContent = condition;
+        severityEl.textContent = 'High';
+        severityEl.className = 'badge bg-danger';
+        valueEl.textContent = '-12.5%';
+        timestampEl.textContent = new Date().toLocaleString();
+        
+        // Generate dynamic recommended actions based on alert
+        const actions = [
+            `Review ${signalName} performance metrics`,
+            'Assess impact on overall thesis validity',
+            'Consider rebalancing position size',
+            'Monitor related signals for confirmation'
+        ];
+        actionsEl.innerHTML = actions.map(action => `<li>${action}</li>`).join('');
+        
+        // Add visual feedback to the alert card
+        const alertCard = document.getElementById(`alert-card-${alertIndex}`);
+        if (alertCard) {
+            alertCard.style.border = '2px solid #0d6efd';
+            alertCard.style.backgroundColor = '#e7f3ff';
+        }
+        
+        modal.show();
+        
+        // Reset styling when modal closes
+        modal._element.addEventListener('hidden.bs.modal', function () {
+            if (alertCard) {
+                alertCard.style.border = '';
+                alertCard.style.backgroundColor = '';
+            }
+        }, { once: true });
+    }
+
+    function triggerMobilePushNotification(signalName, condition, severity, alertIndex) {
+        const modal = new bootstrap.Modal(document.getElementById('mobileModal'));
+        const messageEl = document.getElementById('mobileMessage');
+        const timeEl = document.getElementById('mobileTime');
+        const countdownEl = document.getElementById('mobileCountdown');
+        const vibrationEl = document.getElementById('vibrationPattern');
+        const notificationEl = document.getElementById('mobileNotification');
+        
+        // Populate with real alert data
+        messageEl.textContent = `${signalName}: ${condition.substring(0, 50)}...`;
+        timeEl.textContent = 'now';
+        
+        // Set vibration pattern based on severity
+        if (severity === 'high' || severity === 'critical') {
+            vibrationEl.textContent = '📳📳📳';
+        } else {
+            vibrationEl.textContent = '📳📳';
+        }
+        
+        // Add visual feedback to the alert card
+        const alertCard = document.getElementById(`alert-card-${alertIndex}`);
+        if (alertCard) {
+            alertCard.style.border = '2px solid #20c997';
+            alertCard.style.backgroundColor = '#d1f2eb';
+        }
+        
+        modal.show();
+        
+        // Simulate phone vibration effect
+        let vibrationCount = 0;
+        const vibrationInterval = setInterval(() => {
+            notificationEl.style.transform = vibrationCount % 2 === 0 ? 'translateX(2px)' : 'translateX(-2px)';
+            vibrationCount++;
+            if (vibrationCount > 6) {
+                clearInterval(vibrationInterval);
+                notificationEl.style.transform = '';
+            }
+        }, 100);
+        
+        // Auto-dismiss countdown
+        let countdown = 10;
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            countdownEl.textContent = countdown;
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                modal.hide();
+                // Reset alert card styling
+                if (alertCard) {
+                    alertCard.style.border = '';
+                    alertCard.style.backgroundColor = '';
+                }
+            }
+        }, 1000);
     }
 
     function getConvictionBadge(conviction) {
