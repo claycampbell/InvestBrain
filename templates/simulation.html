@@ -619,8 +619,8 @@ function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
     const counterThesisData = generateCounterThesisContext();
     
     const comprehensiveAlert = `
-        📊 MARKET: ${marketData.trend} (${marketData.impact})
         🎯 THESIS: ${thesisData.status} - ${condition}
+        📊 MARKET: ${marketData.trend} (${marketData.impact})
         ⚠️ RISK: ${counterThesisData.assessment}
         
         Combined Impact: ${calculateCombinedImpact(marketData, thesisData, counterThesisData)}
@@ -672,8 +672,8 @@ function triggerEmailAlert(signalName, condition, alertIndex) {
     // Enhanced email subject and content
     subjectEl.textContent = `Investment Alert: ${signalName} - ${combinedImpact.level} Impact`;
     messageEl.innerHTML = `
-        <strong>Market Context:</strong> ${marketData.trend} (${marketData.impact})<br>
         <strong>Thesis Status:</strong> ${thesisData.status} - ${condition}<br>
+        <strong>Market Context:</strong> ${marketData.trend} (${marketData.impact})<br>
         <strong>Risk Assessment:</strong> ${counterThesisData.assessment}<br>
         <strong>Combined Impact:</strong> ${combinedImpact.description}
     `;
@@ -728,7 +728,7 @@ function triggerMobilePushNotification(signalName, condition, severity, alertInd
     const combinedImpact = calculateCombinedImpact(marketData, thesisData, counterThesisData);
     
     // Concise mobile-friendly format
-    const mobileAlert = `📊 ${marketData.trend} | 🎯 ${thesisData.status} | ⚠️ ${counterThesisData.risk_level} | Impact: ${combinedImpact.level}`;
+    const mobileAlert = `🎯 ${thesisData.status} | 📊 ${marketData.trend} | ⚠️ ${counterThesisData.risk_level} | Impact: ${combinedImpact.level}`;
     
     messageEl.textContent = mobileAlert;
     timeEl.textContent = 'now';
