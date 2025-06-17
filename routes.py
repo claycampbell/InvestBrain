@@ -10,6 +10,7 @@ from services.signal_classifier import SignalClassifier
 from services.notification_service import NotificationService
 from services.query_parser_service import QueryParserService
 from services.data_validation_service import DataValidationService
+from services.sparkline_service import SparklineService
 from config import Config
 
 # Initialize services
@@ -19,6 +20,7 @@ signal_classifier = SignalClassifier()
 notification_service = NotificationService()
 query_parser = QueryParserService()
 data_validator = DataValidationService()
+sparkline_service = SparklineService()
 
 def save_thesis_analysis(thesis_text, analysis_result, signals_result):
     """Save completed analysis to database for monitoring"""
@@ -1109,6 +1111,52 @@ def test_query_parser():
     except Exception as e:
         logging.error(f"Error in query parser test: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/thesis/<int:thesis_id>/sparklines', methods=['GET'])
+def get_investment_sparklines(thesis_id):
+    """Get AI-powered investment insight sparklines for a thesis"""
+    try:
+        # Get thesis and signals
+        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        signals = SignalMonitoring.query.filter_by(thesis_analysis_id=thesis_id).all()
+        
+        # Convert to dictionaries
+        thesis_dict = thesis.to_dict()
+        signals_dict = [signal.to_dict() for signal in signals]
+        
+        # Generate sparklines
+        sparkline_data = sparkline_service.generate_investment_sparklines(thesis_dict, signals_dict)
+        
+        return jsonify({
+            'success': True,
+            'thesis_id': thesis_id,
+            'sparklines': sparkline_data['sparklines'],
+            'ai_insights': sparkline_data['ai_insights'],
+            'generated_at': sparkline_data['generated_at'],
+            'metrics_count': sparkline_data['metrics_count']
+        })
+        
+    except Exception as e:
+        logging.error(f"Error generating sparklines for thesis {thesis_id}: {str(e)}")
+        return jsonify({'error': 'Failed to generate sparklines', 'details': str(e)}), 500
+
+@app.route('/api/mini-sparkline/<metric_name>', methods=['GET'])
+def get_mini_sparkline(metric_name):
+    """Get a mini sparkline for dashboard widgets"""
+    try:
+        value = float(request.args.get('value', 75))
+        trend = request.args.get('trend', 'flat')
+        
+        mini_sparkline = sparkline_service.generate_mini_sparkline(metric_name, value, trend)
+        
+        return jsonify({
+            'success': True,
+            'sparkline': mini_sparkline
+        })
+        
+    except Exception as e:
+        logging.error(f"Error generating mini sparkline: {str(e)}")
+        return jsonify({'error': 'Failed to generate mini sparkline'}), 500
 
 @app.errorhandler(404)
 def not_found_error(error):

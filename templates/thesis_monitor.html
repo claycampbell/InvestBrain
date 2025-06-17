@@ -90,6 +90,28 @@
         </div>
     </div>
 
+    <!-- AI-Powered Investment Insight Sparklines -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>AI-Powered Investment Insight Sparklines
+                    </h5>
+                    <small class="opacity-75">Real-time visual trend indicators for key investment metrics</small>
+                </div>
+                <div class="card-body" id="sparklines-container">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading sparklines...</span>
+                        </div>
+                        <p class="text-muted mt-2">Generating AI-powered investment insights...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="row">
         <!-- Left Column: Thesis Details -->
@@ -508,11 +530,180 @@
         }
     }
 
-    // Load price data on page load
+    // Load sparklines data
+    async function loadSparklines() {
+        try {
+            const response = await fetch(`/api/thesis/{{ thesis.id }}/sparklines`);
+            const data = await response.json();
+            
+            if (data.success) {
+                displaySparklines(data);
+            } else {
+                throw new Error(data.error || 'Failed to load sparklines');
+            }
+        } catch (error) {
+            console.error('Sparklines loading failed:', error);
+            displaySparklineError(error.message);
+        }
+    }
+
+    function displaySparklines(data) {
+        const container = document.getElementById('sparklines-container');
+        
+        // Create sparklines grid
+        let sparklineHTML = '<div class="row">';
+        
+        // Display each sparkline metric
+        Object.entries(data.sparklines).forEach(([metricName, sparklineData]) => {
+            sparklineHTML += `
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="card-title mb-1 text-capitalize">${metricName.replace('_', ' ')}</h6>
+                                    <div class="h4 mb-0" style="color: ${sparklineData.color}">
+                                        ${sparklineData.current_value}
+                                        <small class="text-muted fs-6">
+                                            ${sparklineData.percentage_change >= 0 ? '+' : ''}${sparklineData.percentage_change}%
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <i class="fas fa-arrow-${sparklineData.trend === 'up' ? 'up' : sparklineData.trend === 'down' ? 'down' : 'right'}" 
+                                       style="color: ${sparklineData.color}"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Mini sparkline visualization -->
+                            <div class="sparkline-container mb-2" style="height: 40px; position: relative;">
+                                <canvas id="sparkline-${metricName}" width="200" height="40" style="width: 100%; height: 100%;"></canvas>
+                            </div>
+                            
+                            <p class="small text-muted mb-0">${sparklineData.interpretation}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        sparklineHTML += '</div>';
+        
+        // Add AI Insights section
+        if (data.ai_insights && data.ai_insights.length > 0) {
+            sparklineHTML += `
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="mb-3">
+                            <i class="fas fa-brain text-primary me-2"></i>AI Investment Insights
+                        </h6>
+                        <div class="row">
+            `;
+            
+            data.ai_insights.forEach(insight => {
+                const iconClass = {
+                    'positive': 'fa-arrow-up text-success',
+                    'opportunity': 'fa-lightbulb text-warning',
+                    'warning': 'fa-exclamation-triangle text-danger',
+                    'insight': 'fa-info-circle text-info'
+                }[insight.type] || 'fa-info-circle text-info';
+                
+                sparklineHTML += `
+                    <div class="col-lg-4 col-md-6 mb-2">
+                        <div class="alert alert-light border-start border-3 border-${insight.type === 'positive' ? 'success' : insight.type === 'warning' ? 'danger' : 'primary'} mb-2">
+                            <div class="d-flex align-items-start">
+                                <i class="fas ${iconClass} me-2 mt-1"></i>
+                                <div>
+                                    <div class="fw-bold small">${insight.title}</div>
+                                    <div class="small text-muted">${insight.description}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            sparklineHTML += '</div></div></div>';
+        }
+        
+        container.innerHTML = sparklineHTML;
+        
+        // Draw sparkline charts
+        Object.entries(data.sparklines).forEach(([metricName, sparklineData]) => {
+            drawSparkline(metricName, sparklineData);
+        });
+    }
+
+    function drawSparkline(metricName, sparklineData) {
+        const canvas = document.getElementById(`sparkline-${metricName}`);
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const data = sparklineData.data;
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+        
+        if (data.length < 2) return;
+        
+        // Calculate scales
+        const minVal = Math.min(...data);
+        const maxVal = Math.max(...data);
+        const range = maxVal - minVal || 1;
+        
+        // Draw sparkline
+        ctx.strokeStyle = sparklineData.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        data.forEach((value, index) => {
+            const x = (index / (data.length - 1)) * (width - 10) + 5;
+            const y = height - 5 - ((value - minVal) / range) * (height - 10);
+            
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+        
+        ctx.stroke();
+        
+        // Draw end point
+        const lastX = ((data.length - 1) / (data.length - 1)) * (width - 10) + 5;
+        const lastY = height - 5 - ((data[data.length - 1] - minVal) / range) * (height - 10);
+        
+        ctx.fillStyle = sparklineData.color;
+        ctx.beginPath();
+        ctx.arc(lastX, lastY, 3, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+
+    function displaySparklineError(errorMessage) {
+        const container = document.getElementById('sparklines-container');
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-exclamation-triangle text-warning fs-2 mb-3"></i>
+                <h6 class="text-muted">Sparklines Temporarily Unavailable</h6>
+                <p class="text-muted small mb-3">${errorMessage}</p>
+                <button class="btn btn-outline-primary btn-sm" onclick="loadSparklines()">
+                    <i class="fas fa-refresh me-1"></i>Retry
+                </button>
+            </div>
+        `;
+    }
+
+    // Load price data and sparklines on page load
     document.addEventListener('DOMContentLoaded', function() {
         updatePriceChange();
-        // Refresh price data every 5 minutes
-        setInterval(updatePriceChange, 300000);
+        loadSparklines();
+        // Refresh data every 5 minutes
+        setInterval(() => {
+            updatePriceChange();
+            loadSparklines();
+        }, 300000);
     });
 
     async function exportData() {
