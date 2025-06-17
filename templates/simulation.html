@@ -123,8 +123,8 @@
     <div id="alertTriggersSection" style="display: none;">
         <div class="row mt-4">
             <div class="col-12">
-                <div class="card border-warning">
-                    <div class="card-header bg-warning text-dark">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
                         <h6 class="mb-0"><i class="fas fa-bell"></i> Alert Triggers Activated</h6>
                     </div>
                     <div class="card-body">
@@ -560,8 +560,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const contentDiv = document.getElementById('alertContent');
         
         contentDiv.innerHTML = `
-            <div class="alert alert-warning">
-                <h6><i class="fas fa-exclamation-triangle"></i> ${triggers.length} Alert(s) Triggered</h6>
+            <div class="alert alert-info">
+                <h6><i class="fas fa-bell"></i> ${triggers.length} Alert(s) Triggered</h6>
                 <p>The simulation has activated the following monitoring alerts:</p>
             </div>
             
@@ -638,8 +638,8 @@ function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
     // Add visual feedback to the alert card
     const alertCard = document.getElementById(`alert-card-${alertIndex}`);
     if (alertCard) {
-        alertCard.style.border = '2px solid #ffc107';
-        alertCard.style.backgroundColor = '#fff3cd';
+        alertCard.style.border = '2px solid #0dcaf0';
+        alertCard.style.backgroundColor = '#d1ecf1';
     }
     
     modal.show();

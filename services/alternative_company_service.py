@@ -142,10 +142,10 @@ Format as JSON array:
     
     def _parse_llm_companies(self, response: str) -> List[Dict[str, Any]]:
         """Parse LLM response to extract authentic company data"""
+        import json
+        import re
+        
         try:
-            import json
-            import re
-            
             # Clean the response to extract JSON
             response_cleaned = response.strip()
             
@@ -198,6 +198,35 @@ Format as JSON array:
         except Exception as e:
             logging.error(f"Error processing LLM response: {e}")
             return []
+    
+    def _get_recommendation_strength(self, score: int) -> str:
+        """Get recommendation strength based on composite score"""
+        if score >= 80:
+            return "Strong Buy"
+        elif score >= 70:
+            return "Buy"
+        elif score >= 60:
+            return "Hold"
+        elif score >= 50:
+            return "Weak Hold"
+        else:
+            return "Caution"
+    
+    def _generate_risk_factors(self, company: Dict) -> List[str]:
+        """Generate risk factors for a company"""
+        return [
+            "Market volatility impact",
+            "Sector-specific regulatory risks",
+            "Competition from larger players"
+        ]
+    
+    def _generate_catalyst_timeline(self, company: Dict) -> List[Dict[str, str]]:
+        """Generate catalyst timeline for a company"""
+        return [
+            {"timeframe": "3-6 months", "catalyst": "Earnings growth acceleration"},
+            {"timeframe": "6-12 months", "catalyst": "Market recognition expansion"},
+            {"timeframe": "12+ months", "catalyst": "Strategic positioning benefits"}
+        ]
     
     def _generate_alternative_companies(self, characteristics: Dict, thesis_analysis: Dict) -> List[Dict[str, Any]]:
         """Generate list of alternative companies using LLM analysis"""
