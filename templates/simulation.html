@@ -1077,212 +1077,173 @@ document.addEventListener('DOMContentLoaded', function() {
         
         alertDiv.style.display = 'block';
     }
+});
 
-    // Alert notification functions
-    function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
-        const modal = new bootstrap.Modal(document.getElementById('webPopupModal'));
-        const messageEl = document.getElementById('webAlertMessage');
-        const timeEl = document.getElementById('webAlertTime');
-        const countdownEl = document.getElementById('webCountdown');
-        
-        // Populate with real alert data
-        messageEl.textContent = `${signalName}: ${condition}`;
-        timeEl.textContent = new Date().toLocaleTimeString();
-        
-        // Add visual feedback to the alert card
-        const alertCard = document.getElementById(`alert-card-${alertIndex}`);
-        if (alertCard) {
-            alertCard.style.border = '2px solid #ffc107';
-            alertCard.style.backgroundColor = '#fff3cd';
-        }
-        
-        modal.show();
-        
-        // Auto-dismiss countdown
-        let countdown = 8;
-        const countdownInterval = setInterval(() => {
-            countdown--;
-            countdownEl.textContent = countdown;
-            if (countdown <= 0) {
-                clearInterval(countdownInterval);
-                modal.hide();
-                // Reset alert card styling
-                if (alertCard) {
-                    alertCard.style.border = '';
-                    alertCard.style.backgroundColor = '';
-                }
-            }
-        }, 1000);
+// Global alert notification functions (must be outside DOMContentLoaded for onclick access)
+function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
+    const modal = new bootstrap.Modal(document.getElementById('webPopupModal'));
+    const messageEl = document.getElementById('webAlertMessage');
+    const timeEl = document.getElementById('webAlertTime');
+    const countdownEl = document.getElementById('webCountdown');
+    
+    // Clean up special characters from alert data
+    const cleanSignalName = String(signalName).replace(/'/g, '');
+    const cleanCondition = String(condition).replace(/'/g, '');
+    
+    // Populate with real alert data
+    messageEl.textContent = `${cleanSignalName}: ${cleanCondition}`;
+    timeEl.textContent = new Date().toLocaleTimeString();
+    
+    // Add visual feedback to the alert card
+    const alertCard = document.getElementById(`alert-card-${alertIndex}`);
+    if (alertCard) {
+        alertCard.style.border = '2px solid #ffc107';
+        alertCard.style.backgroundColor = '#fff3cd';
     }
-
-    function triggerEmailAlert(signalName, condition, alertIndex) {
-        const modal = new bootstrap.Modal(document.getElementById('emailModal'));
-        const subjectEl = document.getElementById('emailSubject');
-        const messageEl = document.getElementById('emailAlertMessage');
-        const severityEl = document.getElementById('emailSeverity');
-        const valueEl = document.getElementById('emailValue');
-        const timestampEl = document.getElementById('emailTimestamp');
-        const actionsEl = document.getElementById('emailActions');
-        
-        // Populate with real alert data
-        subjectEl.textContent = `🚨 Investment Alert: ${signalName}`;
-        messageEl.textContent = condition;
-        severityEl.textContent = 'High';
-        severityEl.className = 'badge bg-danger';
-        valueEl.textContent = '-12.5%';
-        timestampEl.textContent = new Date().toLocaleString();
-        
-        // Generate dynamic recommended actions based on alert
-        const actions = [
-            `Review ${signalName} performance metrics`,
-            'Assess impact on overall thesis validity',
-            'Consider rebalancing position size',
-            'Monitor related signals for confirmation'
-        ];
-        actionsEl.innerHTML = actions.map(action => `<li>${action}</li>`).join('');
-        
-        // Add visual feedback to the alert card
-        const alertCard = document.getElementById(`alert-card-${alertIndex}`);
-        if (alertCard) {
-            alertCard.style.border = '2px solid #0d6efd';
-            alertCard.style.backgroundColor = '#e7f3ff';
-        }
-        
-        modal.show();
-        
-        // Reset styling when modal closes
-        modal._element.addEventListener('hidden.bs.modal', function () {
+    
+    modal.show();
+    
+    // Auto-dismiss countdown
+    let countdown = 8;
+    const countdownInterval = setInterval(() => {
+        countdown--;
+        countdownEl.textContent = countdown;
+        if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            modal.hide();
             if (alertCard) {
                 alertCard.style.border = '';
                 alertCard.style.backgroundColor = '';
             }
-        }, { once: true });
-    }
-
-    function triggerMobilePushNotification(signalName, condition, severity, alertIndex) {
-        const modal = new bootstrap.Modal(document.getElementById('mobileModal'));
-        const messageEl = document.getElementById('mobileMessage');
-        const timeEl = document.getElementById('mobileTime');
-        const countdownEl = document.getElementById('mobileCountdown');
-        const vibrationEl = document.getElementById('vibrationPattern');
-        const notificationEl = document.getElementById('mobileNotification');
-        
-        // Populate with real alert data
-        messageEl.textContent = `${signalName}: ${condition.substring(0, 50)}...`;
-        timeEl.textContent = 'now';
-        
-        // Set vibration pattern based on severity
-        if (severity === 'high' || severity === 'critical') {
-            vibrationEl.textContent = '📳📳📳';
-        } else {
-            vibrationEl.textContent = '📳📳';
         }
-        
-        // Add visual feedback to the alert card
-        const alertCard = document.getElementById(`alert-card-${alertIndex}`);
+    }, 1000);
+}
+
+function triggerEmailAlert(signalName, condition, alertIndex) {
+    const modal = new bootstrap.Modal(document.getElementById('emailModal'));
+    const subjectEl = document.getElementById('emailSubject');
+    const messageEl = document.getElementById('emailAlertMessage');
+    const severityEl = document.getElementById('emailSeverity');
+    const valueEl = document.getElementById('emailValue');
+    const timestampEl = document.getElementById('emailTimestamp');
+    const actionsEl = document.getElementById('emailActions');
+    
+    // Clean up special characters from alert data
+    const cleanSignalName = String(signalName).replace(/'/g, '');
+    const cleanCondition = String(condition).replace(/'/g, '');
+    
+    // Populate with real alert data
+    subjectEl.textContent = `Investment Alert: ${cleanSignalName}`;
+    messageEl.textContent = cleanCondition;
+    severityEl.textContent = 'High';
+    severityEl.className = 'badge bg-danger';
+    valueEl.textContent = '-12.5%';
+    timestampEl.textContent = new Date().toLocaleString();
+    
+    // Generate dynamic recommended actions
+    const actions = [
+        `Review ${cleanSignalName} performance metrics`,
+        'Assess impact on overall thesis validity',
+        'Consider rebalancing position size',
+        'Monitor related signals for confirmation'
+    ];
+    actionsEl.innerHTML = actions.map(action => `<li>${action}</li>`).join('');
+    
+    // Add visual feedback to the alert card
+    const alertCard = document.getElementById(`alert-card-${alertIndex}`);
+    if (alertCard) {
+        alertCard.style.border = '2px solid #0d6efd';
+        alertCard.style.backgroundColor = '#e7f3ff';
+    }
+    
+    modal.show();
+    
+    // Reset styling when modal closes
+    modal._element.addEventListener('hidden.bs.modal', function () {
         if (alertCard) {
-            alertCard.style.border = '2px solid #20c997';
-            alertCard.style.backgroundColor = '#d1f2eb';
+            alertCard.style.border = '';
+            alertCard.style.backgroundColor = '';
         }
-        
-        modal.show();
-        
-        // Simulate phone vibration effect
-        let vibrationCount = 0;
-        const vibrationInterval = setInterval(() => {
-            notificationEl.style.transform = vibrationCount % 2 === 0 ? 'translateX(2px)' : 'translateX(-2px)';
-            vibrationCount++;
-            if (vibrationCount > 6) {
-                clearInterval(vibrationInterval);
-                notificationEl.style.transform = '';
-            }
-        }, 100);
-        
-        // Auto-dismiss countdown
-        let countdown = 10;
-        const countdownInterval = setInterval(() => {
-            countdown--;
-            countdownEl.textContent = countdown;
-            if (countdown <= 0) {
-                clearInterval(countdownInterval);
-                modal.hide();
-                // Reset alert card styling
-                if (alertCard) {
-                    alertCard.style.border = '';
-                    alertCard.style.backgroundColor = '';
-                }
-            }
-        }, 1000);
-    }
+    }, { once: true });
+}
 
-    function getConvictionBadge(conviction) {
-        if (!conviction) return 'secondary';
-        const level = conviction.toLowerCase();
-        if (level === 'high') return 'success';
-        if (level === 'medium') return 'warning';
-        if (level === 'low') return 'danger';
-        return 'secondary';
+function triggerMobilePushNotification(signalName, condition, severity, alertIndex) {
+    const modal = new bootstrap.Modal(document.getElementById('mobileModal'));
+    const messageEl = document.getElementById('mobileMessage');
+    const timeEl = document.getElementById('mobileTime');
+    const countdownEl = document.getElementById('mobileCountdown');
+    const vibrationEl = document.getElementById('vibrationPattern');
+    const notificationEl = document.getElementById('mobileNotification');
+    
+    // Clean up special characters from alert data
+    const cleanSignalName = String(signalName).replace(/'/g, '');
+    const cleanCondition = String(condition).replace(/'/g, '');
+    
+    // Populate with real alert data
+    messageEl.textContent = `${cleanSignalName}: ${cleanCondition.substring(0, 50)}...`;
+    timeEl.textContent = 'now';
+    
+    // Set vibration pattern based on severity
+    if (severity === 'high' || severity === 'critical') {
+        vibrationEl.textContent = '📳📳📳';
+    } else {
+        vibrationEl.textContent = '📳📳';
     }
-
-    function getEventBadge(impactType) {
-        if (!impactType) return 'secondary';
-        const type = impactType.toLowerCase();
-        if (type === 'positive') return 'success';
-        if (type === 'negative') return 'danger';
-        return 'warning';
+    
+    // Add visual feedback to the alert card
+    const alertCard = document.getElementById(`alert-card-${alertIndex}`);
+    if (alertCard) {
+        alertCard.style.border = '2px solid #20c997';
+        alertCard.style.backgroundColor = '#d1f2eb';
     }
-
-    // Web Popup Alert - Simulates browser notification popup
-    function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
-        // Create web popup notification similar to browser alerts
-        const popupAlert = document.createElement('div');
-        popupAlert.className = 'position-fixed top-0 start-50 translate-middle-x mt-4';
-        popupAlert.style.zIndex = '9999';
-        popupAlert.style.maxWidth = '400px';
-        popupAlert.innerHTML = `
-            <div class="alert alert-${severity === 'critical' ? 'danger' : severity === 'high' ? 'warning' : 'info'} border-3 shadow-lg" style="animation: slideDownBounce 0.6s ease-out;">
-                <div class="d-flex align-items-center">
-                    <div class="me-3">
-                        <i class="fas fa-exclamation-triangle fa-2x ${severity === 'critical' ? 'text-danger' : severity === 'high' ? 'text-warning' : 'text-info'}"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h6 class="alert-heading mb-1">
-                            <i class="fas fa-globe me-1"></i> Investment Alert
-                        </h6>
-                        <strong>${signalName}</strong><br>
-                        <small>${condition}</small><br>
-                        <div class="small text-muted mt-1">
-                            <i class="fas fa-clock"></i> ${new Date().toLocaleTimeString()}
-                        </div>
-                    </div>
-                    <button type="button" class="btn-close ms-2" onclick="this.closest('.alert').remove()"></button>
-                </div>
-                <div class="mt-2 d-flex gap-2">
-                    <button class="btn btn-sm btn-outline-primary" onclick="this.closest('.alert').remove()">Dismiss</button>
-                    <button class="btn btn-sm btn-primary" onclick="markAlertAsRead(${alertIndex}); this.closest('.alert').remove();">Acknowledge</button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(popupAlert);
-        
-        // Auto-remove after 8 seconds
-        setTimeout(() => {
-            if (document.body.contains(popupAlert)) {
-                popupAlert.style.animation = 'slideUpFade 0.4s ease-in forwards';
-                setTimeout(() => document.body.removeChild(popupAlert), 400);
-            }
-        }, 8000);
-        
-        // Add visual feedback to alert card
-        const alertCard = document.getElementById(`alert-card-${alertIndex}`);
-        if (alertCard) {
-            alertCard.classList.add('border-danger');
-            alertCard.style.animation = 'pulse 1s ease-in-out 2';
+    
+    modal.show();
+    
+    // Simulate phone vibration effect
+    let vibrationCount = 0;
+    const vibrationInterval = setInterval(() => {
+        notificationEl.style.transform = vibrationCount % 2 === 0 ? 'translateX(2px)' : 'translateX(-2px)';
+        vibrationCount++;
+        if (vibrationCount > 6) {
+            clearInterval(vibrationInterval);
+            notificationEl.style.transform = '';
         }
-    }
+    }, 100);
+    
+    // Auto-dismiss countdown
+    let countdown = 10;
+    const countdownInterval = setInterval(() => {
+        countdown--;
+        countdownEl.textContent = countdown;
+        if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            modal.hide();
+            if (alertCard) {
+                alertCard.style.border = '';
+                alertCard.style.backgroundColor = '';
+            }
+        }
+    }, 1000);
+}
 
-    function triggerEmailAlert(signalName, condition, alertIndex) {
+function getConvictionBadge(conviction) {
+    if (!conviction) return 'secondary';
+    const level = conviction.toLowerCase();
+    if (level === 'high') return 'success';
+    if (level === 'medium') return 'warning';
+    if (level === 'low') return 'danger';
+    return 'secondary';
+}
+
+function getEventBadge(impactType) {
+    if (!impactType) return 'secondary';
+    const type = impactType.toLowerCase();
+    if (type === 'positive') return 'success';
+    if (type === 'negative') return 'danger';
+    return 'warning';
+}
+
+function triggerEmailAlert_old(signalName, condition, alertIndex) {
         // Create realistic email modal interface
         const emailModal = document.createElement('div');
         emailModal.className = 'modal fade';
