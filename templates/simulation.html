@@ -607,20 +607,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Global variables for alert functions
+let globalThesisTitle = `{{ thesis.title|replace('"', '\\"')|replace('`', '\\`') or 'Unknown Thesis' }}`;
+
 // Global alert notification functions (must be outside DOMContentLoaded for onclick access)
 function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
-    const modal = new bootstrap.Modal(document.getElementById('webPopupModal'));
-    const messageEl = document.getElementById('webAlertMessage');
-    const timeEl = document.getElementById('webAlertTime');
-    const countdownEl = document.getElementById('webCountdown');
-    
-    // Generate comprehensive alert combining market, thesis, and counter-thesis data
-    const marketData = generateMarketContext();
-    const thesisData = generateThesisContext(signalName);
-    const counterThesisData = generateCounterThesisContext();
+    try {
+        const modal = new bootstrap.Modal(document.getElementById('webPopupModal'));
+        const messageEl = document.getElementById('webAlertMessage');
+        const timeEl = document.getElementById('webAlertTime');
+        const countdownEl = document.getElementById('webCountdown');
+        
+        // Generate comprehensive alert combining market, thesis, and counter-thesis data
+        const marketData = generateMarketContext();
+        const thesisData = generateThesisContext(signalName);
+        const counterThesisData = generateCounterThesisContext();
     
     const comprehensiveAlert = `
-        📋 ${summarizeThesisTitle(thesisTitle)}
+        📋 ${summarizeThesisTitle(globalThesisTitle)}
         🎯 THESIS: ${thesisData.status} - ${condition}
         📊 MARKET: ${marketData.trend} (${marketData.impact})
         ⚠️ RISK: ${counterThesisData.assessment}
@@ -654,6 +658,11 @@ function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
             }
         }
     }, 1000);
+    } catch (error) {
+        console.error('Web popup alert error:', error);
+        // Fallback: simple alert
+        alert(`${signalName}: ${condition}`);
+    }
 }
 
 function triggerEmailAlert(signalName, condition, alertIndex) {
@@ -672,9 +681,9 @@ function triggerEmailAlert(signalName, condition, alertIndex) {
     const combinedImpact = calculateCombinedImpact(marketData, thesisData, counterThesisData);
     
     // Enhanced email subject and content
-    subjectEl.textContent = `Investment Alert: ${summarizeThesisTitle(thesisTitle)} - ${combinedImpact.level} Impact`;
+    subjectEl.textContent = `Investment Alert: ${summarizeThesisTitle(globalThesisTitle)} - ${combinedImpact.level} Impact`;
     messageEl.innerHTML = `
-        <strong>Thesis:</strong> ${summarizeThesisTitle(thesisTitle)}<br>
+        <strong>Thesis:</strong> ${summarizeThesisTitle(globalThesisTitle)}<br>
         <strong>Thesis Status:</strong> ${thesisData.status} - ${condition}<br>
         <strong>Market Context:</strong> ${marketData.trend} (${marketData.impact})<br>
         <strong>Risk Assessment:</strong> ${counterThesisData.assessment}<br>
@@ -731,7 +740,7 @@ function triggerMobilePushNotification(signalName, condition, severity, alertInd
     const combinedImpact = calculateCombinedImpact(marketData, thesisData, counterThesisData);
     
     // Concise mobile-friendly format
-    const mobileAlert = `📋 ${summarizeThesisTitle(thesisTitle)} | 🎯 ${thesisData.status} | 📊 ${marketData.trend} | ⚠️ ${counterThesisData.risk_level} | Impact: ${combinedImpact.level}`;
+    const mobileAlert = `📋 ${summarizeThesisTitle(globalThesisTitle)} | 🎯 ${thesisData.status} | 📊 ${marketData.trend} | ⚠️ ${counterThesisData.risk_level} | Impact: ${combinedImpact.level}`;
     
     messageEl.textContent = mobileAlert;
     timeEl.textContent = 'now';
