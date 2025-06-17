@@ -3063,24 +3063,24 @@ document.addEventListener('DOMContentLoaded', function() {
         window.showPublishingProgress();
     };
 
-    // Alternative Company Analysis
-    async function loadAlternativeCompanies(thesisId) {
+    // Alternative Company Analysis (define at global scope)
+    window.loadAlternativeCompanies = async function(thesisId) {
         try {
             const response = await fetch(`/api/thesis/${thesisId}/alternative-companies`);
             const data = await response.json();
             
             if (data.success) {
-                displayAlternativeCompanies(data.alternatives);
+                window.displayAlternativeCompanies(data.alternatives);
             } else {
                 throw new Error(data.error || 'Failed to load alternative companies');
             }
         } catch (error) {
             console.error('Alternative companies loading failed:', error);
-            displayAlternativeCompaniesError(error.message);
+            window.displayAlternativeCompaniesError(error.message);
         }
-    }
+    };
 
-    function displayAlternativeCompanies(alternatives) {
+    window.displayAlternativeCompanies = function(alternatives) {
         const container = document.getElementById('alternative-companies-container');
         
         let html = `
@@ -3228,16 +3228,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.style.boxShadow = '';
             });
         });
-    }
+    };
 
-    function displayAlternativeCompaniesError(errorMessage) {
+    window.displayAlternativeCompaniesError = function(errorMessage) {
         const container = document.getElementById('alternative-companies-container');
         container.innerHTML = `
             <div class="text-center py-4">
                 <i class="fas fa-exclamation-triangle text-warning fs-2 mb-3"></i>
                 <h6 class="text-muted">Alternative Companies Temporarily Unavailable</h6>
                 <p class="text-muted small mb-3">${errorMessage}</p>
-                <button class="btn btn-outline-success btn-sm" onclick="loadAlternativeCompanies(window.currentThesisId)">
+                <button class="btn btn-outline-success btn-sm" onclick="window.loadAlternativeCompanies(window.currentThesisId)">
                     <i class="fas fa-refresh me-1"></i>Retry Analysis
                 </button>
             </div>
