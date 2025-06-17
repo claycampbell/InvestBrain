@@ -1,124 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}Thesis Simulation - {{ thesis.title }}{% endblock %}
+{% block title %}Thesis Simulation{% endblock %}
 
 {% block content %}
-<style>
-    .alert-card {
-        transition: all 0.3s ease;
-        border: 2px solid #dee2e6;
-    }
-    
-    .alert-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.02); }
-        100% { transform: scale(1); }
-    }
-    
-    .notification-toast {
-        animation: slideInRight 0.3s ease-out;
-    }
-    
-    @keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes slideDownBounce {
-        0% {
-            transform: translateY(-100%);
-            opacity: 0;
-        }
-        60% {
-            transform: translateY(10px);
-            opacity: 1;
-        }
-        100% {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes slideUpFade {
-        0% {
-            transform: translateY(0);
-            opacity: 1;
-        }
-        100% {
-            transform: translateY(-100%);
-            opacity: 0;
-        }
-    }
-    
-    @keyframes slideOutRight {
-        0% {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        100% {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-    }
-    
-    @keyframes vibrate {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-2px); }
-        75% { transform: translateX(2px); }
-    }
-    
-    .btn-group-notification {
-        gap: 0.5rem;
-    }
-    
-    .alert-severity-critical {
-        border-left: 4px solid #dc3545;
-    }
-    
-    .alert-severity-high {
-        border-left: 4px solid #ffc107;
-    }
-    
-    .alert-severity-medium {
-        border-left: 4px solid #17a2b8;
-    }
-</style>
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2><i class="fas fa-play-circle"></i> Thesis Simulation</h2>
-                    <p class="text-muted">Test your investment thesis against time horizon forecasts and real-world event scenarios</p>
-                </div>
-                <a href="/monitoring" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Monitoring
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Thesis Overview -->
+<div class="container-fluid mt-4">
+    <!-- Thesis Information Header -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-primary">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-bullseye"></i> {{ thesis.title }}</h5>
+                    <h5 class="mb-0"><i class="fas fa-microscope"></i> Thesis Simulation Testing</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-8">
+                            <h4 class="text-primary">{{ thesis.title or 'Unknown Thesis' }}</h4>
                             <p><strong>Core Claim:</strong> {{ thesis.core_claim or 'No core claim available' }}</p>
                             <p><strong>Mental Model:</strong> <span class="badge bg-info">{{ thesis.mental_model or 'Unknown' }}</span></p>
                         </div>
@@ -158,13 +54,12 @@
                             <select class="form-select" id="scenarioType" required>
                                 <option value="">Select scenario...</option>
                                 <option value="bull">Bull Market (Favorable conditions)</option>
-                                <option value="base">Base Case (Expected conditions)</option>
-                                <option value="bear">Bear Market (Adverse conditions)</option>
-                                <option value="black_swan">Black Swan (Extreme events)</option>
+                                <option value="bear">Bear Market (Challenging conditions)</option>
+                                <option value="neutral">Neutral Market (Mixed conditions)</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-chart-line"></i> Generate Forecast
+                            <i class="fas fa-chart-line"></i> Run Forecast
                         </button>
                     </form>
                 </div>
@@ -174,29 +69,29 @@
         <div class="col-lg-6">
             <div class="card">
                 <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Event Simulation</h6>
+                    <h6 class="mb-0"><i class="fas fa-bolt"></i> Event Simulation</h6>
                 </div>
                 <div class="card-body">
                     <form id="eventForm">
                         <div class="mb-3">
-                            <label for="eventType" class="form-label">Event Category</label>
+                            <label for="eventType" class="form-label">Event Type</label>
                             <select class="form-select" id="eventType" required>
                                 <option value="">Select event type...</option>
-                                <option value="market">Market Events</option>
-                                <option value="competitive">Competitive Threats</option>
-                                <option value="regulatory">Regulatory Changes</option>
-                                <option value="macroeconomic">Macroeconomic Shifts</option>
-                                <option value="company_specific">Company-Specific Events</option>
+                                <option value="market_shock">Market Shock</option>
+                                <option value="regulatory_change">Regulatory Change</option>
+                                <option value="competitive_threat">Competitive Threat</option>
+                                <option value="earnings_surprise">Earnings Surprise</option>
+                                <option value="economic_shift">Economic Shift</option>
                             </select>
                         </div>
                         <div class="mb-3">
                             <label for="eventSeverity" class="form-label">Event Severity</label>
                             <select class="form-select" id="eventSeverity" required>
                                 <option value="">Select severity...</option>
-                                <option value="minor">Minor Impact (1-5%)</option>
-                                <option value="moderate">Moderate Impact (5-15%)</option>
-                                <option value="major">Major Impact (15-30%)</option>
-                                <option value="critical">Critical Impact (30%+)</option>
+                                <option value="low">Low Impact</option>
+                                <option value="moderate">Moderate Impact</option>
+                                <option value="high">High Impact</option>
+                                <option value="extreme">Extreme Impact</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-warning">
@@ -342,7 +237,7 @@
                         
                         <!-- Email Content -->
                         <div class="email-content p-4">
-                            <h4 class="text-danger mb-3" id="emailSubject">🚨 Investment Alert: Critical Threshold Breached</h4>
+                            <h4 class="text-danger mb-3" id="emailSubject">Investment Alert: Critical Threshold Breached</h4>
                             
                             <div class="alert alert-danger border-0" style="background: #fff5f5;">
                                 <div class="row">
@@ -549,84 +444,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+                ...params,
                 simulation_type: type,
-                ...params
+                scenario: params.scenario_type || 'neutral',
+                volatility: 'medium',
+                include_events: true
             })
         })
         .then(response => response.json())
         .then(data => {
-            console.log('Raw simulation response:', data);
-            console.log('Events in response:', data.events);
-            console.log('Events type:', typeof data.events, 'isArray:', Array.isArray(data.events));
-            
             clearInterval(interval);
             progressBar.style.width = '100%';
             
             setTimeout(() => {
                 modal.hide();
-                try {
-                    displaySimulationResults(data, type);
-                } catch (error) {
-                    console.error('Error in displaySimulationResults:', error);
-                    console.error('Error stack:', error.stack);
-                    alert('Error displaying simulation results: ' + error.message);
-                }
+                displaySimulationResults(data, type);
             }, 1000);
         })
         .catch(error => {
             clearInterval(interval);
             modal.hide();
-            console.error('Error:', error);
+            console.error('Simulation error:', error);
             alert('Simulation failed. Please try again.');
         });
     }
 
     function displaySimulationResults(data, type) {
-        console.log('displaySimulationResults called with:', data);
-        console.log('data.events:', data.events);
-        console.log('data.events type:', typeof data.events);
-        console.log('data.events isArray:', Array.isArray(data.events));
-        
         const resultsDiv = document.getElementById('simulationResults');
         const contentDiv = document.getElementById('resultsContent');
         
         if (data.error) {
             contentDiv.innerHTML = generateErrorDisplay(data);
         } else {
-            // Validate events before processing
-            let events = data.events || [];
-            if (!Array.isArray(events)) {
-                console.error('data.events is not an array:', events);
-                events = [];
-            }
-            
-            // Filter out any undefined/null events
-            events = events.filter((event, index) => {
-                if (event === undefined || event === null) {
-                    console.warn(`Event at index ${index} is undefined/null`);
-                    return false;
-                }
-                if (typeof event !== 'object') {
-                    console.warn(`Event at index ${index} is not an object:`, event);
-                    return false;
-                }
-                return true;
-            });
-            
-            console.log('Filtered events for display:', events);
-            
-            // Create data copy with validated events
-            const validatedData = {
-                ...data,
-                events: events
-            };
-            
-            contentDiv.innerHTML = generateLLMSimulationResults(validatedData, type);
-            
-            // Render performance chart if data available
-            if (data.chart_data && data.chart_data.performance_data) {
-                renderPerformanceChart(data.chart_data, events);
-            }
+            contentDiv.innerHTML = generateLLMSimulationResults(data, type);
             
             // Display alert triggers if available
             if (data.alert_triggers && data.alert_triggers.length > 0) {
@@ -641,11 +491,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function generateLLMSimulationResults(data, type) {
         const scenario = data.scenario_analysis || {};
         const metadata = data.simulation_metadata || {};
-        const events = data.events || [];
         
         return `
             <div class="row">
-                <!-- LLM Scenario Analysis -->
                 <div class="col-lg-8">
                     <div class="card mb-4">
                         <div class="card-header bg-primary text-white">
@@ -664,86 +512,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <strong>Performance Assessment:</strong>
                                 <p class="mt-1">${scenario.performance_assessment || 'Assessment unavailable'}</p>
                             </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6 class="text-danger mb-2">Key Risks</h6>
-                                    <ul class="list-unstyled">
-                                        ${(scenario.key_risks || []).map(risk => `
-                                            <li class="mb-1">
-                                                <i class="fas fa-exclamation-triangle text-danger me-2"></i>
-                                                ${risk}
-                                            </li>
-                                        `).join('')}
-                                    </ul>
-                                </div>
-                                <div class="col-md-6">
-                                    <h6 class="text-success mb-2">Key Opportunities</h6>
-                                    <ul class="list-unstyled">
-                                        ${(scenario.key_opportunities || []).map(opportunity => `
-                                            <li class="mb-1">
-                                                <i class="fas fa-lightbulb text-success me-2"></i>
-                                                ${opportunity}
-                                            </li>
-                                        `).join('')}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Performance Chart Container -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0">
-                                <i class="fas fa-chart-line"></i> 
-                                Performance Forecast (${metadata.time_horizon || 1} Years)
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div id="performanceChart" style="height: 400px;"></div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Strategic Recommendations -->
                 <div class="col-lg-4">
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h6 class="mb-0">
-                                <i class="fas fa-compass"></i> Strategic Recommendations
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-unstyled">
-                                ${(scenario.strategic_recommendations || []).map(rec => `
-                                    <li class="mb-2">
-                                        <i class="fas fa-arrow-right text-primary me-2"></i>
-                                        ${rec}
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h6 class="mb-0">
-                                <i class="fas fa-search"></i> Monitoring Priorities
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-unstyled">
-                                ${(scenario.monitoring_priorities || []).map(priority => `
-                                    <li class="mb-2">
-                                        <i class="fas fa-eye text-info me-2"></i>
-                                        ${priority}
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                    
                     <div class="card">
                         <div class="card-header">
                             <h6 class="mb-0">
@@ -753,31 +526,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="card-body">
                             <div class="mb-2">
                                 <strong>Conviction Level:</strong>
-                                <span class="badge bg-${getConvictionBadge(scenario.conviction_level)}">${scenario.conviction_level || 'Unknown'}</span>
+                                <span class="badge bg-info">${scenario.conviction_level || 'Unknown'}</span>
                             </div>
                             <div class="mb-2">
                                 <strong>Scenario:</strong>
                                 <span class="badge bg-info">${metadata.scenario || 'Unknown'}</span>
                             </div>
-                            <div class="mb-2">
-                                <strong>Volatility:</strong>
-                                <span class="badge bg-secondary">${metadata.volatility || 'Unknown'}</span>
-                            </div>
                             <div class="small text-muted">
                                 <strong>Generated:</strong> ${new Date(metadata.generated_at).toLocaleString()}
-                            </div>
-                            <div class="small text-muted">
-                                <strong>Source:</strong> ${metadata.data_source || 'LLM Analysis'}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            ${events && Array.isArray(events) && events.length > 0 ? generateEventTimeline(events) : '<div class="alert alert-info">No events to display</div>'}
         `;
     }
-    
+
     function generateErrorDisplay(data) {
         return `
             <div class="alert alert-warning">
@@ -786,247 +550,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </h5>
                 <p>${data.description || 'An error occurred during simulation.'}</p>
                 ${data.action_needed ? `<hr><p class="mb-0"><strong>Action needed:</strong> ${data.action_needed}</p>` : ''}
-            </div>
-        `;
-    }
-    
-    function generateEventTimeline(events) {
-        // Add debugging and validation
-        console.log('generateEventTimeline called with:', events);
-        
-        if (!Array.isArray(events)) {
-            console.error('Events is not an array:', events);
-            return '';
-        }
-        
-        // Filter out any null, undefined, or invalid events with detailed debugging
-        const validEvents = [];
-        events.forEach((event, index) => {
-            console.log(`Processing event ${index}:`, typeof event, event);
-            
-            if (event === null || event === undefined) {
-                console.warn(`Event ${index} is null/undefined`);
-                return;
-            }
-            
-            if (typeof event !== 'object') {
-                console.warn(`Event ${index} is not an object:`, typeof event, event);
-                return;
-            }
-            
-            if (!event.hasOwnProperty('title') || event.title === null || event.title === undefined || event.title === '') {
-                console.warn(`Event ${index} missing or empty title:`, event);
-                return;
-            }
-            
-            validEvents.push(event);
-        });
-        
-        console.log('Valid events after filtering:', validEvents);
-        
-        if (validEvents.length === 0) {
-            return '<div class="alert alert-info">No events to display</div>';
-        }
-        
-        return `
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0">
-                                <i class="fas fa-calendar-alt"></i> Market Events Timeline
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="timeline">
-                                ${validEvents.map((event, index) => {
-                                    // Defensive programming - ensure all properties exist
-                                    const safeEvent = {
-                                        title: (event && event.title) ? String(event.title) : 'Market Event',
-                                        description: (event && event.description) ? String(event.description) : 'Market event details',
-                                        month: (event && event.month) ? String(event.month) : 'N/A',
-                                        impact_type: (event && event.impact_type) ? String(event.impact_type) : 'neutral',
-                                        magnitude: (event && event.magnitude) ? String(event.magnitude) : 'Moderate',
-                                        signals_affected: (event && Array.isArray(event.signals_affected)) ? event.signals_affected : []
-                                    };
-                                    
-                                    return `
-                                        <div class="timeline-item mb-3">
-                                            <div class="d-flex">
-                                                <div class="timeline-marker me-3">
-                                                    <span class="badge bg-${getEventBadge(safeEvent.impact_type)} rounded-pill">
-                                                        Month ${safeEvent.month}
-                                                    </span>
-                                                </div>
-                                                <div class="timeline-content flex-grow-1">
-                                                    <h6 class="mb-1">${safeEvent.title}</h6>
-                                                    <p class="mb-1">${safeEvent.description}</p>
-                                                    <div class="small text-muted">
-                                                        <strong>Impact:</strong> ${safeEvent.magnitude} ${safeEvent.impact_type}
-                                                        ${safeEvent.signals_affected.length > 0 ? 
-                                                            `<br><strong>Signals Affected:</strong> ${safeEvent.signals_affected.join(', ')}` : ''}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    function generateForecastResults(data) {
-        const forecast = data.forecast || {};
-        const metrics = data.performance_metrics || {};
-        
-        return `
-            <div class="row">
-                <div class="col-md-6">
-                    <h6 class="text-primary mb-3">Forecast Summary</h6>
-                    <div class="mb-3">
-                        <strong>Time Horizon:</strong> ${forecast.time_horizon || 'N/A'}
-                    </div>
-                    <div class="mb-3">
-                        <strong>Scenario:</strong> <span class="badge bg-info">${forecast.scenario_type || 'N/A'}</span>
-                    </div>
-                    <div class="mb-3">
-                        <strong>Thesis Confidence:</strong> 
-                        <span class="badge bg-${getConfidenceBadge(forecast.confidence)}">${forecast.confidence || 'N/A'}%</span>
-                    </div>
-                    <div class="mb-3">
-                        <strong>Key Outcomes:</strong>
-                        <ul class="mt-2">
-                            ${(forecast.key_outcomes || []).map(outcome => `<li>${outcome}</li>`).join('')}
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <h6 class="text-primary mb-3">Performance Metrics</h6>
-                    <div class="mb-2">
-                        <strong>Expected Return:</strong> 
-                        <span class="text-${metrics.expected_return >= 0 ? 'success' : 'danger'}">
-                            ${metrics.expected_return || 'N/A'}%
-                        </span>
-                    </div>
-                    <div class="mb-2">
-                        <strong>Risk Level:</strong> <span class="badge bg-warning">${metrics.risk_level || 'N/A'}</span>
-                    </div>
-                    <div class="mb-2">
-                        <strong>Key Risks:</strong>
-                        <ul class="mt-2">
-                            ${(metrics.key_risks || []).map(risk => `<li class="text-danger">${risk}</li>`).join('')}
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mt-4">
-                <h6 class="text-primary mb-3">Signal Performance Forecast</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Signal</th>
-                                <th>Current Status</th>
-                                <th>Forecast Direction</th>
-                                <th>Confidence</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${(data.signal_forecasts || []).map(signal => `
-                                <tr>
-                                    <td>${signal.name || 'N/A'}</td>
-                                    <td><span class="badge bg-secondary">${signal.current_status || 'N/A'}</span></td>
-                                    <td>
-                                        <i class="fas fa-arrow-${signal.direction === 'up' ? 'up text-success' : signal.direction === 'down' ? 'down text-danger' : 'right text-muted'}"></i>
-                                        ${signal.direction || 'N/A'}
-                                    </td>
-                                    <td>${signal.confidence || 'N/A'}%</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-    }
-
-    function generateEventResults(data) {
-        const event = data.event_simulation || {};
-        const impact = data.impact_analysis || {};
-        
-        return `
-            <div class="row">
-                <div class="col-md-6">
-                    <h6 class="text-warning mb-3">Event Simulation</h6>
-                    <div class="mb-3">
-                        <strong>Event Type:</strong> ${event.event_type || 'N/A'}
-                    </div>
-                    <div class="mb-3">
-                        <strong>Severity:</strong> <span class="badge bg-warning">${event.severity || 'N/A'}</span>
-                    </div>
-                    <div class="mb-3">
-                        <strong>Event Description:</strong>
-                        <p class="mt-1">${event.description || 'No description available'}</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <h6 class="text-danger mb-3">Impact Analysis</h6>
-                    <div class="mb-2">
-                        <strong>Thesis Impact:</strong> 
-                        <span class="text-${impact.thesis_impact >= 0 ? 'success' : 'danger'}">
-                            ${impact.thesis_impact || 'N/A'}%
-                        </span>
-                    </div>
-                    <div class="mb-2">
-                        <strong>Recovery Time:</strong> ${impact.recovery_time || 'N/A'}
-                    </div>
-                    <div class="mb-2">
-                        <strong>Mitigation Actions:</strong>
-                        <ul class="mt-2">
-                            ${(impact.mitigation_actions || []).map(action => `<li>${action}</li>`).join('')}
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mt-4">
-                <h6 class="text-danger mb-3">Signal Response Analysis</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Signal</th>
-                                <th>Pre-Event</th>
-                                <th>Post-Event</th>
-                                <th>Impact</th>
-                                <th>Alert Triggered</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${(data.signal_responses || []).map(signal => `
-                                <tr>
-                                    <td>${signal.name || 'N/A'}</td>
-                                    <td>${signal.pre_event || 'N/A'}</td>
-                                    <td>${signal.post_event || 'N/A'}</td>
-                                    <td class="text-${signal.impact_pct >= 0 ? 'success' : 'danger'}">
-                                        ${signal.impact_pct || 'N/A'}%
-                                    </td>
-                                    <td>
-                                        ${signal.alert_triggered ? 
-                                            '<i class="fas fa-bell text-warning"></i> Yes' : 
-                                            '<i class="fas fa-times text-muted"></i> No'
-                                        }
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
             </div>
         `;
     }
@@ -1051,13 +574,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <strong>Recommended Action:</strong> ${alert.action || 'No action specified'}
                             </div>
                             <div class="d-flex gap-2 mb-2">
-                                <button class="btn btn-sm btn-outline-danger" onclick="triggerWebPopupAlert('${alert.signal_name || 'Unknown Signal'}', '${alert.condition || ''}', '${alert.severity || 'medium'}', ${index})">
+                                <button class="btn btn-sm btn-outline-danger" onclick="triggerWebPopupAlert('${escapeQuotes(alert.signal_name || 'Unknown Signal')}', '${escapeQuotes(alert.condition || '')}', '${alert.severity || 'medium'}', ${index})">
                                     <i class="fas fa-exclamation-triangle"></i> Web Popup
                                 </button>
-                                <button class="btn btn-sm btn-outline-info" onclick="triggerEmailAlert('${alert.signal_name || 'Unknown Signal'}', '${alert.condition || ''}', ${index})">
+                                <button class="btn btn-sm btn-outline-info" onclick="triggerEmailAlert('${escapeQuotes(alert.signal_name || 'Unknown Signal')}', '${escapeQuotes(alert.condition || '')}', ${index})">
                                     <i class="fas fa-envelope"></i> Email Alert
                                 </button>
-                                <button class="btn btn-sm btn-outline-success" onclick="triggerMobilePushNotification('${alert.signal_name || 'Unknown Signal'}', '${alert.condition || ''}', '${alert.severity || 'medium'}', ${index})">
+                                <button class="btn btn-sm btn-outline-success" onclick="triggerMobilePushNotification('${escapeQuotes(alert.signal_name || 'Unknown Signal')}', '${escapeQuotes(alert.condition || '')}', '${alert.severity || 'medium'}', ${index})">
                                     <i class="fas fa-mobile-alt"></i> Mobile Push
                                 </button>
                             </div>
@@ -1077,6 +600,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         alertDiv.style.display = 'block';
     }
+
+    function escapeQuotes(str) {
+        return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
 });
 
 // Global alert notification functions (must be outside DOMContentLoaded for onclick access)
@@ -1086,12 +613,8 @@ function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
     const timeEl = document.getElementById('webAlertTime');
     const countdownEl = document.getElementById('webCountdown');
     
-    // Clean up special characters from alert data
-    const cleanSignalName = String(signalName).replace(/'/g, '');
-    const cleanCondition = String(condition).replace(/'/g, '');
-    
     // Populate with real alert data
-    messageEl.textContent = `${cleanSignalName}: ${cleanCondition}`;
+    messageEl.textContent = `${signalName}: ${condition}`;
     timeEl.textContent = new Date().toLocaleTimeString();
     
     // Add visual feedback to the alert card
@@ -1128,13 +651,9 @@ function triggerEmailAlert(signalName, condition, alertIndex) {
     const timestampEl = document.getElementById('emailTimestamp');
     const actionsEl = document.getElementById('emailActions');
     
-    // Clean up special characters from alert data
-    const cleanSignalName = String(signalName).replace(/'/g, '');
-    const cleanCondition = String(condition).replace(/'/g, '');
-    
     // Populate with real alert data
-    subjectEl.textContent = `Investment Alert: ${cleanSignalName}`;
-    messageEl.textContent = cleanCondition;
+    subjectEl.textContent = `Investment Alert: ${signalName}`;
+    messageEl.textContent = condition;
     severityEl.textContent = 'High';
     severityEl.className = 'badge bg-danger';
     valueEl.textContent = '-12.5%';
@@ -1142,7 +661,7 @@ function triggerEmailAlert(signalName, condition, alertIndex) {
     
     // Generate dynamic recommended actions
     const actions = [
-        `Review ${cleanSignalName} performance metrics`,
+        `Review ${signalName} performance metrics`,
         'Assess impact on overall thesis validity',
         'Consider rebalancing position size',
         'Monitor related signals for confirmation'
@@ -1175,12 +694,8 @@ function triggerMobilePushNotification(signalName, condition, severity, alertInd
     const vibrationEl = document.getElementById('vibrationPattern');
     const notificationEl = document.getElementById('mobileNotification');
     
-    // Clean up special characters from alert data
-    const cleanSignalName = String(signalName).replace(/'/g, '');
-    const cleanCondition = String(condition).replace(/'/g, '');
-    
     // Populate with real alert data
-    messageEl.textContent = `${cleanSignalName}: ${cleanCondition.substring(0, 50)}...`;
+    messageEl.textContent = `${signalName}: ${condition.substring(0, 50)}...`;
     timeEl.textContent = 'now';
     
     // Set vibration pattern based on severity
@@ -1225,429 +740,5 @@ function triggerMobilePushNotification(signalName, condition, severity, alertInd
         }
     }, 1000);
 }
-
-function getConvictionBadge(conviction) {
-    if (!conviction) return 'secondary';
-    const level = conviction.toLowerCase();
-    if (level === 'high') return 'success';
-    if (level === 'medium') return 'warning';
-    if (level === 'low') return 'danger';
-    return 'secondary';
-}
-
-function getEventBadge(impactType) {
-    if (!impactType) return 'secondary';
-    const type = impactType.toLowerCase();
-    if (type === 'positive') return 'success';
-    if (type === 'negative') return 'danger';
-    return 'warning';
-}
-
-function triggerEmailAlert_old(signalName, condition, alertIndex) {
-        // Create realistic email modal interface
-        const emailModal = document.createElement('div');
-        emailModal.className = 'modal fade';
-        emailModal.id = `email-modal-${alertIndex}`;
-        emailModal.innerHTML = `
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-info text-white">
-                        <h5 class="modal-title">
-                            <i class="fas fa-envelope"></i> Email Alert Dispatch
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="card bg-light">
-                                    <div class="card-header">
-                                        <h6 class="mb-0"><i class="fas fa-paper-plane"></i> Email Preview</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="mb-2">
-                                            <strong>From:</strong> alerts@investmentthesis.ai
-                                        </div>
-                                        <div class="mb-2">
-                                            <strong>To:</strong> portfolio@investment.com, analyst@firm.com
-                                        </div>
-                                        <div class="mb-2">
-                                            <strong>Subject:</strong> 🚨 Investment Alert: ${signalName}
-                                        </div>
-                                        <hr>
-                                        <div class="email-body">
-                                            <p><strong>Investment Alert Triggered</strong></p>
-                                            <p><strong>Signal:</strong> ${signalName}</p>
-                                            <p><strong>Condition:</strong> ${condition}</p>
-                                            <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-                                            <p><strong>Recommended Action:</strong> Review portfolio allocation and consider position adjustments.</p>
-                                            <hr>
-                                            <p class="small text-muted">
-                                                This is an automated alert from your Investment Thesis Monitoring System. 
-                                                To modify alert settings, visit your dashboard.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <h6>Delivery Status</h6>
-                                <div class="list-group">
-                                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                                        Primary Email
-                                        <span class="badge bg-success rounded-pill">Sent</span>
-                                    </div>
-                                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                                        Backup Email
-                                        <span class="badge bg-success rounded-pill">Sent</span>
-                                    </div>
-                                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                                        SMS Backup
-                                        <span class="badge bg-info rounded-pill">Queued</span>
-                                    </div>
-                                </div>
-                                <div class="mt-3 p-2 bg-success text-white rounded">
-                                    <i class="fas fa-check-circle"></i> Email dispatched successfully to 2 recipients
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-info">View Email Logs</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(emailModal);
-        const modal = new bootstrap.Modal(emailModal);
-        modal.show();
-        
-        // Remove modal after it's hidden
-        emailModal.addEventListener('hidden.bs.modal', function () {
-            document.body.removeChild(emailModal);
-        });
-        
-        // Add email sent indicator to alert card
-        const alertCard = document.getElementById(`alert-card-${alertIndex}`);
-        if (alertCard) {
-            alertCard.classList.add('border-info');
-            const emailBadge = document.createElement('span');
-            emailBadge.className = 'badge bg-info position-absolute top-0 start-0 translate-middle';
-            emailBadge.innerHTML = '<i class="fas fa-envelope"></i>';
-            alertCard.style.position = 'relative';
-            alertCard.appendChild(emailBadge);
-        }
-    }
-
-    function triggerMobilePushNotification(signalName, condition, severity, alertIndex) {
-        // Create mobile push notification simulation
-        const mobileNotification = document.createElement('div');
-        mobileNotification.className = 'position-fixed top-0 end-0 m-3';
-        mobileNotification.style.zIndex = '9999';
-        mobileNotification.style.maxWidth = '350px';
-        mobileNotification.innerHTML = `
-            <div class="card border-dark shadow-lg" style="animation: slideInRight 0.5s ease-out, vibrate 0.1s ease-in-out 3;">
-                <div class="card-header bg-dark text-white d-flex align-items-center">
-                    <i class="fas fa-mobile-alt me-2"></i>
-                    <strong class="flex-grow-1">Investment App</strong>
-                    <small class="text-muted">now</small>
-                    <button type="button" class="btn-close btn-close-white ms-2" onclick="this.closest('.card').parentElement.remove()"></button>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex align-items-start">
-                        <div class="me-3">
-                            <div class="rounded-circle bg-${severity === 'critical' ? 'danger' : severity === 'high' ? 'warning' : 'info'} text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="card-title mb-1">${signalName}</h6>
-                            <p class="card-text small text-muted mb-2">${condition}</p>
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-sm btn-outline-primary" onclick="this.closest('.card').parentElement.remove()">Dismiss</button>
-                                <button class="btn btn-sm btn-primary" onclick="markAlertAsRead(${alertIndex}); this.closest('.card').parentElement.remove();">View Details</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer bg-light">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-muted">
-                            <i class="fas fa-shield-alt"></i> Secure Alert
-                        </small>
-                        <small class="text-muted">
-                            Swipe to dismiss
-                        </small>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(mobileNotification);
-        
-        // Auto-remove after 10 seconds
-        setTimeout(() => {
-            if (document.body.contains(mobileNotification)) {
-                mobileNotification.style.animation = 'slideOutRight 0.4s ease-in forwards';
-                setTimeout(() => {
-                    if (document.body.contains(mobileNotification)) {
-                        document.body.removeChild(mobileNotification);
-                    }
-                }, 400);
-            }
-        }, 10000);
-        
-        // Add mobile notification indicator to alert card
-        const alertCard = document.getElementById(`alert-card-${alertIndex}`);
-        if (alertCard) {
-            alertCard.classList.add('border-success');
-            const mobileBadge = document.createElement('span');
-            mobileBadge.className = 'badge bg-success position-absolute top-0 end-0 translate-middle';
-            mobileBadge.innerHTML = '<i class="fas fa-mobile-alt"></i>';
-            alertCard.style.position = 'relative';
-            alertCard.appendChild(mobileBadge);
-        }
-    }
-
-    function triggerDashboardUpdate(signalName, condition, alertIndex) {
-        // Show dashboard update simulation
-        const updateModal = document.createElement('div');
-        updateModal.className = 'modal fade';
-        updateModal.id = `dashboard-modal-${alertIndex}`;
-        updateModal.innerHTML = `
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-success text-white">
-                        <h5 class="modal-title">
-                            <i class="fas fa-chart-line"></i> Dashboard Update
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>Signal Status Update</h6>
-                                <div class="card bg-light">
-                                    <div class="card-body">
-                                        <h6 class="card-title text-danger">${signalName}</h6>
-                                        <p class="card-text">${condition}</p>
-                                        <span class="badge bg-warning">Alert Active</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <h6>Monitoring Dashboard</h6>
-                                <div class="bg-light p-3 rounded">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Signal Status:</span>
-                                        <span class="text-danger">Triggered</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Last Updated:</span>
-                                        <span>${new Date().toLocaleString()}</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <span>Next Check:</span>
-                                        <span class="text-info">In 5 minutes</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <h6>Actions Taken</h6>
-                            <ul class="list-group">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    Dashboard updated
-                                    <span class="badge bg-success rounded-pill">Complete</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    Alert logged
-                                    <span class="badge bg-success rounded-pill">Complete</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    Notification queued
-                                    <span class="badge bg-info rounded-pill">Pending</span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="alert alert-info mt-3">
-                            <i class="fas fa-info-circle"></i>
-                            This is a simulated dashboard update showing how real monitoring alerts would update the system.
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary">View Full Dashboard</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(updateModal);
-        const modal = new bootstrap.Modal(updateModal);
-        modal.show();
-        
-        // Remove modal after it's hidden
-        updateModal.addEventListener('hidden.bs.modal', function () {
-            document.body.removeChild(updateModal);
-        });
-    }
-
-    function markAlertAsRead(alertIndex) {
-        const alertCard = document.getElementById(`alert-card-${alertIndex}`);
-        if (alertCard) {
-            alertCard.style.opacity = '0.6';
-            alertCard.classList.remove('border-warning');
-            alertCard.classList.add('border-success');
-            
-            // Add "Read" indicator
-            const readBadge = document.createElement('div');
-            readBadge.className = 'position-absolute top-0 end-0 translate-middle';
-            readBadge.innerHTML = '<span class="badge bg-success"><i class="fas fa-check"></i> Read</span>';
-            alertCard.style.position = 'relative';
-            alertCard.appendChild(readBadge);
-        }
-        
-        // Close any open modal
-        const openModal = bootstrap.Modal.getInstance(document.querySelector('.modal.show'));
-        if (openModal) {
-            openModal.hide();
-        }
-    }
-
-    function renderPerformanceChart(chartData, events) {
-        console.log('renderPerformanceChart called with:');
-        console.log('chartData:', chartData);
-        console.log('events:', events);
-        console.log('events type:', typeof events);
-        console.log('events isArray:', Array.isArray(events));
-        
-        const performanceData = chartData.performance_data || {};
-        const timeline = chartData.timeline || [];
-        
-        // Validate events array
-        if (!Array.isArray(events)) {
-            console.error('Events is not an array in renderPerformanceChart:', events);
-            events = [];
-        }
-        
-        // Filter and validate events before processing with comprehensive checks
-        const validEvents = [];
-        console.log('Chart rendering - events type:', typeof events, 'isArray:', Array.isArray(events));
-        
-        if (Array.isArray(events)) {
-            events.forEach((event, index) => {
-                console.log(`Chart event ${index}:`, typeof event, event);
-                
-                if (event && typeof event === 'object' && event.title && event.month) {
-                    validEvents.push(event);
-                } else {
-                    console.warn(`Chart: Invalid event ${index}:`, event);
-                }
-            });
-        } else {
-            console.error('Chart: Events is not an array:', events);
-        }
-        
-        console.log('Valid events for chart:', validEvents);
-        
-        if (!performanceData.market_performance || !performanceData.thesis_performance) {
-            document.getElementById('performanceChart').innerHTML = 
-                '<div class="text-center py-4 text-muted">Performance data unavailable</div>';
-            return;
-        }
-
-        const options = {
-            chart: {
-                type: 'line',
-                height: 400,
-                toolbar: { show: true },
-                zoom: { enabled: true }
-            },
-            series: [
-                {
-                    name: 'Market Baseline',
-                    data: performanceData.market_performance,
-                    color: '#6c757d'
-                },
-                {
-                    name: 'Thesis Performance',
-                    data: performanceData.thesis_performance,
-                    color: '#0d6efd'
-                }
-            ],
-            xaxis: {
-                categories: timeline,
-                title: { text: 'Time Horizon' }
-            },
-            yaxis: {
-                title: { text: 'Performance Index' }
-            },
-            stroke: {
-                width: [2, 3],
-                curve: 'smooth'
-            },
-            markers: {
-                size: [0, 4],
-                hover: { size: 6 }
-            },
-            annotations: {
-                points: validEvents.map((event, index) => {
-                    // Comprehensive safety check for each event in the map
-                    if (!event || typeof event !== 'object') {
-                        console.error(`Invalid event in map at index ${index}:`, event);
-                        return null;
-                    }
-                    
-                    // Create safe property accessors
-                    const safeMonth = (event.month && typeof event.month === 'number') ? event.month : 1;
-                    const safeImpactValue = (event.impact_value && typeof event.impact_value === 'number') ? event.impact_value : 100;
-                    const safeImpactType = (event.impact_type && typeof event.impact_type === 'string') ? event.impact_type : 'neutral';
-                    const safeTitle = (event.title && typeof event.title === 'string') ? event.title : 'Event';
-                    
-                    return {
-                        x: safeMonth - 1,
-                        y: safeImpactValue,
-                        marker: {
-                            size: 8,
-                            fillColor: safeImpactType === 'positive' ? '#28a745' : '#dc3545',
-                            strokeColor: '#fff',
-                            strokeWidth: 2
-                        },
-                        label: {
-                            text: safeTitle,
-                            style: {
-                                color: '#fff',
-                                background: safeImpactType === 'positive' ? '#28a745' : '#dc3545'
-                            }
-                        }
-                    };
-                }).filter(annotation => annotation !== null)
-            },
-            legend: {
-                position: 'top'
-            },
-            grid: {
-                show: true,
-                borderColor: '#e9ecef'
-            },
-            tooltip: {
-                shared: true,
-                intersect: false
-            }
-        };
-
-        const chart = new ApexCharts(document.getElementById('performanceChart'), options);
-        chart.render();
-    }
-
-    function getConfidenceBadge(confidence) {
-        if (confidence >= 80) return 'success';
-        if (confidence >= 60) return 'warning';
-        return 'danger';
-    }
-});
 </script>
 {% endblock %}
