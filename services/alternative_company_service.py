@@ -13,28 +13,56 @@ class AlternativeCompanyService:
         self.azure_service = AzureOpenAIService()
         
     def find_alternative_companies(self, thesis_analysis: Dict, signals: List[Dict]) -> Dict[str, Any]:
-        """Find alternative companies matching thesis patterns"""
+        """Find alternative companies matching thesis patterns using LLM analysis"""
         try:
-            # Extract thesis characteristics
+            # Extract thesis characteristics for analysis
             thesis_characteristics = self._extract_thesis_characteristics(thesis_analysis, signals)
             
-            # Generate alternative companies based on patterns
-            alternatives = self._generate_alternative_companies(thesis_characteristics, thesis_analysis)
+            # Use LLM to generate authentic alternative companies
+            from services.azure_openai_service import AzureOpenAIService
+            openai_service = AzureOpenAIService()
             
-            # Score and rank alternatives
-            scored_alternatives = self._score_alternatives(alternatives, thesis_characteristics)
+            # Create comprehensive analysis prompt
+            prompt = self._create_comprehensive_analysis_prompt(thesis_characteristics, thesis_analysis)
             
-            return {
-                'thesis_characteristics': thesis_characteristics,
-                'alternative_companies': scored_alternatives[:8],  # Top 8 alternatives
-                'total_found': len(scored_alternatives),
-                'analysis_criteria': self._get_analysis_criteria(thesis_characteristics),
-                'generated_at': datetime.utcnow().isoformat()
-            }
+            messages = [
+                {"role": "system", "content": "You are an expert investment analyst with deep knowledge of public markets. Find real, undervalued alternative companies that match specific investment thesis patterns."},
+                {"role": "user", "content": prompt}
+            ]
+            
+            # Generate LLM analysis
+            response = openai_service.generate_completion(messages, temperature=0.7)
+            alternatives = self._parse_llm_companies(response)
+            
+            if alternatives and len(alternatives) > 0:
+                return {
+                    'thesis_characteristics': thesis_characteristics,
+                    'alternative_companies': alternatives[:8],
+                    'total_found': len(alternatives),
+                    'analysis_criteria': self._get_analysis_criteria(thesis_characteristics),
+                    'generated_at': datetime.utcnow().isoformat()
+                }
+            else:
+                # Return empty state when LLM cannot provide authentic matches
+                return {
+                    'thesis_characteristics': thesis_characteristics,
+                    'alternative_companies': [],
+                    'total_found': 0,
+                    'analysis_criteria': ['Unable to identify authentic alternative companies'],
+                    'generated_at': datetime.utcnow().isoformat(),
+                    'message': 'No suitable alternative companies found matching thesis patterns'
+                }
             
         except Exception as e:
             logging.error(f"Alternative company analysis failed: {e}")
-            return self._generate_fallback_alternatives()
+            return {
+                'thesis_characteristics': {},
+                'alternative_companies': [],
+                'total_found': 0,
+                'analysis_criteria': ['Analysis service temporarily unavailable'],
+                'generated_at': datetime.utcnow().isoformat(),
+                'error': str(e)
+            }
     
     def _extract_thesis_characteristics(self, thesis_analysis: Dict, signals: List[Dict]) -> Dict[str, Any]:
         """Extract key characteristics from thesis for pattern matching"""
@@ -65,11 +93,122 @@ class AlternativeCompanyService:
         }
     
     def _generate_alternative_companies(self, characteristics: Dict, thesis_analysis: Dict) -> List[Dict[str, Any]]:
-        """Generate list of alternative companies based on characteristics"""
+        """Generate list of alternative companies using LLM analysis"""
+        try:
+            # Use LLM to generate actual alternatives based on thesis patterns
+            from services.azure_openai_service import AzureOpenAIService
+            openai_service = AzureOpenAIService()
+            
+            # Prepare analysis prompt
+            prompt = self._create_alternative_analysis_prompt(characteristics, thesis_analysis)
+            
+            messages = [
+                {"role": "system", "content": "You are an expert investment analyst specializing in finding undervalued alternative companies that match specific investment thesis patterns."},
+                {"role": "user", "content": prompt}
+            ]
+            
+            response = openai_service.generate_completion(messages, temperature=0.7)
+            return self._parse_llm_response(response)
+            
+        except Exception as e:
+            logging.error(f"LLM alternative company generation failed: {e}")
+            return self._generate_manual_alternatives(characteristics, thesis_analysis)
+    
+    def _create_alternative_analysis_prompt(self, characteristics: Dict, thesis_analysis: Dict) -> str:
+        """Create detailed prompt for LLM alternative company analysis"""
+        core_claim = thesis_analysis.get('core_claim', '')
+        sector = characteristics.get('sector', 'Technology')
+        business_model = characteristics.get('business_model', 'SaaS')
+        value_drivers = characteristics.get('value_drivers', [])
+        
+        prompt = f"""
+Based on the following investment thesis characteristics, identify 5-8 undervalued alternative companies that match these patterns:
+
+THESIS CORE CLAIM: {core_claim}
+
+CHARACTERISTICS TO MATCH:
+- Sector: {sector}
+- Business Model: {business_model}
+- Value Drivers: {', '.join(value_drivers) if value_drivers else 'Not specified'}
+- Growth Stage: {characteristics.get('growth_stage', 'Unknown')}
+
+REQUIREMENTS:
+1. Find real, publicly traded companies (include ticker symbols)
+2. Focus on companies that are currently undervalued or overlooked by the market
+3. Match the same value creation patterns as the original thesis
+4. Include companies at different market capitalizations
+5. Avoid the most obvious/popular choices in favor of hidden gems
+
+For each company, provide:
+- Company name and ticker symbol
+- Current market cap (approximate)
+- Brief description of business model
+- Key metrics that match the thesis patterns
+- Why it's currently unloved/undervalued (2-3 factors)
+- Hidden strengths that align with thesis (2-3 factors)
+- Composite investment score (0-100)
+
+Format response as JSON array with this structure:
+[{{
+  "name": "Company Name",
+  "ticker": "TICK",
+  "market_cap": 12.5,
+  "description": "Brief business description",
+  "key_metrics": {{"metric1": 0.25, "metric2": 0.18}},
+  "unloved_factors": ["Factor 1", "Factor 2"],
+  "hidden_strengths": ["Strength 1", "Strength 2"],
+  "composite_score": 85
+}}]
+"""
+        return prompt
+    
+    def _parse_llm_response(self, response: str) -> List[Dict[str, Any]]:
+        """Parse LLM response to extract company data"""
+        try:
+            import json
+            
+            # Try to extract JSON from response
+            response_cleaned = response.strip()
+            if response_cleaned.startswith('```json'):
+                response_cleaned = response_cleaned[7:-3]
+            elif response_cleaned.startswith('```'):
+                response_cleaned = response_cleaned[3:-3]
+            
+            companies = json.loads(response_cleaned)
+            
+            # Validate and enhance the data
+            enhanced_companies = []
+            for company in companies:
+                enhanced_company = {
+                    'name': company.get('name', 'Unknown Company'),
+                    'ticker': company.get('ticker', 'N/A'),
+                    'market_cap': company.get('market_cap', 0),
+                    'description': company.get('description', 'No description available'),
+                    'key_metrics': company.get('key_metrics', {}),
+                    'unloved_factors': company.get('unloved_factors', []),
+                    'hidden_strengths': company.get('hidden_strengths', []),
+                    'composite_score': company.get('composite_score', 50),
+                    'pattern_match_score': company.get('composite_score', 50) * 0.8,
+                    'undervaluation_score': company.get('composite_score', 50) * 0.9,
+                    'potential_score': company.get('composite_score', 50) * 0.85,
+                    'recommendation_strength': self._get_recommendation_strength(company.get('composite_score', 50)),
+                    'risk_factors': self._generate_risk_factors(company),
+                    'catalyst_timeline': self._generate_catalyst_timeline(company)
+                }
+                enhanced_companies.append(enhanced_company)
+            
+            return enhanced_companies
+            
+        except Exception as e:
+            logging.error(f"Failed to parse LLM response: {e}")
+            return []
+    
+    def _generate_manual_alternatives(self, characteristics: Dict, thesis_analysis: Dict) -> List[Dict[str, Any]]:
+        """Generate manual alternatives when LLM fails - using diverse database"""
         sector = characteristics.get('sector', 'Technology')
         business_model = characteristics.get('business_model', 'SaaS')
         
-        # Company database based on common patterns
+        # Diverse company database for fallback
         company_database = {
             'Technology': {
                 'SaaS': [
