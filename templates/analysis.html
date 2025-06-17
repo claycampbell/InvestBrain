@@ -200,24 +200,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Alternative Company Analysis Section -->
-        <div class="card mt-4">
-            <div class="card-header bg-gradient-success text-white">
-                <h5 class="mb-0">
-                    <i class="fas fa-gem me-2"></i>Alternative Company Analysis
-                </h5>
-                <small class="opacity-75">Discover undervalued companies matching your thesis patterns</small>
-            </div>
-            <div class="card-body" id="alternative-companies-container">
-                <div class="text-center py-4">
-                    <div class="spinner-border text-success" role="status">
-                        <span class="visually-hidden">Finding alternative companies...</span>
-                    </div>
-                    <p class="text-muted mt-2">Analyzing thesis patterns for similar opportunities...</p>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -455,6 +437,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="card-body">
                             ${generateEnhancedCounterThesis(thesisData.counter_thesis_scenarios)}
+                        </div>
+                    </div>
+
+                    <!-- Alternative Company Analysis Section -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-gradient-success text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-gem me-2"></i>Alternative Company Analysis
+                            </h6>
+                            <small class="opacity-75">Undervalued companies matching your thesis patterns</small>
+                        </div>
+                        <div class="card-body" id="alternative-companies-container">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-success" role="status">
+                                    <span class="visually-hidden">Finding alternative companies...</span>
+                                </div>
+                                <p class="text-muted mt-2">Analyzing thesis patterns for similar opportunities...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
