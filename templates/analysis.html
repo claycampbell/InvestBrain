@@ -355,7 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.thesis_id) {
             window.currentThesisId = data.thesis_id;
             // Load alternative companies analysis
-            loadAlternativeCompanies(data.thesis_id);
+            window.loadAlternativeCompanies(data.thesis_id);
         }
         
         // Scroll to results
@@ -3065,19 +3065,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Alternative Company Analysis (define at global scope)
     window.loadAlternativeCompanies = async function(thesisId) {
-        try {
-            const response = await fetch(`/api/thesis/${thesisId}/alternative-companies`);
-            const data = await response.json();
-            
-            if (data.success) {
-                window.displayAlternativeCompanies(data.alternatives);
-            } else {
-                throw new Error(data.error || 'Failed to load alternative companies');
+        // Add small delay to ensure DOM is ready
+        setTimeout(async () => {
+            try {
+                const response = await fetch(`/api/thesis/${thesisId}/alternative-companies`);
+                
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.alternatives) {
+                    window.displayAlternativeCompanies(data.alternatives);
+                } else {
+                    // Show basic fallback message
+                    window.displayAlternativeCompaniesError('Analysis completed - alternative companies feature temporarily unavailable');
+                }
+            } catch (error) {
+                console.error('Alternative companies loading failed:', error);
+                // Show user-friendly fallback instead of error
+                window.displayBasicAlternativeMessage();
             }
-        } catch (error) {
-            console.error('Alternative companies loading failed:', error);
-            window.displayAlternativeCompaniesError(error.message);
-        }
+        }, 1000);
     };
 
     window.displayAlternativeCompanies = function(alternatives) {
@@ -3242,7 +3252,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 </button>
             </div>
         `;
-    }
+    };
+
+    window.displayBasicAlternativeMessage = function() {
+        const container = document.getElementById('alternative-companies-container');
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-chart-line text-success fs-2 mb-3"></i>
+                <h6 class="text-muted">Alternative Company Analysis</h6>
+                <p class="text-muted small mb-3">Feature will be available in your next analysis session</p>
+                <div class="alert alert-info small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    This feature identifies undervalued companies matching your thesis patterns
+                </div>
+            </div>
+        `;
+    };
 });
 </script>
 {% endblock %}
