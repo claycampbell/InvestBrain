@@ -666,19 +666,20 @@ function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
 }
 
 function triggerEmailAlert(signalName, condition, alertIndex) {
-    const modal = new bootstrap.Modal(document.getElementById('emailModal'));
-    const subjectEl = document.getElementById('emailSubject');
-    const messageEl = document.getElementById('emailAlertMessage');
-    const severityEl = document.getElementById('emailSeverity');
-    const valueEl = document.getElementById('emailValue');
-    const timestampEl = document.getElementById('emailTimestamp');
-    const actionsEl = document.getElementById('emailActions');
-    
-    // Generate comprehensive alert data
-    const marketData = generateMarketContext();
-    const thesisData = generateThesisContext(signalName);
-    const counterThesisData = generateCounterThesisContext();
-    const combinedImpact = calculateCombinedImpact(marketData, thesisData, counterThesisData);
+    try {
+        const modal = new bootstrap.Modal(document.getElementById('emailModal'));
+        const subjectEl = document.getElementById('emailSubject');
+        const messageEl = document.getElementById('emailAlertMessage');
+        const severityEl = document.getElementById('emailSeverity');
+        const valueEl = document.getElementById('emailValue');
+        const timestampEl = document.getElementById('emailTimestamp');
+        const actionsEl = document.getElementById('emailActions');
+        
+        // Generate comprehensive alert data
+        const marketData = generateMarketContext();
+        const thesisData = generateThesisContext(signalName);
+        const counterThesisData = generateCounterThesisContext();
+        const combinedImpact = calculateCombinedImpact(marketData, thesisData, counterThesisData);
     
     // Enhanced email subject and content
     subjectEl.textContent = `Investment Alert: ${summarizeThesisTitle(globalThesisTitle)} - ${combinedImpact.level} Impact`;
@@ -723,21 +724,26 @@ function triggerEmailAlert(signalName, condition, alertIndex) {
             alertCard.style.backgroundColor = '';
         }
     }, { once: true });
+    } catch (error) {
+        console.error('Email alert error:', error);
+        alert(`Email Alert: ${signalName} - ${condition}`);
+    }
 }
 
 function triggerMobilePushNotification(signalName, condition, severity, alertIndex) {
-    const modal = new bootstrap.Modal(document.getElementById('mobileModal'));
-    const messageEl = document.getElementById('mobileMessage');
-    const timeEl = document.getElementById('mobileTime');
-    const countdownEl = document.getElementById('mobileCountdown');
-    const vibrationEl = document.getElementById('vibrationPattern');
-    const notificationEl = document.getElementById('mobileNotification');
-    
-    // Generate comprehensive mobile alert
-    const marketData = generateMarketContext();
-    const thesisData = generateThesisContext(signalName);
-    const counterThesisData = generateCounterThesisContext();
-    const combinedImpact = calculateCombinedImpact(marketData, thesisData, counterThesisData);
+    try {
+        const modal = new bootstrap.Modal(document.getElementById('mobileModal'));
+        const messageEl = document.getElementById('mobileMessage');
+        const timeEl = document.getElementById('mobileTime');
+        const countdownEl = document.getElementById('mobileCountdown');
+        const vibrationEl = document.getElementById('vibrationPattern');
+        const notificationEl = document.getElementById('mobileNotification');
+        
+        // Generate comprehensive mobile alert
+        const marketData = generateMarketContext();
+        const thesisData = generateThesisContext(signalName);
+        const counterThesisData = generateCounterThesisContext();
+        const combinedImpact = calculateCombinedImpact(marketData, thesisData, counterThesisData);
     
     // Concise mobile-friendly format
     const mobileAlert = `📋 ${summarizeThesisTitle(globalThesisTitle)} | 🎯 ${thesisData.status} | 📊 ${marketData.trend} | ⚠️ ${counterThesisData.risk_level} | Impact: ${combinedImpact.level}`;
@@ -786,6 +792,10 @@ function triggerMobilePushNotification(signalName, condition, severity, alertInd
             }
         }
     }, 1000);
+    } catch (error) {
+        console.error('Mobile alert error:', error);
+        alert(`Mobile Alert: ${signalName} - ${condition}`);
+    }
 }
 
 // Helper functions to generate comprehensive alert data
