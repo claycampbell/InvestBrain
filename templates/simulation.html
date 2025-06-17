@@ -613,8 +613,20 @@ function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
     const timeEl = document.getElementById('webAlertTime');
     const countdownEl = document.getElementById('webCountdown');
     
-    // Populate with real alert data
-    messageEl.textContent = `${signalName}: ${condition}`;
+    // Generate comprehensive alert combining market, thesis, and counter-thesis data
+    const marketData = generateMarketContext();
+    const thesisData = generateThesisContext(signalName);
+    const counterThesisData = generateCounterThesisContext();
+    
+    const comprehensiveAlert = `
+        📊 MARKET: ${marketData.trend} (${marketData.impact})
+        🎯 THESIS: ${thesisData.status} - ${condition}
+        ⚠️ RISK: ${counterThesisData.assessment}
+        
+        Combined Impact: ${calculateCombinedImpact(marketData, thesisData, counterThesisData)}
+    `;
+    
+    messageEl.innerHTML = comprehensiveAlert.replace(/\n/g, '<br>');
     timeEl.textContent = new Date().toLocaleTimeString();
     
     // Add visual feedback to the alert card
@@ -627,7 +639,7 @@ function triggerWebPopupAlert(signalName, condition, severity, alertIndex) {
     modal.show();
     
     // Auto-dismiss countdown
-    let countdown = 8;
+    let countdown = 10; // Extended for comprehensive info
     const countdownInterval = setInterval(() => {
         countdown--;
         countdownEl.textContent = countdown;
@@ -651,20 +663,35 @@ function triggerEmailAlert(signalName, condition, alertIndex) {
     const timestampEl = document.getElementById('emailTimestamp');
     const actionsEl = document.getElementById('emailActions');
     
-    // Populate with real alert data
-    subjectEl.textContent = `Investment Alert: ${signalName}`;
-    messageEl.textContent = condition;
-    severityEl.textContent = 'High';
-    severityEl.className = 'badge bg-danger';
-    valueEl.textContent = '-12.5%';
+    // Generate comprehensive alert data
+    const marketData = generateMarketContext();
+    const thesisData = generateThesisContext(signalName);
+    const counterThesisData = generateCounterThesisContext();
+    const combinedImpact = calculateCombinedImpact(marketData, thesisData, counterThesisData);
+    
+    // Enhanced email subject and content
+    subjectEl.textContent = `Investment Alert: ${signalName} - ${combinedImpact.level} Impact`;
+    messageEl.innerHTML = `
+        <strong>Market Context:</strong> ${marketData.trend} (${marketData.impact})<br>
+        <strong>Thesis Status:</strong> ${thesisData.status} - ${condition}<br>
+        <strong>Risk Assessment:</strong> ${counterThesisData.assessment}<br>
+        <strong>Combined Impact:</strong> ${combinedImpact.description}
+    `;
+    
+    // Dynamic severity based on combined assessment
+    const severity = combinedImpact.level;
+    severityEl.textContent = severity;
+    severityEl.className = `badge ${severity === 'Critical' ? 'bg-danger' : severity === 'High' ? 'bg-warning' : 'bg-info'}`;
+    valueEl.textContent = combinedImpact.value;
     timestampEl.textContent = new Date().toLocaleString();
     
-    // Generate dynamic recommended actions
+    // Enhanced recommended actions based on all data points
     const actions = [
-        `Review ${signalName} performance metrics`,
-        'Assess impact on overall thesis validity',
-        'Consider rebalancing position size',
-        'Monitor related signals for confirmation'
+        `Review ${signalName} in context of ${marketData.trend} market conditions`,
+        `Assess thesis validity against ${counterThesisData.key_risk}`,
+        `Monitor correlation with market ${marketData.correlation}`,
+        `Evaluate position sizing given ${combinedImpact.level.toLowerCase()} impact level`,
+        `Track thesis performance vs. ${thesisData.benchmark} expectations`
     ];
     actionsEl.innerHTML = actions.map(action => `<li>${action}</li>`).join('');
     
@@ -694,8 +721,16 @@ function triggerMobilePushNotification(signalName, condition, severity, alertInd
     const vibrationEl = document.getElementById('vibrationPattern');
     const notificationEl = document.getElementById('mobileNotification');
     
-    // Populate with real alert data
-    messageEl.textContent = `${signalName}: ${condition.substring(0, 50)}...`;
+    // Generate comprehensive mobile alert
+    const marketData = generateMarketContext();
+    const thesisData = generateThesisContext(signalName);
+    const counterThesisData = generateCounterThesisContext();
+    const combinedImpact = calculateCombinedImpact(marketData, thesisData, counterThesisData);
+    
+    // Concise mobile-friendly format
+    const mobileAlert = `📊 ${marketData.trend} | 🎯 ${thesisData.status} | ⚠️ ${counterThesisData.risk_level} | Impact: ${combinedImpact.level}`;
+    
+    messageEl.textContent = mobileAlert;
     timeEl.textContent = 'now';
     
     // Set vibration pattern based on severity
@@ -739,6 +774,75 @@ function triggerMobilePushNotification(signalName, condition, severity, alertInd
             }
         }
     }, 1000);
+}
+
+// Helper functions to generate comprehensive alert data
+function generateMarketContext() {
+    const marketConditions = [
+        { trend: 'Bullish Rally', impact: '+2.3%', correlation: 'positive momentum' },
+        { trend: 'Bearish Pressure', impact: '-1.8%', correlation: 'negative sentiment' },
+        { trend: 'Sideways Consolidation', impact: '±0.4%', correlation: 'mixed signals' },
+        { trend: 'Volatile Trading', impact: '±3.1%', correlation: 'high uncertainty' },
+        { trend: 'Risk-Off Environment', impact: '-2.1%', correlation: 'defensive rotation' }
+    ];
+    return marketConditions[Math.floor(Math.random() * marketConditions.length)];
+}
+
+function generateThesisContext(signalName) {
+    const thesisContexts = [
+        { status: 'On Track', benchmark: 'baseline', confidence: 'High' },
+        { status: 'Outperforming', benchmark: 'optimistic case', confidence: 'Very High' },
+        { status: 'Underperforming', benchmark: 'conservative case', confidence: 'Medium' },
+        { status: 'At Inflection', benchmark: 'critical threshold', confidence: 'Low' },
+        { status: 'Diverging', benchmark: 'expected trajectory', confidence: 'Very Low' }
+    ];
+    return thesisContexts[Math.floor(Math.random() * thesisContexts.length)];
+}
+
+function generateCounterThesisContext() {
+    const counterThesisData = [
+        { assessment: 'Low risk scenario materializing', risk_level: 'Low', key_risk: 'execution delays' },
+        { assessment: 'Moderate headwinds emerging', risk_level: 'Medium', key_risk: 'competitive pressure' },
+        { assessment: 'Significant challenges detected', risk_level: 'High', key_risk: 'market disruption' },
+        { assessment: 'Critical risk factors active', risk_level: 'Critical', key_risk: 'regulatory changes' },
+        { assessment: 'Bear case conditions present', risk_level: 'Extreme', key_risk: 'fundamental shift' }
+    ];
+    return counterThesisData[Math.floor(Math.random() * counterThesisData.length)];
+}
+
+function calculateCombinedImpact(marketData, thesisData, counterThesisData) {
+    // Calculate impact level based on all three data points
+    const marketScore = marketData.trend.includes('Bullish') ? 2 : marketData.trend.includes('Bearish') ? -2 : 0;
+    const thesisScore = thesisData.status === 'Outperforming' ? 2 : thesisData.status === 'Underperforming' ? -2 : 0;
+    const riskScore = counterThesisData.risk_level === 'Low' ? 1 : counterThesisData.risk_level === 'High' ? -2 : 
+                     counterThesisData.risk_level === 'Critical' ? -3 : 0;
+    
+    const totalScore = marketScore + thesisScore + riskScore;
+    
+    let level, description, value;
+    if (totalScore >= 3) {
+        level = 'Positive';
+        description = 'Aligned market and thesis conditions with controlled risk';
+        value = '+8.5%';
+    } else if (totalScore >= 1) {
+        level = 'Moderate';
+        description = 'Mixed signals require monitoring';
+        value = '+2.1%';
+    } else if (totalScore >= -1) {
+        level = 'Neutral';
+        description = 'Balanced conditions with some uncertainty';
+        value = '±0.3%';
+    } else if (totalScore >= -3) {
+        level = 'High';
+        description = 'Multiple risk factors converging';
+        value = '-5.2%';
+    } else {
+        level = 'Critical';
+        description = 'Severe headwinds across market, thesis, and risk factors';
+        value = '-12.8%';
+    }
+    
+    return { level, description, value };
 }
 </script>
 {% endblock %}
