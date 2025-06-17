@@ -135,7 +135,7 @@ Return JSON:
         """
         Generate realistic price forecast using ML-inspired mathematical models
         """
-        months = int(time_horizon) * 12
+        months = int(float(time_horizon) * 12)
         days_per_month = 21  # Trading days
         total_days = months * days_per_month
         
@@ -778,14 +778,14 @@ Return JSON format:
             risks = ['Market volatility', 'Execution risk']
         return risks[:3]
 
-    def _generate_intelligent_events(self, thesis_params: Dict, time_horizon: int, scenario: str) -> List[Dict[str, Any]]:
+    def _generate_intelligent_events(self, thesis_params: Dict, time_horizon: float, scenario: str) -> List[Dict[str, Any]]:
         """Generate intelligent market events based on thesis parameters"""
         events = []
-        total_months = time_horizon * 12
-        num_events = min(4, max(2, time_horizon))
+        total_months = int(time_horizon * 12)
+        num_events = min(4, max(2, int(time_horizon)))
         
         # Determine event timing
-        event_months = [int(total_months * i / (num_events + 1)) + 1 for i in range(1, num_events + 1)]
+        event_months = [int(total_months * i / (num_events + 1)) + 1 for i in range(1, int(num_events) + 1)]
         
         # Event templates based on scenario and thesis characteristics
         event_templates = {
