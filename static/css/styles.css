@@ -108,6 +108,22 @@
     border-left-color: var(--thesis-info);
 }
 
+/* Alternative Company Analysis Cards */
+.alternative-company-card {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.alternative-company-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: var(--bs-success);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745, #20c997) !important;
+}
+
 /* Animations */
 @keyframes pulse {
     0% { opacity: 1; }
