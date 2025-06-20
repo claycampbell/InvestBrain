@@ -12,6 +12,9 @@ from services.query_parser_service import QueryParserService
 from services.data_validation_service import DataValidationService
 from services.sparkline_service import SparklineService
 from services.alternative_company_service import AlternativeCompanyService
+from services.metric_selector import MetricSelector
+from services.data_adapter_service import DataAdapter
+from services.analysis_workflow_service import AnalysisWorkflowService
 from config import Config
 
 # Initialize services
@@ -23,6 +26,9 @@ query_parser = QueryParserService()
 data_validator = DataValidationService()
 sparkline_service = SparklineService()
 alternative_company_service = AlternativeCompanyService()
+metric_selector = MetricSelector()
+data_adapter = DataAdapter()
+analysis_workflow_service = AnalysisWorkflowService()
 
 def save_thesis_analysis(thesis_text, analysis_result, signals_result):
     """Save completed analysis to database for monitoring"""

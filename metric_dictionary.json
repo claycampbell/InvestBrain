@@ -1,0 +1,189 @@
+{
+  "metric_categories": {
+    "growth_metrics": {
+      "description": "Metrics measuring company growth rates across different timeframes",
+      "metrics": {
+        "revenue_growth": {
+          "current": "revenue_growth_this_yr",
+          "forecast": "revenue_growth_next_yr",
+          "cagr": {
+            "historical": "ciq_revenue_usd_cagr_ltm_minus_12_to_ltm",
+            "forward_4": "ciq_revenue_usd_cagr_floating_ltm_to_ntm_plus_4",
+            "forward_8": "ciq_revenue_usd_cagr_floating_ltm_to_ntm_plus_8"
+          },
+          "use_cases": [
+            "trend analysis",
+            "growth trajectory assessment",
+            "peer comparison"
+          ]
+        },
+        "fcf_growth": {
+          "cagr": {
+            "historical": "ciq_fcf_usd_cagr_ltm_minus_12_to_ltm",
+            "forward_4": "ciq_fcf_usd_cagr_floating_ltm_to_ntm_plus_4",
+            "forward_8": "ciq_fcf_usd_cagr_floating_ltm_to_ntm_plus_8"
+          },
+          "use_cases": [
+            "cash generation analysis",
+            "business sustainability assessment"
+          ]
+        },
+        "eps_growth": {
+          "cagr": {
+            "historical": "ciq_eps_usd_cagr_ltm_minus_12_to_ltm",
+            "forward_4": "ciq_eps_usd_cagr_floating_ltm_to_ntm_plus_4"
+          },
+          "use_cases": [
+            "profitability trends",
+            "earnings momentum analysis"
+          ]
+        }
+      }
+    },
+    "valuation_metrics": {
+      "description": "Metrics related to company valuation and market pricing",
+      "metrics": {
+        "market_value": {
+          "market_cap": "market_cap_billions_usd",
+          "enterprise_value": "enterprise_value_billions_usd",
+          "use_cases": [
+            "company size assessment",
+            "acquisition analysis"
+          ]
+        },
+        "multiples": {
+          "pe_ratio": {
+            "current": "consensus_pe_this_year",
+            "forward": "consensus_pe_next_year"
+          },
+          "ev_sales": {
+            "current": "enterprise_value_over_sales_this_yr",
+            "forward": "enterprise_value_over_sales_next_yr"
+          },
+          "use_cases": [
+            "relative valuation",
+            "peer comparison"
+          ]
+        }
+      }
+    },
+    "profitability_metrics": {
+      "description": "Metrics measuring company profitability and margins",
+      "metrics": {
+        "margins": {
+          "net_margin": {
+            "current": "net_margin_this_yr",
+            "forward": "net_margin_next_yr"
+          },
+          "operating_margin": {
+            "current": "operating_margin_this_yr",
+            "forward": "operating_margin_next_yr"
+          },
+          "gross_margin": {
+            "forward": "gross_margin_next_yr"
+          },
+          "use_cases": [
+            "profitability analysis",
+            "operational efficiency",
+            "cost structure assessment"
+          ]
+        }
+      }
+    },
+    "risk_metrics": {
+      "description": "Metrics measuring company risk and volatility",
+      "metrics": {
+        "volatility": {
+          "1yr": "volatility_1_yr",
+          "3yr": "volatility_3_yr",
+          "5yr": "volatility_5_yr",
+          "use_cases": [
+            "risk assessment",
+            "trading analysis"
+          ]
+        },
+        "beta": {
+          "1yr": "beta_1y",
+          "3yr": "beta_3y",
+          "5yr": "beta_5y",
+          "use_cases": [
+            "market sensitivity",
+            "portfolio risk analysis"
+          ]
+        },
+        "drawdown": {
+          "1yr": "maximum_drawdown_1_yr",
+          "3yr": "maximum_drawdown_3_yr",
+          "5yr": "maximum_drawdown_5_yr",
+          "use_cases": [
+            "downside risk assessment",
+            "risk tolerance evaluation"
+          ]
+        }
+      }
+    },
+    "market_metrics": {
+      "description": "Market-related metrics and classifications",
+      "metrics": {
+        "index_weights": {
+          "sp500": "snp_500_constituent_weight",
+          "russell1000": {
+            "total": "russell_1000_constituent_weight",
+            "value": "russell_1000_value_constituent_weight",
+            "growth": "russell_1000_growth_constituent_weight"
+          },
+          "use_cases": [
+            "index exposure analysis",
+            "style classification"
+          ]
+        },
+        "returns": {
+          "ytd": "returns_usd_ytd",
+          "1yr": "returns_usd_1_ytd",
+          "3yr": "returns_usd_3_ytd",
+          "5yr": "returns_usd_5_ytd",
+          "use_cases": [
+            "performance analysis",
+            "momentum assessment"
+          ]
+        }
+      }
+    }
+  },
+  "analysis_frameworks": {
+    "growth_analysis": {
+      "primary_metrics": [
+        "revenue_growth_this_yr",
+        "ciq_revenue_usd_cagr_ltm_minus_12_to_ltm",
+        "ciq_fcf_usd_cagr_ltm_minus_12_to_ltm"
+      ],
+      "supporting_metrics": [
+        "operating_margin_this_yr",
+        "net_margin_this_yr"
+      ]
+    },
+    "value_analysis": {
+      "primary_metrics": [
+        "consensus_pe_this_year",
+        "enterprise_value_over_sales_this_yr"
+      ],
+      "supporting_metrics": [
+        "market_cap_billions_usd",
+        "enterprise_value_billions_usd"
+      ]
+    },
+    "risk_analysis": {
+      "primary_metrics": [
+        "beta_3y",
+        "volatility_3_yr",
+        "maximum_drawdown_3_yr"
+      ],
+      "supporting_metrics": [
+        "returns_usd_3_ytd"
+      ]
+    }
+  },
+  "version": "1.0",
+  "last_updated": "2025-06-20",
+  "total_metrics": 155
+}

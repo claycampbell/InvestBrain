@@ -1,0 +1,544 @@
+metric dictionary:
+{
+  "metric_categories": {
+    "growth_metrics": {
+      "description": "Metrics measuring company growth rates across different timeframes",
+      "metrics": {
+        "revenue_growth": {
+          "current": "revenue_growth_this_yr",
+          "forecast": "revenue_growth_next_yr",
+          "cagr": {
+            "historical": "ciq_revenue_usd_cagr_ltm_minus_12_to_ltm",
+            "forward_4": "ciq_revenue_usd_cagr_floating_ltm_to_ntm_plus_4",
+            "forward_8": "ciq_revenue_usd_cagr_floating_ltm_to_ntm_plus_8"
+          },
+          "use_cases": [
+            "trend analysis",
+            "growth trajectory assessment",
+            "peer comparison"
+          ]
+        },
+        "fcf_growth": {
+          "cagr": {
+            "historical": "ciq_fcf_usd_cagr_ltm_minus_12_to_ltm",
+            "forward_4": "ciq_fcf_usd_cagr_floating_ltm_to_ntm_plus_4",
+            "forward_8": "ciq_fcf_usd_cagr_floating_ltm_to_ntm_plus_8"
+          },
+          "use_cases": [
+            "cash generation analysis",
+            "business sustainability assessment"
+          ]
+        },
+        "eps_growth": {
+          "cagr": {
+            "historical": "ciq_eps_usd_cagr_ltm_minus_12_to_ltm",
+            "forward_4": "ciq_eps_usd_cagr_floating_ltm_to_ntm_plus_4"
+          },
+          "use_cases": [
+            "profitability trends",
+            "earnings momentum analysis"
+          ]
+        }
+      }
+    },
+    "valuation_metrics": {
+      "description": "Metrics related to company valuation and market pricing",
+      "metrics": {
+        "market_value": {
+          "market_cap": "market_cap_billions_usd",
+          "enterprise_value": "enterprise_value_billions_usd",
+          "use_cases": [
+            "company size assessment",
+            "acquisition analysis"
+          ]
+        },
+        "multiples": {
+          "pe_ratio": {
+            "current": "consensus_pe_this_year",
+            "forward": "consensus_pe_next_year"
+          },
+          "ev_sales": {
+            "current": "enterprise_value_over_sales_this_yr",
+            "forward": "enterprise_value_over_sales_next_yr"
+          },
+          "use_cases": [
+            "relative valuation",
+            "peer comparison"
+          ]
+        }
+      }
+    },
+    "profitability_metrics": {
+      "description": "Metrics measuring company profitability and margins",
+      "metrics": {
+        "margins": {
+          "net_margin": {
+            "current": "net_margin_this_yr",
+            "forward": "net_margin_next_yr"
+          },
+          "operating_margin": {
+            "current": "operating_margin_this_yr",
+            "forward": "operating_margin_next_yr"
+          },
+          "gross_margin": {
+            "forward": "gross_margin_next_yr"
+          },
+          "use_cases": [
+            "profitability analysis",
+            "operational efficiency",
+            "cost structure assessment"
+          ]
+        }
+      }
+    },
+    "risk_metrics": {
+      "description": "Metrics measuring company risk and volatility",
+      "metrics": {
+        "volatility": {
+          "1yr": "volatility_1_yr",
+          "3yr": "volatility_3_yr",
+          "5yr": "volatility_5_yr",
+          "use_cases": [
+            "risk assessment",
+            "trading analysis"
+          ]
+        },
+        "beta": {
+          "1yr": "beta_1y",
+          "3yr": "beta_3y",
+          "5yr": "beta_5y",
+          "use_cases": [
+            "market sensitivity",
+            "portfolio risk analysis"
+          ]
+        },
+        "drawdown": {
+          "1yr": "maximum_drawdown_1_yr",
+          "3yr": "maximum_drawdown_3_yr",
+          "5yr": "maximum_drawdown_5_yr",
+          "use_cases": [
+            "downside risk assessment",
+            "risk tolerance evaluation"
+          ]
+        }
+      }
+    },
+    "market_metrics": {
+      "description": "Market-related metrics and classifications",
+      "metrics": {
+        "index_weights": {
+          "sp500": "snp_500_constituent_weight",
+          "russell1000": {
+            "total": "russell_1000_constituent_weight",
+            "value": "russell_1000_value_constituent_weight",
+            "growth": "russell_1000_growth_constituent_weight"
+          },
+          "use_cases": [
+            "index exposure analysis",
+            "style classification"
+          ]
+        },
+        "returns": {
+          "ytd": "returns_usd_ytd",
+          "1yr": "returns_usd_1_ytd",
+          "3yr": "returns_usd_3_ytd",
+          "5yr": "returns_usd_5_ytd",
+          "use_cases": [
+            "performance analysis",
+            "momentum assessment"
+          ]
+        }
+      }
+    }
+  },
+  "analysis_frameworks": {
+    "growth_analysis": {
+      "primary_metrics": [
+        "revenue_growth_this_yr",
+        "ciq_revenue_usd_cagr_ltm_minus_12_to_ltm",
+        "ciq_fcf_usd_cagr_ltm_minus_12_to_ltm"
+      ],
+      "supporting_metrics": [
+        "operating_margin_this_yr",
+        "net_margin_this_yr"
+      ]
+    },
+    "value_analysis": {
+      "primary_metrics": [
+        "consensus_pe_this_year",
+        "enterprise_value_over_sales_this_yr"
+      ],
+      "supporting_metrics": [
+        "market_cap_billions_usd",
+        "enterprise_value_billions_usd"
+      ]
+    },
+    "risk_analysis": {
+      "primary_metrics": [
+        "beta_3y",
+        "volatility_3_yr",
+        "maximum_drawdown_3_yr"
+      ],
+      "supporting_metrics": [
+        "returns_usd_3_ytd"
+      ]
+    }
+  },
+  "version": "1.0",
+  "last_updated": "2025-06-20",
+  "total_metrics": 155
+}
+metric selector:
+import json
+from typing import List, Dict, Any
+import os
+
+class MetricSelector:
+    """Helper class for selecting relevant metrics based on analysis needs"""
+    
+    def __init__(self, dictionary_path: str = 'metric_dictionary.json'):
+        """Initialize the metric selector with the metric dictionary"""
+        with open(dictionary_path, 'r') as f:
+            self.metric_dict = json.load(f)
+    
+    def get_metrics_for_analysis(self, analysis_type: str) -> Dict[str, List[str]]:
+        """Get primary and supporting metrics for a specific analysis type"""
+        if analysis_type not in self.metric_dict['analysis_frameworks']:
+            raise ValueError(f"Unknown analysis type: {analysis_type}")
+            
+        return self.metric_dict['analysis_frameworks'][analysis_type]
+    
+    def get_metrics_by_category(self, category: str) -> Dict[str, Any]:
+        """Get all metrics within a specific category"""
+        if category not in self.metric_dict['metric_categories']:
+            raise ValueError(f"Unknown category: {category}")
+            
+        return self.metric_dict['metric_categories'][category]
+    
+    def find_metrics_by_use_case(self, use_case: str) -> List[Dict[str, Any]]:
+        """Find metrics that support a specific use case"""
+        matching_metrics = []
+        
+        for category in self.metric_dict['metric_categories'].values():
+            for metric_group in category['metrics'].values():
+                if 'use_cases' in metric_group and use_case.lower() in [uc.lower() for uc in metric_group['use_cases']]:
+                    matching_metrics.append(metric_group)
+        
+        return matching_metrics
+    
+    def get_growth_metrics(self, timeframe: str = None) -> Dict[str, Any]:
+        """Get growth-related metrics, optionally filtered by timeframe"""
+        growth = self.metric_dict['metric_categories']['growth_metrics']['metrics']
+        
+        if timeframe:
+            filtered = {}
+            for metric_type, data in growth.items():
+                if 'cagr' in data:
+                    if timeframe in data['cagr']:
+                        filtered[metric_type] = {'cagr': {timeframe: data['cagr'][timeframe]}}
+            return filtered
+        
+        return growth
+    
+    def get_risk_metrics(self, timeframe: str = None) -> Dict[str, Any]:
+        """Get risk-related metrics, optionally filtered by timeframe"""
+        risk = self.metric_dict['metric_categories']['risk_metrics']['metrics']
+        
+        if timeframe:
+            filtered = {}
+            for metric_type, data in risk.items():
+                if timeframe in data:
+                    filtered[metric_type] = {timeframe: data[timeframe]}
+            return filtered
+        
+        return risk
+    
+    def get_valuation_metrics(self) -> Dict[str, Any]:
+        """Get valuation-related metrics"""
+        return self.metric_dict['metric_categories']['valuation_metrics']['metrics']
+    
+    def get_profitability_metrics(self) -> Dict[str, Any]:
+        """Get profitability-related metrics"""
+        return self.metric_dict['metric_categories']['profitability_metrics']['metrics']
+    
+    def get_all_available_metrics(self) -> List[str]:
+        """Get a flat list of all available metric names"""
+        metrics = []
+        
+        def extract_metrics(data: Dict[str, Any]):
+            for key, value in data.items():
+                if isinstance(value, str) and not key.startswith('_'):
+                    metrics.append(value)
+                elif isinstance(value, dict):
+                    extract_metrics(value)
+        
+        extract_metrics(self.metric_dict['metric_categories'])
+        return list(set(metrics))  # Remove duplicates
+
+    def generate_graphql_query(self, metrics: List[str]) -> str:
+        """Generate a GraphQL query for the specified metrics"""
+        metrics_str = ','.join([f'{{name: "{m}"}}' for m in metrics])
+        
+        query = f"""
+        query {{
+            financialMetrics(
+                entityIds: [
+                    {{id: "BDRXDB4", type: SEDOL}}
+                ],
+                metricIds: [{metrics_str}]
+            ) {{
+                metrics {{
+                    name
+                    value
+                }}
+            }}
+        }}
+        """
+        return query
+
+# Example usage:
+if __name__ == "__main__":
+    selector = MetricSelector()
+    
+    # Get metrics for growth analysis
+    growth_metrics = selector.get_metrics_for_analysis('growth_analysis')
+    print("\nGrowth Analysis Metrics:")
+    print(json.dumps(growth_metrics, indent=2))
+    
+    # Get all valuation metrics
+    valuation_metrics = selector.get_valuation_metrics()
+    print("\nValuation Metrics:")
+    print(json.dumps(valuation_metrics, indent=2))
+    
+    # Find metrics for risk assessment use case
+    risk_metrics = selector.find_metrics_by_use_case('risk assessment')
+    print("\nRisk Assessment Metrics:")
+    print(json.dumps(risk_metrics, indent=2))
+    
+    # Generate a query for some metrics
+    sample_metrics = selector.get_metrics_for_analysis('value_analysis')['primary_metrics']
+    query = selector.generate_graphql_query(sample_metrics)
+    print("\nSample GraphQL Query:")
+    print(query) analysis example: """
+Example showing how to use the analysis workflow with an LLM system
+"""
+
+import json
+from services.analysis_workflow_service import AnalysisWorkflowService
+from metric_selector import MetricSelector
+
+def generate_system_context():
+    """Generate the system context for the LLM"""
+    return """You are an investment analysis assistant with access to a comprehensive metric and document analysis system.
+    
+Available Analysis Types:
+1. Growth Analysis
+2. Value Analysis
+3. Risk Analysis
+4. Comprehensive Analysis
+
+You have access to:
+1. Financial metrics from Eagle API
+2. Document analysis capabilities
+3. Advanced analytics tools
+
+For each analysis, you should:
+1. Consider both quantitative (metrics) and qualitative (documents) data
+2. Follow structured analysis frameworks
+3. Provide actionable insights
+4. Consider risks and limitations
+5. Make clear recommendations"""
+
+def generate_analysis_request(company_name: str, analysis_type: str = "comprehensive"):
+    """Generate an analysis request for a company"""
+    workflow = AnalysisWorkflowService()
+    
+    # Example documents (in practice, these would be actual documents)
+    documents = [
+        f"{company_name}_annual_report.pdf",
+        f"{company_name}_investor_presentation.pdf"
+    ]
+    
+    # Process the analysis request
+    result = workflow.process_analysis_request(
+        request_type=analysis_type,
+        documents=documents,
+        context={"company": company_name}
+    )
+    
+    # Generate LLM prompt
+    prompt = workflow.generate_llm_prompt(result)
+    
+    return {
+        'system_context': generate_system_context(),
+        'analysis_prompt': prompt,
+        'raw_data': result
+    }
+
+def example_llm_analysis_flow():
+    """Demonstrate the complete analysis flow with LLM integration"""
+    print("\n=== Investment Analysis Example ===\n")
+    
+    # 1. Setup the analysis
+    company = "EXAMPLE_COMPANY"
+    request = generate_analysis_request(company, "growth")
+    
+    print("System Context:")
+    print(request['system_context'])
+    print("\nAnalysis Prompt:")
+    print(request['analysis_prompt'])
+    
+    # 2. Example of expected LLM response format
+    expected_response = {
+        'key_findings': [
+            "Strong revenue growth of 15% YoY",
+            "Improving operating margins",
+            "Positive document sentiment around growth strategy"
+        ],
+        'metric_insights': {
+            'growth_metrics': {
+                'assessment': "Above industry average",
+                'supporting_data': ["revenue_growth_this_yr: 15%"]
+            },
+            'quality_metrics': {
+                'assessment': "Stable and improving",
+                'supporting_data': ["operating_margin_this_yr: 25%"]
+            }
+        },
+        'document_insights': {
+            'key_themes': ["expansion", "market growth"],
+            'sentiment': "Positive",
+            'risk_factors': ["market competition", "regulatory changes"]
+        },
+        'recommendations': [
+            {
+                'action': "Consider position increase",
+                'rationale': "Strong growth metrics and positive qualitative indicators",
+                'timing': "Near-term opportunity"
+            }
+        ]
+    }
+    
+    print("\nExample Expected LLM Response:")
+    print(json.dumps(expected_response, indent=2))
+    
+    print("\nAnalysis Framework Usage:")
+    selector = MetricSelector()
+    metrics = selector.get_metrics_for_analysis('growth_analysis')
+    print("\nPrimary Growth Metrics:")
+    print(json.dumps(metrics['primary_metrics'], indent=2))
+    print("\nSupporting Metrics:")
+    print(json.dumps(metrics['supporting_metrics'], indent=2))
+
+if __name__ == "__main__":
+    example_llm_analysis_flow() data adapter: """
+Data Adapter Service - Handles interactions with external data sources
+"""
+
+import requests
+from typing import Dict, Any, List
+import os
+from dotenv import load_dotenv
+
+class DataAdapter:
+    """Adapter for handling data source interactions"""
+    
+    def __init__(self):
+        load_dotenv()
+        self.eagle_url = "https://eagle-gamma.capgroup.com/svc-backend/graphql"
+        self.token = os.getenv('AZURE_OPENAI_TOKEN')
+        self.headers = {
+            'Authorization': f'Bearer {self.token}',
+            'Content-Type': 'application/json',
+        }
+    
+    def execute_query(self, query: str) -> Dict[str, Any]:
+        """Execute a GraphQL query and return results"""
+        try:
+            response = requests.post(
+                self.eagle_url,
+                headers=self.headers,
+                json={'query': query},
+                verify=False
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                # Check for API errors
+                if 'errors' in result:
+                    print("\nAPI Errors:")
+                    for error in result['errors']:
+                        print(f"- {error.get('message', 'Unknown error')}")
+                    return {}
+                
+                # Process results
+                if 'data' in result and 'financialMetrics' in result['data']:
+                    metrics_data = result['data']['financialMetrics']
+                    metrics_values = {}
+                    
+                    # Extract metric values
+                    if metrics_data and metrics_data[0].get('metrics'):
+                        for metric in metrics_data[0]['metrics']:
+                            if metric['value'] is not None:
+                                metrics_values[metric['name']] = metric['value']
+                    
+                    return metrics_values
+                
+            else:
+                print(f"\nHTTP Error {response.status_code}:")
+                print(response.text)
+                
+        except Exception as e:
+            print(f"\nRequest Error: {str(e)}")
+            
+        return {}
+    
+    def fetch_metric_values(self, metrics: List[str]) -> Dict[str, Any]:
+        """Fetch values for specific metrics"""
+        # Format metric names for GraphQL query
+        metrics_str = ','.join([f'{{name: "{m}"}}' for m in metrics])
+        
+        query = f"""
+        query {{
+            financialMetrics(
+                entityIds: [
+                    {{id: "BDRXDB4", type: SEDOL}}
+                ],
+                metricIds: [{metrics_str}]
+            ) {{
+                metrics {{
+                    name
+                    value
+                }}
+            }}
+        }}
+        """
+        
+        return self.execute_query(query)
+    
+    def fetch_document_metadata(self, document_id: str) -> Dict[str, Any]:
+        """Fetch metadata for a document"""
+        # This would typically interact with a document management system
+        # For now, return mock data
+        return {
+            'id': document_id,
+            'type': 'financial_report',
+            'date': '2025-06-20',
+            'status': 'active'
+        }
+
+if __name__ == "__main__":
+    # Example usage
+    adapter = DataAdapter()
+    
+    # Test fetching some metrics
+    test_metrics = [
+        "revenue_growth_this_yr",
+        "operating_margin_this_yr",
+        "net_margin_this_yr"
+    ]
+    
+    results = adapter.fetch_metric_values(test_metrics)
+    print("\nTest Metric Values:")
+    print(json.dumps(results, indent=2))
