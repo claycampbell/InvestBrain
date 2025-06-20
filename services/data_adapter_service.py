@@ -76,8 +76,8 @@ class DataAdapter:
             logging.error(f"Unexpected error: {str(e)}")
             return {'error': 'Unexpected error', 'details': str(e)}
     
-    def fetch_metric_values(self, metrics: List[str], entity_id: str = "BDRXDB4") -> Dict[str, Any]:
-        """Fetch values for specific metrics"""
+    def fetch_metric_values(self, metrics: List[str], company_ticker: str = "NVDA") -> Dict[str, Any]:
+        """Fetch values for specific metrics using ticker symbol"""
         if not metrics:
             return {'error': 'No metrics specified'}
             
@@ -88,13 +88,14 @@ class DataAdapter:
         query {{
             financialMetrics(
                 entityIds: [
-                    {{id: "{entity_id}", type: SEDOL}}
+                    {{id: "{company_ticker}", type: TICKER}}
                 ],
                 metricIds: [{metrics_str}]
             ) {{
                 metrics {{
                     name
                     value
+                    category
                 }}
             }}
         }}
@@ -102,8 +103,36 @@ class DataAdapter:
         
         return self.execute_query(query)
     
-    def fetch_company_metrics(self, company_ticker: str, metric_categories: List[str] = None) -> Dict[str, Any]:
-        """Fetch comprehensive metrics for a company"""
+    def fetch_metric_values_with_sedol(self, metrics: List[str], company_ticker: str, sedol_id: str) -> Dict[str, Any]:
+        """Fetch values for specific metrics using both ticker and SEDOL ID"""
+        if not metrics:
+            return {'error': 'No metrics specified'}
+            
+        # Format metric names for GraphQL query
+        metrics_str = ','.join([f'{{name: "{m}"}}' for m in metrics])
+        
+        query = f"""
+        query {{
+            financialMetrics(
+                entityIds: [
+                    {{id: "{sedol_id}", type: SEDOL}},
+                    {{id: "{company_ticker}", type: TICKER}}
+                ],
+                metricIds: [{metrics_str}]
+            ) {{
+                metrics {{
+                    name
+                    value
+                    category
+                }}
+            }}
+        }}
+        """
+        
+        return self.execute_query(query)
+    
+    def fetch_company_metrics(self, company_ticker: str, metric_categories: List[str] = None, sedol_id: str = None) -> Dict[str, Any]:
+        """Fetch comprehensive metrics for a company using ticker and optional SEDOL ID"""
         from services.metric_selector import MetricSelector
         
         selector = MetricSelector()
@@ -127,14 +156,18 @@ class DataAdapter:
         # Remove duplicates
         unique_metrics = list(set(all_metrics))
         
-        # Fetch the metrics
-        result = self.fetch_metric_values(unique_metrics)
+        # Fetch the metrics using both ticker and SEDOL if available
+        if sedol_id:
+            result = self.fetch_metric_values_with_sedol(unique_metrics, company_ticker, sedol_id)
+        else:
+            result = self.fetch_metric_values(unique_metrics, company_ticker)
         
         if result.get('success'):
             # Organize metrics by category for better presentation
             organized_metrics = self._organize_metrics_by_category(result['metrics'], selector)
             result['organized_metrics'] = organized_metrics
             result['company_ticker'] = company_ticker
+            result['sedol_id'] = sedol_id
             
         return result
     

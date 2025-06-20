@@ -29,13 +29,20 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="companyTicker" class="form-label">Company Ticker</label>
                                 <input type="text" class="form-control" id="companyTicker" placeholder="e.g., NVDA, AAPL, MSFT">
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="sedolId" class="form-label">SEDOL ID <small class="text-muted">(optional)</small></label>
+                                <input type="text" class="form-control" id="sedolId" placeholder="e.g., BDRXDB4">
+                                <small class="text-muted">For precise company identification in Eagle API</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="analysisType" class="form-label">Analysis Type</label>
                                 <select class="form-select" id="analysisType">

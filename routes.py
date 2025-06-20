@@ -1247,9 +1247,13 @@ def get_company_metrics(ticker):
         # Get optional metric categories from query params
         categories = request.args.getlist('categories')
         
+        # Get SEDOL ID from request if provided
+        sedol_id = request.args.get('sedol_id')
+        
         result = data_adapter.fetch_company_metrics(
             company_ticker=ticker.upper(),
-            metric_categories=categories if categories else None
+            metric_categories=categories if categories else None,
+            sedol_id=sedol_id
         )
         
         if 'error' in result:
