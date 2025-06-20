@@ -2,6 +2,8 @@ import logging
 import json
 import re
 from typing import Dict, List, Any
+from services.data_adapter_service import DataAdapter
+from services.metric_selector import MetricSelector
 
 class LocalAnalysisService:
     """Local analysis service for thesis processing when Azure OpenAI is unavailable"""
@@ -16,6 +18,8 @@ class LocalAnalysisService:
             'Operational Metrics',
             'Technology Innovation'
         ]
+        self.data_adapter = DataAdapter()
+        self.metric_selector = MetricSelector()
     
     def analyze_thesis(self, thesis_text: str) -> Dict[str, Any]:
         """Analyze investment thesis using rule-based approach"""
@@ -174,6 +178,12 @@ class LocalAnalysisService:
         metrics = []
         text_lower = thesis_text.lower()
         
+        # Extract company tickers and get Eagle API metrics
+        company_tickers = self._extract_company_tickers(thesis_text)
+        if company_tickers:
+            eagle_metrics = self._get_eagle_metrics_for_thesis(company_tickers[0], thesis_text)
+            metrics.extend(eagle_metrics)
+        
         if 'revenue' in text_lower or 'growth' in text_lower:
             metrics.append({
                 "name": "Revenue Growth Rate",
@@ -210,7 +220,7 @@ class LocalAnalysisService:
                 "value_chain_position": "upstream"
             })
         
-        return metrics[:3]  # Limit to top 3 metrics
+        return metrics[:5]  # Limit to top 5 metrics (including Eagle API)
     
     def _generate_counter_scenarios(self, thesis_text: str) -> List[Dict[str, Any]]:
         """Generate counter-thesis scenarios"""
@@ -294,3 +304,81 @@ class LocalAnalysisService:
             "institutional_ownership": 65,
             "sentiment_trend": "positive"
         }
+    
+    def _extract_company_tickers(self, thesis_text: str) -> List[str]:
+        """Extract company ticker symbols from thesis text"""
+        ticker_patterns = [
+            r'\b[A-Z]{1,5}\b',  # 1-5 uppercase letters
+            r'\$[A-Z]{1,5}\b',  # With dollar sign prefix
+            r'\([A-Z]{1,5}\)',  # In parentheses
+        ]
+        
+        tickers = []
+        for pattern in ticker_patterns:
+            matches = re.findall(pattern, thesis_text)
+            tickers.extend([match.replace('$', '').replace('(', '').replace(')', '') for match in matches])
+        
+        exclude_words = {'THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'CAN', 'HER', 'WAS', 'ONE', 'OUR', 'HAD', 'BUT', 'HAS'}
+        valid_tickers = [ticker for ticker in tickers if ticker not in exclude_words and len(ticker) >= 2]
+        
+        return list(set(valid_tickers))
+    
+    def _get_eagle_metrics_for_thesis(self, ticker: str, thesis_text: str) -> List[Dict[str, Any]]:
+        """Get relevant Eagle API metrics based on thesis content and company"""
+        try:
+            categories = self._determine_relevant_categories(thesis_text)
+            selected_metrics = self.metric_selector.select_metrics_for_analysis('Growth Analysis', categories)
+            eagle_data = self.data_adapter.fetch_company_metrics(ticker, categories)
+            
+            if eagle_data and 'metrics' in eagle_data:
+                metrics = []
+                for metric_name, metric_data in eagle_data['metrics'].items():
+                    if metric_data.get('value') is not None:
+                        metrics.append({
+                            "name": f"Eagle: {metric_name}",
+                            "type": "Eagle_API_Metric",
+                            "description": f"Real-time financial metric: {metric_name}",
+                            "frequency": "real-time",
+                            "threshold": self._calculate_threshold(metric_data.get('value', 0)),
+                            "threshold_type": "above",
+                            "data_source": "Eagle API",
+                            "value_chain_position": "upstream",
+                            "current_value": metric_data.get('value'),
+                            "category": metric_data.get('category', 'financial')
+                        })
+                
+                return metrics[:3]
+            
+        except Exception as e:
+            logging.warning(f"Eagle API metrics unavailable for {ticker}: {str(e)}")
+        
+        return []
+    
+    def _determine_relevant_categories(self, thesis_text: str) -> List[str]:
+        """Determine relevant metric categories based on thesis content"""
+        text_lower = thesis_text.lower()
+        categories = []
+        
+        if any(term in text_lower for term in ['growth', 'revenue', 'sales', 'expand']):
+            categories.append('Growth')
+        
+        if any(term in text_lower for term in ['valuation', 'price', 'multiple', 'pe', 'pb']):
+            categories.append('Valuation')
+        
+        if any(term in text_lower for term in ['profit', 'margin', 'efficiency', 'roe', 'roa']):
+            categories.append('Profitability')
+        
+        if any(term in text_lower for term in ['risk', 'debt', 'volatility', 'beta']):
+            categories.append('Risk')
+        
+        if any(term in text_lower for term in ['market', 'cap', 'volume', 'liquidity']):
+            categories.append('Market')
+        
+        return categories if categories else ['Growth']
+    
+    def _calculate_threshold(self, current_value: float) -> float:
+        """Calculate appropriate threshold based on current value"""
+        if current_value > 0:
+            return current_value * 1.1
+        else:
+            return abs(current_value) * 0.9
