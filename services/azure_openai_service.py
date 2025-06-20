@@ -385,3 +385,43 @@ Respond with valid JSON only:
         except Exception as e:
             logging.error(f"Error in analyze_thesis: {str(e)}")
             raise
+
+    def _extract_ticker_symbol(self, text):
+        """Extract ticker symbol from thesis text"""
+        import re
+        
+        # Look for ticker patterns
+        patterns = [
+            r'\$([A-Z]{1,5})\b',  # $TICKER format
+            r'\b([A-Z]{1,5})\b',  # Standalone uppercase letters
+            r'\(([A-Z]{1,5})\)',  # (TICKER) format
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, text)
+            if matches:
+                # Filter out common words
+                exclude = {'THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'CAN', 'HER', 'WAS', 'ONE', 'OUR', 'HAD', 'HAS'}
+                for match in matches:
+                    if match not in exclude and len(match) >= 2:
+                        return match
+        
+        return None
+
+    def _extract_sedol_id(self, text):
+        """Extract SEDOL ID from thesis text"""
+        import re
+        
+        # Look for SEDOL patterns (7 characters: 6 alphanumeric + 1 check digit)
+        patterns = [
+            r'SEDOL:\s*([A-Z0-9]{7})',  # SEDOL: prefix
+            r'SEDOL\s+([A-Z0-9]{7})',   # SEDOL space prefix
+            r'\b([A-Z0-9]{7})\b',       # 7 alphanumeric characters
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            if matches:
+                return matches[0].upper()
+        
+        return None
