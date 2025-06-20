@@ -26,8 +26,8 @@ class DataAdapter:
     def execute_query(self, query: str) -> Dict[str, Any]:
         """Execute a GraphQL query and return results"""
         if not self.token:
-            logging.error("EAGLE_API_TOKEN not configured")
-            return {'error': 'API token not configured'}
+            logging.warning("AZURE_OPENAI_TOKEN not configured for Eagle API")
+            return {'error': 'API token not configured', 'requires_auth': True}
             
         try:
             response = requests.post(
