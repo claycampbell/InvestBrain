@@ -269,6 +269,8 @@ function loadAnalysisFrameworks() {
 
 function fetchCompanyMetrics() {
     const ticker = document.getElementById('companyTicker').value.trim();
+    const sedolId = document.getElementById('sedolId').value.trim();
+    
     if (!ticker) {
         alert('Please enter a company ticker');
         return;
@@ -281,8 +283,14 @@ function fetchCompanyMetrics() {
     document.getElementById('loadingText').textContent = 'Fetching Company Metrics...';
     modal.show();
     
-    const url = `/api/company/${ticker}/metrics` + (selectedCategories.length > 0 ? 
-        '?' + selectedCategories.map(c => 'categories=' + c).join('&') : '');
+    // Build URL with categories and optional SEDOL ID
+    const params = new URLSearchParams();
+    selectedCategories.forEach(c => params.append('categories', c));
+    if (sedolId) {
+        params.append('sedol_id', sedolId);
+    }
+    
+    const url = `/api/company/${ticker}/metrics` + (params.toString() ? '?' + params.toString() : '');
     
     fetch(url)
         .then(response => response.json())
