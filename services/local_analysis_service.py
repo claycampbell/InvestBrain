@@ -178,10 +178,12 @@ class LocalAnalysisService:
         metrics = []
         text_lower = thesis_text.lower()
         
-        # Extract company tickers and get Eagle API metrics
-        company_tickers = self._extract_company_tickers(thesis_text)
-        if company_tickers:
-            eagle_metrics = self._get_eagle_metrics_for_thesis(company_tickers[0], thesis_text)
+        # Extract company identifiers and get Eagle API metrics
+        company_identifiers = self._extract_company_identifiers(thesis_text)
+        if company_identifiers['tickers']:
+            ticker = company_identifiers['tickers'][0]
+            sedol = company_identifiers['sedols'][0] if company_identifiers['sedols'] else None
+            eagle_metrics = self._get_eagle_metrics_for_thesis(ticker, thesis_text, sedol)
             metrics.extend(eagle_metrics)
         
         if 'revenue' in text_lower or 'growth' in text_lower:
@@ -305,52 +307,86 @@ class LocalAnalysisService:
             "sentiment_trend": "positive"
         }
     
-    def _extract_company_tickers(self, thesis_text: str) -> List[str]:
-        """Extract company ticker symbols from thesis text"""
+    def _extract_company_identifiers(self, thesis_text: str) -> Dict[str, List[str]]:
+        """Extract company ticker symbols and SEDOL IDs from thesis text"""
+        # Ticker patterns
         ticker_patterns = [
             r'\b[A-Z]{1,5}\b',  # 1-5 uppercase letters
             r'\$[A-Z]{1,5}\b',  # With dollar sign prefix
             r'\([A-Z]{1,5}\)',  # In parentheses
         ]
         
+        # SEDOL patterns (7 characters: 6 alphanumeric + 1 check digit)
+        sedol_patterns = [
+            r'\bSEDOL:\s*([A-Z0-9]{7})\b',  # SEDOL: prefix
+            r'\b([A-Z0-9]{7})\b',  # 7 alphanumeric characters
+            r'SEDOL\s+([A-Z0-9]{7})',  # SEDOL space prefix
+        ]
+        
         tickers = []
+        sedols = []
+        
+        # Extract tickers
         for pattern in ticker_patterns:
             matches = re.findall(pattern, thesis_text)
             tickers.extend([match.replace('$', '').replace('(', '').replace(')', '') for match in matches])
         
+        # Extract SEDOLs
+        for pattern in sedol_patterns:
+            matches = re.findall(pattern, thesis_text, re.IGNORECASE)
+            sedols.extend(matches)
+        
+        # Filter out common words from tickers
         exclude_words = {'THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'CAN', 'HER', 'WAS', 'ONE', 'OUR', 'HAD', 'BUT', 'HAS'}
         valid_tickers = [ticker for ticker in tickers if ticker not in exclude_words and len(ticker) >= 2]
         
-        return list(set(valid_tickers))
+        return {
+            'tickers': list(set(valid_tickers)),
+            'sedols': list(set(sedols))
+        }
+
+    def _extract_company_tickers(self, thesis_text: str) -> List[str]:
+        """Legacy method for backward compatibility"""
+        identifiers = self._extract_company_identifiers(thesis_text)
+        return identifiers['tickers']
     
-    def _get_eagle_metrics_for_thesis(self, ticker: str, thesis_text: str) -> List[Dict[str, Any]]:
-        """Get relevant Eagle API metrics based on thesis content and company"""
+    def _get_eagle_metrics_for_thesis(self, ticker: str, thesis_text: str, sedol_id: str = None) -> List[Dict[str, Any]]:
+        """Get relevant Eagle API metrics based on thesis content and company identifiers"""
         try:
             categories = self._determine_relevant_categories(thesis_text)
-            selected_metrics = self.metric_selector.select_metrics_for_analysis('Growth Analysis', categories)
-            eagle_data = self.data_adapter.fetch_company_metrics(ticker, categories)
+            eagle_data = self.data_adapter.fetch_company_metrics(ticker, categories, sedol_id)
             
             if eagle_data and 'metrics' in eagle_data:
                 metrics = []
                 for metric_name, metric_data in eagle_data['metrics'].items():
                     if metric_data.get('value') is not None:
+                        # Create descriptive name including identifiers
+                        identifier_info = f"{ticker}"
+                        if sedol_id:
+                            identifier_info += f" (SEDOL: {sedol_id})"
+                        
                         metrics.append({
                             "name": f"Eagle: {metric_name}",
                             "type": "Eagle_API_Metric",
-                            "description": f"Real-time financial metric: {metric_name}",
+                            "description": f"Real-time financial metric for {identifier_info}: {metric_name}",
                             "frequency": "real-time",
                             "threshold": self._calculate_threshold(metric_data.get('value', 0)),
                             "threshold_type": "above",
                             "data_source": "Eagle API",
                             "value_chain_position": "upstream",
                             "current_value": metric_data.get('value'),
-                            "category": metric_data.get('category', 'financial')
+                            "category": metric_data.get('category', 'financial'),
+                            "company_ticker": ticker,
+                            "sedol_id": sedol_id
                         })
                 
                 return metrics[:3]
             
         except Exception as e:
-            logging.warning(f"Eagle API metrics unavailable for {ticker}: {str(e)}")
+            identifier_info = f"{ticker}"
+            if sedol_id:
+                identifier_info += f" (SEDOL: {sedol_id})"
+            logging.warning(f"Eagle API metrics unavailable for {identifier_info}: {str(e)}")
         
         return []
     

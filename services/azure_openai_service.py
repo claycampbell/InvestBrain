@@ -228,8 +228,10 @@ class AzureOpenAIService:
         # TEMPORARY: Static data for testing neural network animation
         if "test" in thesis_text.lower() or len(thesis_text) > 10:
             company_name = self._extract_company_name(thesis_text) or "NVIDIA"
+            ticker_symbol = self._extract_ticker_symbol(thesis_text) or "NVDA"
+            sedol_id = self._extract_sedol_id(thesis_text) or "2379504"
             return json.dumps({
-                "core_claim": f"Strong investment opportunity in {company_name} driven by technological leadership and market expansion",
+                "core_claim": f"Strong investment opportunity in {company_name} ({ticker_symbol}) driven by technological leadership and market expansion",
                 "core_analysis": f"{company_name} demonstrates compelling risk-adjusted returns with sustainable competitive advantages in high-growth markets",
                 "causal_chain": [
                     {"chain_link": 1, "event": "Market leadership", "explanation": "Dominant position drives pricing power"},
@@ -259,7 +261,9 @@ class AzureOpenAIService:
                         "threshold": 15.0,
                         "threshold_type": "above",
                         "data_source": "FactSet",
-                        "value_chain_position": "downstream"
+                        "value_chain_position": "downstream",
+                        "company_ticker": ticker_symbol,
+                        "sedol_id": sedol_id
                     },
                     {
                         "name": "Market Share Metrics",
@@ -269,7 +273,9 @@ class AzureOpenAIService:
                         "threshold": 25.0,
                         "threshold_type": "above",
                         "data_source": "Industry Reports",
-                        "value_chain_position": "midstream"
+                        "value_chain_position": "midstream",
+                        "company_ticker": ticker_symbol,
+                        "sedol_id": sedol_id
                     },
                     {
                         "name": "Operating Margin",
@@ -279,7 +285,9 @@ class AzureOpenAIService:
                         "threshold": 20.0,
                         "threshold_type": "above",
                         "data_source": "FactSet",
-                        "value_chain_position": "midstream"
+                        "value_chain_position": "midstream",
+                        "company_ticker": ticker_symbol,
+                        "sedol_id": sedol_id
                     }
                 ],
                 "monitoring_plan": {
@@ -324,10 +332,17 @@ class AzureOpenAIService:
                     "momentum_score": 82,
                     "institutional_ownership": 68,
                     "sentiment_trend": "positive"
+                },
+                "company_identifiers": {
+                    "ticker": ticker_symbol,
+                    "sedol_id": sedol_id,
+                    "company_name": company_name
                 }
             })
         
-        system_prompt = """You are an expert investment analyst. Analyze investment theses and provide structured analysis.
+        system_prompt = """You are an expert investment analyst. Analyze investment theses and provide structured analysis with comprehensive company identification.
+
+When identifying companies, include both ticker symbols and SEDOL IDs where available for precise Eagle API integration.
 
 Respond with valid JSON only:
 {
@@ -337,9 +352,10 @@ Respond with valid JSON only:
   "assumptions": ["Assumption 1"],
   "mental_model": "Growth|Value|Cyclical|Disruption",
   "counter_thesis_scenarios": [{"scenario": "Risk", "description": "Details", "trigger_conditions": ["Condition"], "data_signals": ["Signal"]}],
-  "metrics_to_track": [{"name": "Signal", "type": "Level_0_Raw_Activity", "description": "Description", "frequency": "monthly", "threshold": 5.0, "threshold_type": "above", "data_source": "FactSet", "value_chain_position": "midstream"}],
+  "metrics_to_track": [{"name": "Signal", "type": "Level_0_Raw_Activity", "description": "Description", "frequency": "monthly", "threshold": 5.0, "threshold_type": "above", "data_source": "FactSet", "value_chain_position": "midstream", "company_ticker": "TICKER", "sedol_id": "SEDOL123"}],
   "monitoring_plan": {"objective": "Monitor performance", "data_pulls": [{"category": "Financial", "metrics": ["Revenue"], "data_source": "FactSet", "frequency": "quarterly"}], "alert_logic": [{"frequency": "quarterly", "condition": "Revenue < target", "action": "Review"}], "decision_triggers": [{"condition": "Performance decline", "action": "sell"}], "review_schedule": "Monthly"},
-  "market_sentiment": {"buy_rating": 75, "hold_rating": 20, "sell_rating": 5, "price_target_avg": 450, "price_target_high": 520, "price_target_low": 380, "analyst_count": 28, "momentum_score": 82, "institutional_ownership": 68, "sentiment_trend": "positive"}
+  "market_sentiment": {"buy_rating": 75, "hold_rating": 20, "sell_rating": 5, "price_target_avg": 450, "price_target_high": 520, "price_target_low": 380, "analyst_count": 28, "momentum_score": 82, "institutional_ownership": 68, "sentiment_trend": "positive"},
+  "company_identifiers": {"ticker": "TICKER", "sedol_id": "SEDOL123", "company_name": "Company Name"}
 }"""
 
         user_prompt = f"Analyze: {thesis_text}"
