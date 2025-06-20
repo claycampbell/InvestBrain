@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+
+{% block title %}Internal Data Analysis - Investment Thesis Intelligence{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">Internal Data Analysis</h2>
+                    <p class="text-muted mb-0">Comprehensive financial metrics and analysis using internal data sources</p>
+                </div>
+                <div>
+                    <span class="badge bg-success" id="connectionStatus">Checking Connection...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Company Analysis Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2"></i>Company Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="companyTicker" class="form-label">Company Ticker</label>
+                                <input type="text" class="form-control" id="companyTicker" placeholder="e.g., NVDA, AAPL, MSFT">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="analysisType" class="form-label">Analysis Type</label>
+                                <select class="form-select" id="analysisType">
+                                    <option value="comprehensive">Comprehensive Analysis</option>
+                                    <option value="growth_analysis">Growth Analysis</option>
+                                    <option value="value_analysis">Value Analysis</option>
+                                    <option value="risk_analysis">Risk Analysis</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Metric Categories</label>
+                                <div class="row" id="metricCategories">
+                                    <!-- Categories will be loaded dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary me-2" onclick="fetchCompanyMetrics()">
+                        <i class="fas fa-chart-line me-2"></i>Fetch Metrics
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="runCompanyAnalysis()">
+                        <i class="fas fa-brain me-2"></i>Run AI Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Frameworks Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>Analysis Frameworks
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="analysisFrameworks">
+                        <!-- Frameworks will be loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="row" id="resultsSection" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Analysis Results
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Metrics Display -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Financial Metrics</h6>
+                            <div id="metricsDisplay">
+                                <!-- Metrics will be displayed here -->
+                            </div>
+                        </div>
+                        
+                        <!-- AI Analysis Display -->
+                        <div class="col-md-6">
+                            <h6 class="text-success mb-3">AI Analysis</h6>
+                            <div id="aiAnalysisDisplay">
+                                <!-- AI analysis will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Quality Section -->
+    <div class="row mt-4" id="dataQualitySection" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>Data Quality Assessment
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h3 text-primary" id="metricCoverage">-</div>
+                                <small class="text-muted">Metric Coverage</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h3 text-info" id="metricCount">-</div>
+                                <small class="text-muted">Metrics Available</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h3 text-success" id="completenessScore">-</div>
+                                <small class="text-muted">Completeness Score</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <span class="badge bg-secondary fs-6" id="qualityRating">-</span>
+                                <div><small class="text-muted">Quality Rating</small></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5 id="loadingText">Processing Analysis...</h5>
+                <p class="text-muted mb-0" id="loadingSubtext">This may take a few moments</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    checkDataSourceStatus();
+    loadMetricCategories();
+    loadAnalysisFrameworks();
+});
+
+function checkDataSourceStatus() {
+    fetch('/api/data-source/status')
+        .then(response => response.json())
+        .then(data => {
+            const statusEl = document.getElementById('connectionStatus');
+            if (data.connected) {
+                statusEl.textContent = 'Connected to Eagle API';
+                statusEl.className = 'badge bg-success';
+            } else {
+                statusEl.textContent = 'Connection Issue';
+                statusEl.className = 'badge bg-danger';
+            }
+        })
+        .catch(error => {
+            const statusEl = document.getElementById('connectionStatus');
+            statusEl.textContent = 'Connection Error';
+            statusEl.className = 'badge bg-danger';
+        });
+}
+
+function loadMetricCategories() {
+    fetch('/api/metrics/categories')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const container = document.getElementById('metricCategories');
+                container.innerHTML = '';
+                
+                Object.entries(data.categories).forEach(([key, category]) => {
+                    const div = document.createElement('div');
+                    div.className = 'col-md-4 mb-2';
+                    div.innerHTML = `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="${key}" id="category-${key}">
+                            <label class="form-check-label" for="category-${key}">
+                                ${key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                <small class="text-muted">(${category.metric_count} metrics)</small>
+                            </label>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        })
+        .catch(error => console.error('Error loading metric categories:', error));
+}
+
+function loadAnalysisFrameworks() {
+    fetch('/api/metrics/analysis-frameworks')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const container = document.getElementById('analysisFrameworks');
+                container.innerHTML = '';
+                
+                Object.entries(data.frameworks).forEach(([key, framework]) => {
+                    const div = document.createElement('div');
+                    div.className = 'col-md-4 mb-3';
+                    div.innerHTML = `
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">${key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</h6>
+                                <p class="card-text">
+                                    <strong>Primary:</strong> ${framework.primary_metrics.length} metrics<br>
+                                    <strong>Supporting:</strong> ${framework.supporting_metrics.length} metrics
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        })
+        .catch(error => console.error('Error loading analysis frameworks:', error));
+}
+
+function fetchCompanyMetrics() {
+    const ticker = document.getElementById('companyTicker').value.trim();
+    if (!ticker) {
+        alert('Please enter a company ticker');
+        return;
+    }
+    
+    const selectedCategories = Array.from(document.querySelectorAll('#metricCategories input:checked'))
+        .map(cb => cb.value);
+    
+    const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    document.getElementById('loadingText').textContent = 'Fetching Company Metrics...';
+    modal.show();
+    
+    const url = `/api/company/${ticker}/metrics` + (selectedCategories.length > 0 ? 
+        '?' + selectedCategories.map(c => 'categories=' + c).join('&') : '');
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            modal.hide();
+            displayMetrics(data);
+            showDataQuality(data);
+            document.getElementById('resultsSection').style.display = 'block';
+        })
+        .catch(error => {
+            modal.hide();
+            console.error('Error fetching metrics:', error);
+            alert('Failed to fetch company metrics');
+        });
+}
+
+function runCompanyAnalysis() {
+    const ticker = document.getElementById('companyTicker').value.trim();
+    const analysisType = document.getElementById('analysisType').value;
+    
+    if (!ticker) {
+        alert('Please enter a company ticker');
+        return;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    document.getElementById('loadingText').textContent = 'Running AI Analysis...';
+    document.getElementById('loadingSubtext').textContent = 'Analyzing financial metrics and generating insights';
+    modal.show();
+    
+    fetch(`/api/company/${ticker}/analysis`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            analysis_type: analysisType
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        modal.hide();
+        displayAIAnalysis(data);
+        showDataQuality(data);
+        document.getElementById('resultsSection').style.display = 'block';
+    })
+    .catch(error => {
+        modal.hide();
+        console.error('Error running analysis:', error);
+        alert('Failed to run company analysis');
+    });
+}
+
+function displayMetrics(data) {
+    const container = document.getElementById('metricsDisplay');
+    
+    if (data.error) {
+        container.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+        return;
+    }
+    
+    let html = '';
+    
+    if (data.organized_metrics) {
+        Object.entries(data.organized_metrics).forEach(([category, metrics]) => {
+            if (Object.keys(metrics).length > 0) {
+                html += `
+                    <div class="mb-3">
+                        <h6 class="text-secondary">${category.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                `;
+                
+                Object.entries(metrics).forEach(([metric, value]) => {
+                    html += `
+                        <tr>
+                            <td class="text-truncate" style="max-width: 200px;" title="${metric}">${metric}</td>
+                            <td class="text-end"><strong>${formatMetricValue(value)}</strong></td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    } else if (data.metrics) {
+        html = `
+            <div class="table-responsive">
+                <table class="table table-sm">
+        `;
+        
+        Object.entries(data.metrics).forEach(([metric, value]) => {
+            html += `
+                <tr>
+                    <td class="text-truncate" style="max-width: 200px;" title="${metric}">${metric}</td>
+                    <td class="text-end"><strong>${formatMetricValue(value)}</strong></td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                </table>
+            </div>
+        `;
+    }
+    
+    if (!html) {
+        html = '<div class="alert alert-info">No metrics available</div>';
+    }
+    
+    container.innerHTML = html;
+}
+
+function displayAIAnalysis(data) {
+    const container = document.getElementById('aiAnalysisDisplay');
+    
+    if (data.error) {
+        container.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+        return;
+    }
+    
+    let html = '';
+    
+    if (data.llm_analysis) {
+        if (data.llm_analysis.error) {
+            html = `<div class="alert alert-warning">${data.llm_analysis.error}</div>`;
+        } else if (data.llm_analysis.analysis_text) {
+            html = `
+                <div class="border rounded p-3">
+                    <pre class="mb-0" style="white-space: pre-wrap;">${data.llm_analysis.analysis_text}</pre>
+                </div>
+            `;
+        } else {
+            html = '<div class="alert alert-info">Analysis completed but no results available</div>';
+        }
+    } else {
+        html = '<div class="alert alert-info">No AI analysis available</div>';
+    }
+    
+    container.innerHTML = html;
+}
+
+function showDataQuality(data) {
+    if (data.data_quality) {
+        const quality = data.data_quality;
+        
+        document.getElementById('metricCoverage').textContent = (quality.metric_coverage * 100).toFixed(1) + '%';
+        document.getElementById('metricCount').textContent = quality.metric_count || 0;
+        document.getElementById('completenessScore').textContent = (quality.completeness_score * 100).toFixed(1) + '%';
+        
+        const ratingEl = document.getElementById('qualityRating');
+        ratingEl.textContent = quality.quality_rating || 'Unknown';
+        ratingEl.className = `badge fs-6 ${quality.quality_rating === 'high' ? 'bg-success' : 
+                                        quality.quality_rating === 'medium' ? 'bg-warning' : 'bg-danger'}`;
+        
+        document.getElementById('dataQualitySection').style.display = 'block';
+    }
+}
+
+function formatMetricValue(value) {
+    if (typeof value === 'number') {
+        if (value >= 1000000000) {
+            return (value / 1000000000).toFixed(2) + 'B';
+        } else if (value >= 1000000) {
+            return (value / 1000000).toFixed(2) + 'M';
+        } else if (value >= 1000) {
+            return (value / 1000).toFixed(2) + 'K';
+        } else if (value % 1 !== 0) {
+            return value.toFixed(4);
+        }
+    }
+    return value;
+}
+</script>
+{% endblock %}

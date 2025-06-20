@@ -17,7 +17,7 @@ class DataAdapter:
     
     def __init__(self):
         self.eagle_url = "https://eagle-gamma.capgroup.com/svc-backend/graphql"
-        self.token = os.getenv('EAGLE_API_TOKEN')
+        self.token = os.getenv('AZURE_OPENAI_TOKEN')
         self.headers = {
             'Authorization': f'Bearer {self.token}',
             'Content-Type': 'application/json',

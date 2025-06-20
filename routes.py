@@ -1198,6 +1198,111 @@ def get_alternative_companies(thesis_id):
         logging.error(f"Error generating alternative companies for thesis {thesis_id}: {str(e)}")
         return jsonify({'error': 'Failed to generate alternative companies', 'details': str(e)}), 500
 
+@app.route('/api/metrics/categories')
+def get_metric_categories():
+    """Get available metric categories"""
+    try:
+        categories = {}
+        for category_name in ['growth_metrics', 'valuation_metrics', 'profitability_metrics', 'risk_metrics', 'market_metrics']:
+            category_data = metric_selector.get_metrics_by_category(category_name)
+            if category_data:
+                categories[category_name] = {
+                    'description': category_data.get('description', ''),
+                    'metric_count': len(category_data.get('metrics', {}))
+                }
+        
+        return jsonify({
+            'success': True,
+            'categories': categories,
+            'total_categories': len(categories)
+        })
+    except Exception as e:
+        logging.error(f"Failed to get metric categories: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/metrics/analysis-frameworks')
+def get_analysis_frameworks():
+    """Get available analysis frameworks"""
+    try:
+        frameworks = {}
+        for framework in ['growth_analysis', 'value_analysis', 'risk_analysis']:
+            framework_data = metric_selector.get_metrics_for_analysis(framework)
+            frameworks[framework] = {
+                'primary_metrics': framework_data.get('primary_metrics', []),
+                'supporting_metrics': framework_data.get('supporting_metrics', [])
+            }
+        
+        return jsonify({
+            'success': True,
+            'frameworks': frameworks
+        })
+    except Exception as e:
+        logging.error(f"Failed to get analysis frameworks: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/company/<ticker>/metrics')
+def get_company_metrics(ticker):
+    """Fetch comprehensive metrics for a company"""
+    try:
+        # Get optional metric categories from query params
+        categories = request.args.getlist('categories')
+        
+        result = data_adapter.fetch_company_metrics(
+            company_ticker=ticker.upper(),
+            metric_categories=categories if categories else None
+        )
+        
+        if 'error' in result:
+            return jsonify(result), 500
+            
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"Failed to fetch metrics for {ticker}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/company/<ticker>/analysis', methods=['POST'])
+def run_company_analysis(ticker):
+    """Run comprehensive analysis for a company"""
+    try:
+        data = request.get_json() or {}
+        analysis_type = data.get('analysis_type', 'comprehensive')
+        documents = data.get('documents', [])
+        
+        result = analysis_workflow_service.run_comprehensive_analysis(
+            company_ticker=ticker.upper(),
+            analysis_type=analysis_type,
+            documents=documents
+        )
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"Failed to run analysis for {ticker}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/data-source/status')
+def check_data_source_status():
+    """Check the status of the internal data source connection"""
+    try:
+        is_connected = data_adapter.validate_connection()
+        
+        return jsonify({
+            'success': True,
+            'connected': is_connected,
+            'timestamp': datetime.utcnow().isoformat(),
+            'source': 'Eagle API'
+        })
+        
+    except Exception as e:
+        logging.error(f"Failed to check data source status: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/internal-data-analysis')
+def internal_data_analysis():
+    """Internal data analysis dashboard page"""
+    return render_template('internal_data_analysis.html')
+
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('404.html'), 404
