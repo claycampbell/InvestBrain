@@ -461,7 +461,7 @@ class LocalAnalysisService:
                     'name': f'Eagle: Return on Equity',
                     'type': 'Internal Research Data',
                     'description': f'Real-time financial metric for {ticker}' + 
-                                 (f ' (SEDOL: {sedol_id})' if sedol_id else '') + 
+                                 (f' (SEDOL: {sedol_id})' if sedol_id else '') + 
                                  ': Return on Equity',
                     'data_source': 'Eagle API',
                     'company_ticker': ticker,
