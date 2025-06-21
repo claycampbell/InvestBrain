@@ -657,11 +657,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 signalDescription = 'No description available';
             }
             
+            // Process signal name to replace "Eagle:" with badge
+            let displayName = signalName;
+            let eagleBadge = '';
+            
+            if (signalName.startsWith('Eagle:')) {
+                displayName = signalName.replace('Eagle:', '').trim();
+                eagleBadge = '<span class="badge bg-success me-2"><i class="fas fa-eagle"></i> Eagle API</span>';
+            }
+            
             return `
                 <div class="signal-card mb-3 p-3 border rounded bg-light">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="flex-grow-1">
-                            <div class="fw-bold text-primary mb-1">${signalName}</div>
+                            <div class="fw-bold text-primary mb-1">${eagleBadge}${displayName}</div>
                             <div class="signal-description small text-muted mb-2">
                                 ${signalDescription}
                                 ${signalObj.company_ticker ? `<div class="mt-1"><strong>Company:</strong> ${signalObj.company_ticker}${signalObj.sedol_id ? ` (SEDOL: ${signalObj.sedol_id})` : ''}</div>` : ''}
@@ -670,7 +679,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="small text-muted mb-2">
                                 <i class="fas fa-database"></i> Structured financial query
                                 <span class="badge bg-primary ms-2">Level 0</span>
-                                ${signalObj.data_source ? `<span class="badge ${signalObj.data_source === 'Eagle API' ? 'bg-success' : 'bg-info'} ms-1">${signalObj.data_source}</span>` : ''}
+                                ${signalObj.data_source && signalObj.data_source !== 'Eagle API' ? `<span class="badge bg-info ms-1">${signalObj.data_source}</span>` : ''}
                                 ${signalObj.eagle_api ? '<span class="badge bg-warning ms-1"><i class="fas fa-eagle"></i> Real-time</span>' : ''}
                             </div>
                         </div>
