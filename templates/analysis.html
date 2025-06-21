@@ -661,13 +661,18 @@ document.addEventListener('DOMContentLoaded', function() {
             let displayName = signalName;
             let sourceBadge = '';
             
-            if (signalName.startsWith('Eagle:')) {
+            // Debug logging
+            console.log('Processing signal:', signalName, 'Eagle API:', signalObj.eagle_api, 'Data source:', signalObj.data_source);
+            
+            if (signalName && signalName.startsWith('Eagle:')) {
                 displayName = signalName.replace('Eagle:', '').trim();
+                console.log('Replaced Eagle: prefix, new name:', displayName);
             }
             
             // Add source badge for Eagle API signals
-            if (signalObj.eagle_api || signalObj.data_source === 'Eagle API') {
+            if (signalObj.eagle_api === true || signalObj.data_source === 'Eagle API') {
                 sourceBadge = '<span class="badge bg-secondary ms-2">Eagle API</span>';
+                console.log('Added Eagle API badge');
             }
             
             return `
