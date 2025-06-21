@@ -370,7 +370,7 @@ class LocalAnalysisService:
                         
                         metrics.append({
                             "name": f"Eagle: {metric_name}",
-                            "type": "Level_0_Raw_Activity",
+                            "type": "Internal Research Data",
                             "description": f"Real-time financial metric for {identifier_info}: {metric_name}",
                             "frequency": "real-time",
                             "threshold": self._calculate_threshold(float(metric_data.get('value', 0))),
@@ -433,7 +433,7 @@ class LocalAnalysisService:
             eagle_signals = [
                 {
                     'name': f'Eagle: Revenue Growth Rate',
-                    'type': 'Level_0_Raw_Activity',
+                    'type': 'Internal Research Data',
                     'description': f'Real-time financial metric for {ticker}' + 
                                  (f' (SEDOL: {sedol_id})' if sedol_id else '') + 
                                  ': Revenue Growth Rate',
@@ -446,7 +446,7 @@ class LocalAnalysisService:
                 },
                 {
                     'name': f'Eagle: Operating Margin',
-                    'type': 'Level_0_Raw_Activity',
+                    'type': 'Internal Research Data',
                     'description': f'Real-time financial metric for {ticker}' + 
                                  (f' (SEDOL: {sedol_id})' if sedol_id else '') + 
                                  ': Operating Margin',
@@ -459,9 +459,9 @@ class LocalAnalysisService:
                 },
                 {
                     'name': f'Eagle: Return on Equity',
-                    'type': 'Level_0_Raw_Activity',
+                    'type': 'Internal Research Data',
                     'description': f'Real-time financial metric for {ticker}' + 
-                                 (f' (SEDOL: {sedol_id})' if sedol_id else '') + 
+                                 (f ' (SEDOL: {sedol_id})' if sedol_id else '') + 
                                  ': Return on Equity',
                     'data_source': 'Eagle API',
                     'company_ticker': ticker,
