@@ -367,7 +367,7 @@ class LocalAnalysisService:
                         
                         metrics.append({
                             "name": f"Eagle: {metric_name}",
-                            "type": "Eagle_API_Metric",
+                            "type": "Level_0_Raw_Activity",
                             "description": f"Real-time financial metric for {identifier_info}: {metric_name}",
                             "frequency": "real-time",
                             "threshold": self._calculate_threshold(metric_data.get('value', 0)),
@@ -377,7 +377,9 @@ class LocalAnalysisService:
                             "current_value": metric_data.get('value'),
                             "category": metric_data.get('category', 'financial'),
                             "company_ticker": ticker,
-                            "sedol_id": sedol_id
+                            "sedol_id": sedol_id,
+                            "level": "Internal Research Data",
+                            "eagle_api": True
                         })
                 
                 return metrics[:3]

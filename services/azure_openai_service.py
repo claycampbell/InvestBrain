@@ -225,6 +225,11 @@ class AzureOpenAIService:
     def analyze_thesis(self, thesis_text):
         """Analyze an investment thesis using structured prompts with signal extraction focus"""
         
+        # Check for timeout or connection issues - use fallback
+        if not self.client or not self.api_key:
+            logging.warning("Azure OpenAI not configured - using structured fallback")
+            return self._generate_fallback_analysis(thesis_text)
+        
         # TEMPORARY: Static data for testing neural network animation
         if "test" in thesis_text.lower() or len(thesis_text) > 10:
             company_name = self._extract_company_name(thesis_text) or "NVIDIA"
@@ -425,3 +430,27 @@ Respond with valid JSON only:
                 return matches[0].upper()
         
         return None
+
+    def _generate_fallback_analysis(self, thesis_text):
+        """Generate structured analysis when Azure OpenAI is unavailable"""
+        company_name = self._extract_company_name(thesis_text) or "Company"
+        ticker_symbol = self._extract_ticker_symbol(thesis_text) or "TICKER"
+        sedol_id = self._extract_sedol_id(thesis_text) or "0000000"
+        
+        return json.dumps({
+            "core_claim": f"Investment analysis requires Azure OpenAI API key for {company_name}",
+            "core_analysis": "Complete analysis requires authenticated AI service access",
+            "causal_chain": [{"chain_link": 1, "event": "API Authentication", "explanation": "Azure OpenAI credentials needed for analysis"}],
+            "assumptions": ["Valid API credentials will be provided"],
+            "mental_model": "Authentication",
+            "counter_thesis_scenarios": [{"scenario": "Missing credentials", "description": "Analysis cannot proceed", "trigger_conditions": ["No API key"], "data_signals": ["Authentication failure"]}],
+            "metrics_to_track": [{"name": "API Status", "type": "Level_0_Raw_Activity", "description": "Monitor API availability", "frequency": "continuous", "threshold": 1.0, "threshold_type": "above", "data_source": "System", "value_chain_position": "upstream", "company_ticker": ticker_symbol, "sedol_id": sedol_id}],
+            "monitoring_plan": {"objective": "Establish API connection", "data_pulls": [{"category": "System", "metrics": ["API Status"], "data_source": "Azure", "frequency": "continuous"}], "alert_logic": [{"frequency": "immediate", "condition": "API unavailable", "action": "Request credentials"}], "decision_triggers": [{"condition": "Credentials provided", "action": "retry analysis"}], "review_schedule": "Immediate"},
+            "market_sentiment": {"buy_rating": 0, "hold_rating": 0, "sell_rating": 0, "price_target_avg": 0, "price_target_high": 0, "price_target_low": 0, "analyst_count": 0, "momentum_score": 0, "institutional_ownership": 0, "sentiment_trend": "requires_credentials"},
+            "company_identifiers": {
+                "ticker": ticker_symbol,
+                "sedol_id": sedol_id,
+                "company_name": company_name
+            },
+            "error": "Azure OpenAI API key required for complete analysis"
+        })
