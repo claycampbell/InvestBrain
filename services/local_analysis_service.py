@@ -414,6 +414,106 @@ class LocalAnalysisService:
         
         return categories if categories else ['Growth']
     
+    def extract_eagle_signals_for_thesis(self, thesis_text: str) -> List[Dict[str, Any]]:
+        """Extract Eagle API signals for thesis analysis"""
+        try:
+            # Extract company identifiers
+            ticker, sedol_id = self._extract_company_identifiers(thesis_text)
+            
+            if not ticker:
+                return []
+            
+            # Get Eagle API metrics
+            eagle_metrics = self._get_eagle_metrics_for_thesis(ticker, sedol_id or "")
+            
+            # Convert to signal format
+            signals = []
+            for metric in eagle_metrics:
+                signals.append({
+                    'name': f"Eagle: {metric['name']}",
+                    'type': 'Level_0_Raw_Activity',
+                    'description': f"Real-time financial metric for {ticker}" + 
+                                 (f" (SEDOL: {sedol_id})" if sedol_id else "") + 
+                                 f": {metric['name']}",
+                    'data_source': 'Eagle API',
+                    'company_ticker': ticker,
+                    'sedol_id': sedol_id,
+                    'eagle_api': True,
+                    'current_value': str(metric.get('current_value', 'N/A')),
+                    'level': 'Internal Research Data'
+                })
+            
+            return signals
+            
+        except Exception as e:
+            logging.warning(f"Failed to extract Eagle signals: {str(e)}")
+            return []
+    
+    def analyze_thesis_comprehensive(self, thesis_text: str) -> Dict[str, Any]:
+        """Comprehensive local analysis when AI services fail"""
+        try:
+            # Extract company identifiers
+            ticker, sedol_id = self._extract_company_identifiers(thesis_text)
+            
+            # Generate basic analysis structure
+            analysis = {
+                'core_claim': f"Investment thesis analysis for {ticker or 'identified company'}",
+                'core_analysis': 'Local analysis of investment opportunity based on available metrics',
+                'assumptions': [
+                    'Market conditions remain stable',
+                    'Company fundamentals are accurately represented',
+                    'Financial metrics reflect current performance'
+                ],
+                'mental_model': 'Fundamental Analysis',
+                'counter_thesis': {
+                    'scenarios': [
+                        {
+                            'name': 'Market Downturn',
+                            'probability': 0.3,
+                            'impact': 'Negative price pressure despite strong fundamentals'
+                        }
+                    ]
+                },
+                'metrics_to_track': []
+            }
+            
+            # Add Eagle API signals if available
+            eagle_signals = self.extract_eagle_signals_for_thesis(thesis_text)
+            analysis['metrics_to_track'].extend(eagle_signals)
+            
+            # Add basic fallback signals if no Eagle API data
+            if not eagle_signals:
+                basic_signals = [
+                    {
+                        'name': 'Revenue Growth Analysis',
+                        'type': 'Level_1_Signal',
+                        'description': 'Track revenue growth trends',
+                        'data_source': 'Local Analysis',
+                        'level': 'Derived Signals'
+                    },
+                    {
+                        'name': 'Market Position Assessment',
+                        'type': 'Level_2_Signal', 
+                        'description': 'Evaluate competitive positioning',
+                        'data_source': 'Local Analysis',
+                        'level': 'Pattern Recognition'
+                    }
+                ]
+                analysis['metrics_to_track'].extend(basic_signals)
+            
+            return analysis
+            
+        except Exception as e:
+            logging.error(f"Comprehensive analysis failed: {str(e)}")
+            return {
+                'core_claim': 'Analysis temporarily unavailable',
+                'core_analysis': 'Unable to process thesis at this time',
+                'assumptions': [],
+                'mental_model': 'Basic Analysis',
+                'counter_thesis': {'scenarios': []},
+                'metrics_to_track': []
+            }
+    
     def _calculate_threshold(self, current_value: float) -> float:
         """Calculate appropriate threshold based on current value"""
         if current_value > 0:

@@ -161,17 +161,12 @@ def analyze():
                     'data': processed_data
                 })
         
-        # Analyze thesis using reliable service with intelligent fallbacks
-        try:
-            from services.reliable_analysis_service import ReliableAnalysisService
-            reliable_service = ReliableAnalysisService()
-            analysis_result = reliable_service.analyze_thesis(thesis_text)
-        except Exception as ai_error:
-            # Fallback to local analysis if AI service fails
-            logging.warning(f"AI analysis failed, using local fallback: {str(ai_error)}")
-            from services.local_analysis_service import LocalAnalysisService
-            local_service = LocalAnalysisService()
-            analysis_result = local_service.analyze_thesis_local(thesis_text)
+        # Use local analysis with Eagle API integration
+        from services.local_analysis_service import LocalAnalysisService
+        local_service = LocalAnalysisService()
+        
+        # Generate analysis with Eagle API signals
+        analysis_result = local_service.analyze_thesis_comprehensive(thesis_text)
         
         # Extract signals from AI analysis and documents using the classification hierarchy
         signals_result = signal_classifier.extract_signals_from_ai_analysis(
