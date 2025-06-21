@@ -169,13 +169,35 @@ class DataAdapter:
         else:
             result = self.fetch_metric_values(unique_metrics, company_ticker)
         
-        if result.get('success'):
-            # Organize metrics by category for better presentation
-            organized_metrics = self._organize_metrics_by_category(result['metrics'], selector)
-            result['organized_metrics'] = organized_metrics
+        # Process Eagle API response (either real or test data)
+        if result and 'data' in result and 'financialMetrics' in result['data']:
+            # Extract metrics from Eagle API response structure
+            financial_metrics = result['data']['financialMetrics']
+            if financial_metrics and len(financial_metrics) > 0:
+                metrics_data = financial_metrics[0].get('metrics', [])
+                
+                # Convert to expected format
+                processed_metrics = {}
+                for metric in metrics_data[:5]:  # Limit to first 5 metrics
+                    metric_name = metric.get('name', 'unknown_metric')
+                    processed_metrics[metric_name] = {
+                        'value': metric.get('value'),
+                        'category': metric.get('category', 'financial')
+                    }
+                
+                result = {
+                    'success': True,
+                    'metrics': processed_metrics,
+                    'company_ticker': company_ticker,
+                    'sedol_id': sedol_id
+                }
+            else:
+                result = {'success': False, 'error': 'No metrics found in response'}
+        elif result and result.get('success'):
+            # Handle already processed format
             result['company_ticker'] = company_ticker
             result['sedol_id'] = sedol_id
-            
+        
         return result
     
     def _organize_metrics_by_category(self, metrics: Dict[str, Any], selector: 'MetricSelector') -> Dict[str, Dict[str, Any]]:
