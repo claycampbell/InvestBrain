@@ -1307,6 +1307,40 @@ def internal_data_analysis():
     """Internal data analysis dashboard page"""
     return render_template('internal_data_analysis.html')
 
+@app.route('/api/test-eagle-response')
+def test_eagle_response():
+    """Test endpoint to validate Eagle API response schema for frontend"""
+    try:
+        ticker = request.args.get('ticker', 'NVDA')
+        sedol_id = request.args.get('sedol_id', '2379504')
+        
+        data_adapter = DataAdapter()
+        test_response = data_adapter.get_test_eagle_response(
+            company_ticker=ticker,
+            sedol_id=sedol_id
+        )
+        
+        # Validate response schema
+        is_valid = data_adapter.test_api.validate_response_schema(test_response)
+        
+        return jsonify({
+            'test_response': test_response,
+            'schema_valid': is_valid,
+            'company_identifier': {
+                'ticker': ticker,
+                'sedol_id': sedol_id
+            },
+            'metrics_count': len(test_response.get('data', {}).get('financialMetrics', [{}])[0].get('metrics', [])),
+            'note': 'This is a test response matching Eagle API schema for frontend validation'
+        })
+        
+    except Exception as e:
+        logging.error(f"Eagle API test response failed: {str(e)}")
+        return jsonify({
+            'error': f'Test response generation failed: {str(e)}',
+            'schema_valid': False
+        })
+
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('404.html'), 404

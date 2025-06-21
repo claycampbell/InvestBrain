@@ -8,6 +8,7 @@ import os
 import logging
 import json
 from datetime import datetime
+from .test_eagle_api_responses import TestEagleAPIResponses
 
 if TYPE_CHECKING:
     from services.metric_selector import MetricSelector
@@ -18,6 +19,7 @@ class DataAdapter:
     def __init__(self):
         self.eagle_url = "https://eagle-gamma.capgroup.com/svc-backend/graphql"
         self.token = os.getenv('AZURE_OPENAI_TOKEN')
+        self.test_api = TestEagleAPIResponses()
         self.headers = {
             'Authorization': f'Bearer {self.token}',
             'Content-Type': 'application/json',
@@ -130,6 +132,10 @@ class DataAdapter:
         """
         
         return self.execute_query(query)
+    
+    def get_test_eagle_response(self, company_ticker: str = None, sedol_id: str = None) -> Dict[str, Any]:
+        """Get test response matching Eagle API schema for frontend validation"""
+        return self.test_api.get_test_response_for_company(ticker=company_ticker, sedol_id=sedol_id)
     
     def fetch_company_metrics(self, company_ticker: str, metric_categories: List[str] = None, sedol_id: str = None) -> Dict[str, Any]:
         """Fetch comprehensive metrics for a company using ticker and optional SEDOL ID"""
