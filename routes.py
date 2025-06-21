@@ -161,12 +161,34 @@ def analyze():
                     'data': processed_data
                 })
         
-        # Use local analysis with Eagle API integration
+        # Use Azure OpenAI for dynamic analysis with Eagle API integration
+        from services.azure_openai_service import AzureOpenAIService
         from services.local_analysis_service import LocalAnalysisService
-        local_service = LocalAnalysisService()
         
-        # Generate analysis with Eagle API signals
-        analysis_result = local_service.analyze_thesis_comprehensive(thesis_text)
+        try:
+            # Try Azure OpenAI first for authentic analysis
+            azure_service = AzureOpenAIService()
+            analysis_response = azure_service.analyze_thesis(thesis_text)
+            
+            # Parse JSON response from Azure OpenAI
+            if isinstance(analysis_response, str):
+                analysis_result = json.loads(analysis_response)
+            else:
+                analysis_result = analysis_response
+            
+            # Add Eagle API signals to the Azure analysis
+            local_service = LocalAnalysisService()
+            eagle_signals = local_service.extract_eagle_signals_for_thesis(thesis_text)
+            if eagle_signals:
+                if 'metrics_to_track' not in analysis_result:
+                    analysis_result['metrics_to_track'] = []
+                analysis_result['metrics_to_track'].extend(eagle_signals)
+                
+        except Exception as e:
+            logging.warning(f"Azure OpenAI unavailable, using fallback: {str(e)}")
+            # Fallback to local analysis only if Azure OpenAI fails
+            local_service = LocalAnalysisService()
+            analysis_result = local_service.analyze_thesis_comprehensive(thesis_text)
         
         # Extract signals from AI analysis and documents using the classification hierarchy
         signals_result = signal_classifier.extract_signals_from_ai_analysis(
