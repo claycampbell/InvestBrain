@@ -7,22 +7,23 @@ from config import Config
 class AzureOpenAIService:
     def __init__(self):
         self.client = None
+        self.api_key = None
         self.deployment_name = Config.AZURE_OPENAI_DEPLOYMENT_NAME
         self._initialize_client()
     
     def _initialize_client(self):
         """Initialize the Azure OpenAI client"""
         try:
-            api_key = Config.AZURE_OPENAI_API_KEY
+            self.api_key = Config.AZURE_OPENAI_API_KEY
             endpoint = Config.AZURE_OPENAI_ENDPOINT
             api_version = Config.AZURE_OPENAI_API_VERSION
             
-            if not api_key or not endpoint:
+            if not self.api_key or not endpoint:
                 logging.error("Azure OpenAI credentials not found in environment variables")
                 return
             
             self.client = AzureOpenAI(
-                api_key=api_key,
+                api_key=self.api_key,
                 api_version=api_version,
                 azure_endpoint=endpoint,
                 timeout=120.0,  # Increased timeout
