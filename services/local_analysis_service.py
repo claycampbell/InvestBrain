@@ -1,7 +1,7 @@
 import logging
 import json
 import re
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional, Tuple
 from services.data_adapter_service import DataAdapter
 from services.metric_selector import MetricSelector
 
@@ -307,29 +307,32 @@ class LocalAnalysisService:
             "sentiment_trend": "positive"
         }
     
-    def _extract_company_identifiers(self, thesis_text: str) -> Dict[str, List[str]]:
-        """Extract company ticker symbols and SEDOL IDs from thesis text"""
-        # Ticker patterns
+    def _extract_company_identifiers(self, thesis_text: str) -> Tuple[Optional[str], Optional[str]]:
+        """Extract primary company ticker and SEDOL ID from thesis text"""
+        import re
+        
+        # Enhanced ticker patterns including company names with tickers
         ticker_patterns = [
-            r'\b[A-Z]{1,5}\b',  # 1-5 uppercase letters
-            r'\$[A-Z]{1,5}\b',  # With dollar sign prefix
-            r'\([A-Z]{1,5}\)',  # In parentheses
+            r'\b([A-Z]{2,5})\b(?=\s|\)|\])',  # 2-5 uppercase letters
+            r'\$([A-Z]{2,5})\b',  # With dollar sign prefix
+            r'\(([A-Z]{2,5})\)',  # In parentheses (common format)
+            r'ticker:\s*([A-Z]{2,5})',  # ticker: prefix
+            r'symbol:\s*([A-Z]{2,5})',  # symbol: prefix
         ]
         
         # SEDOL patterns (7 characters: 6 alphanumeric + 1 check digit)
         sedol_patterns = [
-            r'\bSEDOL:\s*([A-Z0-9]{7})\b',  # SEDOL: prefix
-            r'\b([A-Z0-9]{7})\b',  # 7 alphanumeric characters
+            r'SEDOL:\s*([A-Z0-9]{7})\b',  # SEDOL: prefix
             r'SEDOL\s+([A-Z0-9]{7})',  # SEDOL space prefix
         ]
         
         tickers = []
         sedols = []
         
-        # Extract tickers
+        # Extract tickers with enhanced matching
         for pattern in ticker_patterns:
-            matches = re.findall(pattern, thesis_text)
-            tickers.extend([match.replace('$', '').replace('(', '').replace(')', '') for match in matches])
+            matches = re.findall(pattern, thesis_text, re.IGNORECASE)
+            tickers.extend([match.upper() for match in matches])
         
         # Extract SEDOLs
         for pattern in sedol_patterns:
@@ -337,18 +340,20 @@ class LocalAnalysisService:
             sedols.extend(matches)
         
         # Filter out common words from tickers
-        exclude_words = {'THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'CAN', 'HER', 'WAS', 'ONE', 'OUR', 'HAD', 'BUT', 'HAS'}
+        exclude_words = {'THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'CAN', 'HER', 'WAS', 'ONE', 'OUR', 'HAD', 'HAS', 'WHO', 'HOW', 'WHY', 'GET', 'SET', 'NEW', 'OLD', 'NOW', 'DAY', 'WAY', 'USE', 'MAN', 'MAY', 'SAY', 'SEE', 'HIM', 'TWO', 'SHE', 'ITS', 'OUT', 'WHO', 'OIL', 'GAS', 'TOP', 'END', 'BIG', 'KEY', 'BAD', 'LOW', 'HIGH', 'GOOD', 'BEST', 'NEXT', 'LAST', 'LONG', 'MORE', 'LESS', 'SAME', 'MAIN', 'REAL', 'FULL', 'TRUE', 'FALSE', 'YES', 'NO'}
+        
         valid_tickers = [ticker for ticker in tickers if ticker not in exclude_words and len(ticker) >= 2]
         
-        return {
-            'tickers': list(set(valid_tickers)),
-            'sedols': list(set(sedols))
-        }
+        # Return first valid ticker and SEDOL
+        primary_ticker = valid_tickers[0] if valid_tickers else None
+        primary_sedol = sedols[0] if sedols else None
+        
+        return primary_ticker, primary_sedol
 
     def _extract_company_tickers(self, thesis_text: str) -> List[str]:
         """Legacy method for backward compatibility"""
-        identifiers = self._extract_company_identifiers(thesis_text)
-        return identifiers['tickers']
+        ticker, _ = self._extract_company_identifiers(thesis_text)
+        return [ticker] if ticker else []
     
     def _get_eagle_metrics_for_thesis(self, ticker: str, thesis_text: str, sedol_id: str = None) -> List[Dict[str, Any]]:
         """Get relevant Eagle API metrics based on thesis content and company identifiers"""
