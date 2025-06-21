@@ -663,16 +663,23 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="fw-bold text-primary mb-1">${signalName}</div>
                             <div class="signal-description small text-muted mb-2">
                                 ${signalDescription}
+                                ${signal.company_ticker ? `<div class="mt-1"><strong>Company:</strong> ${signal.company_ticker}${signal.sedol_id ? ` (SEDOL: ${signal.sedol_id})` : ''}</div>` : ''}
+                                ${signal.current_value ? `<div class="mt-1"><strong>Current Value:</strong> <span class="text-success">${signal.current_value}</span></div>` : ''}
                             </div>
                             <div class="small text-muted mb-2">
                                 <i class="fas fa-database"></i> Structured financial query
                                 <span class="badge bg-primary ms-2">Level 0</span>
+                                ${signal.data_source ? `<span class="badge ${signal.data_source === 'Eagle API' ? 'bg-success' : 'bg-info'} ms-1">${signal.data_source}</span>` : ''}
+                                ${signal.eagle_api ? '<span class="badge bg-warning ms-1"><i class="fas fa-eagle"></i> Real-time</span>' : ''}
                             </div>
                         </div>
                         <div class="flex-shrink-0">
                             <button class="btn btn-sm btn-outline-primary validate-data-btn" 
                                     data-signal-name="${signalName}" 
                                     data-signal-id="${signalId}"
+                                    data-signal-source="${signal.data_source || 'Unknown'}"
+                                    data-company-ticker="${signal.company_ticker || ''}"
+                                    data-sedol-id="${signal.sedol_id || ''}"
                                     onclick="initiateValidation('${signalName}', '${signalId}')">
                                 <i class="fas fa-check-circle"></i> Validate Data
                             </button>
