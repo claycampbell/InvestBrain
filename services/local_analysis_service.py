@@ -179,11 +179,9 @@ class LocalAnalysisService:
         text_lower = thesis_text.lower()
         
         # Extract company identifiers and get Eagle API metrics
-        company_identifiers = self._extract_company_identifiers(thesis_text)
-        if company_identifiers['tickers']:
-            ticker = company_identifiers['tickers'][0]
-            sedol = company_identifiers['sedols'][0] if company_identifiers['sedols'] else None
-            eagle_metrics = self._get_eagle_metrics_for_thesis(ticker, thesis_text, sedol)
+        ticker, sedol = self._extract_company_identifiers(thesis_text)
+        if ticker:
+            eagle_metrics = self._get_eagle_metrics_for_thesis(ticker, thesis_text, sedol or "")
             metrics.extend(eagle_metrics)
         
         if 'revenue' in text_lower or 'growth' in text_lower:

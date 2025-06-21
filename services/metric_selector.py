@@ -34,11 +34,23 @@ class MetricSelector:
     
     def get_metrics_by_category(self, category: str) -> Dict[str, Any]:
         """Get all metrics within a specific category"""
-        if not self.metric_dict or category not in self.metric_dict.get('metric_categories', {}):
-            logging.error(f"Unknown category: {category}")
+        # Map simplified category names to full metric dictionary keys
+        category_mapping = {
+            'Growth': 'growth_metrics',
+            'Profitability': 'profitability_metrics', 
+            'Valuation': 'valuation_metrics',
+            'Risk': 'risk_metrics',
+            'Market': 'market_metrics'
+        }
+        
+        # Use mapping if available, otherwise use category as-is
+        mapped_category = category_mapping.get(category, category)
+        
+        if not self.metric_dict or mapped_category not in self.metric_dict.get('metric_categories', {}):
+            logging.error(f"Unknown category: {category} (mapped to: {mapped_category})")
             return {}
             
-        return self.metric_dict['metric_categories'][category]
+        return self.metric_dict['metric_categories'][mapped_category]
     
     def find_metrics_by_use_case(self, use_case: str) -> List[Dict[str, Any]]:
         """Find metrics that support a specific use case"""
