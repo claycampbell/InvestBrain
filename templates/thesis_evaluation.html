@@ -78,6 +78,56 @@
             padding: 2rem;
             margin-bottom: 2rem;
         }
+        
+        /* Responsive adjustments for multi-column layout */
+        @media (max-width: 1199px) {
+            .col-lg-4, .col-lg-5, .col-lg-3 {
+                margin-bottom: 1rem;
+            }
+            .radar-chart {
+                height: 350px;
+            }
+        }
+        
+        @media (max-width: 991px) {
+            .col-lg-4, .col-lg-5, .col-lg-3 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+            .radar-chart {
+                height: 300px;
+            }
+        }
+        
+        @media (max-width: 767px) {
+            .thesis-meta {
+                padding: 1.5rem;
+            }
+            .strength-indicator {
+                font-size: 1.5rem;
+            }
+            .evaluation-card {
+                margin-bottom: 1rem;
+            }
+        }
+        
+        /* Grid layout optimizations */
+        .evaluation-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        @media (min-width: 1200px) {
+            .evaluation-grid {
+                grid-template-columns: 1fr 1.3fr 0.8fr;
+            }
+        }
+        
+        @media (min-width: 992px) and (max-width: 1199px) {
+            .evaluation-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -136,11 +186,13 @@
             </div>
         </div>
 
-        <!-- Evaluation Results -->
+        <!-- Main Dashboard Grid -->
         <div class="row" id="evaluationContent" style="display: none;">
-            <!-- Strength Overview -->
-            <div class="col-md-4 mb-4">
-                <div class="evaluation-card card h-100">
+            
+            <!-- Left Column: Scores & Analysis -->
+            <div class="col-lg-4">
+                <!-- Strength Overview -->
+                <div class="evaluation-card card mb-4">
                     <div class="card-body">
                         <h5 class="card-title">
                             <i class="fas fa-chart-line text-primary me-2"></i>
@@ -166,11 +218,9 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Quality Assessment -->
-            <div class="col-md-4 mb-4">
-                <div class="evaluation-card card h-100">
+                <!-- Quality Assessment -->
+                <div class="evaluation-card card mb-4">
                     <div class="card-body">
                         <h5 class="card-title">
                             <i class="fas fa-microscope text-success me-2"></i>
@@ -196,11 +246,9 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Key Metrics -->
-            <div class="col-md-4 mb-4">
-                <div class="evaluation-card card h-100">
+                <!-- Dimension Scores -->
+                <div class="evaluation-card card mb-4">
                     <div class="card-body">
                         <h5 class="card-title">
                             <i class="fas fa-tachometer-alt text-warning me-2"></i>
@@ -212,13 +260,11 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Detailed Analysis -->
-        <div class="row" id="detailedAnalysis" style="display: none;">
-            <div class="col-md-6 mb-4">
+            <!-- Center Column: Radar Chart & Insights -->
+            <div class="col-lg-5">
                 <!-- Radar Chart -->
-                <div class="evaluation-card card">
+                <div class="evaluation-card card mb-4">
                     <div class="card-body">
                         <h5 class="card-title">
                             <i class="fas fa-radar text-info me-2"></i>
@@ -227,11 +273,9 @@
                         <div id="radarChart" class="radar-chart"></div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-md-6 mb-4">
                 <!-- Key Insights -->
-                <div class="evaluation-card card">
+                <div class="evaluation-card card mb-4">
                     <div class="card-body">
                         <h5 class="card-title">
                             <i class="fas fa-lightbulb text-warning me-2"></i>
@@ -258,26 +302,24 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Recommendations -->
-        <div class="row" id="recommendationsSection" style="display: none;">
-            <div class="col-md-6 mb-4">
-                <div class="evaluation-card card">
+            <!-- Right Column: Recommendations & Actions -->
+            <div class="col-lg-3">
+                <!-- Improvement Recommendations -->
+                <div class="evaluation-card card mb-4">
                     <div class="card-body">
                         <h5 class="card-title">
                             <i class="fas fa-arrow-up text-success me-2"></i>
-                            Improvement Recommendations
+                            Improvements
                         </h5>
                         <div id="improvementRecommendations">
                             <!-- Populated by JavaScript -->
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-md-6 mb-4">
-                <div class="evaluation-card card">
+                <!-- Research Gaps -->
+                <div class="evaluation-card card mb-4">
                     <div class="card-body">
                         <h5 class="card-title">
                             <i class="fas fa-search text-warning me-2"></i>
@@ -288,13 +330,9 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Risk Factors & Actions -->
-        <div class="row" id="actionableSection" style="display: none;">
-            <div class="col-md-6 mb-4">
-                <div class="evaluation-card card">
+                <!-- Risk Factors -->
+                <div class="evaluation-card card mb-4">
                     <div class="card-body">
                         <h5 class="card-title">
                             <i class="fas fa-shield-alt text-danger me-2"></i>
@@ -305,14 +343,13 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-md-6 mb-4">
-                <div class="evaluation-card card">
+                <!-- Actionable Insights -->
+                <div class="evaluation-card card mb-4">
                     <div class="card-body">
                         <h5 class="card-title">
                             <i class="fas fa-tasks text-primary me-2"></i>
-                            Actionable Insights
+                            Actions
                         </h5>
                         <div id="actionableInsights">
                             <!-- Populated by JavaScript -->
@@ -409,11 +446,8 @@
             // Display insights
             displayInsights(strength);
             
-            // Show all sections
+            // Show the main dashboard
             document.getElementById('evaluationContent').style.display = 'block';
-            document.getElementById('detailedAnalysis').style.display = 'block';
-            document.getElementById('recommendationsSection').style.display = 'block';
-            document.getElementById('actionableSection').style.display = 'block';
         }
 
         function displayDimensionScores(scores) {
@@ -564,9 +598,6 @@
         function refreshEvaluation() {
             document.getElementById('loadingOverlay').style.display = 'flex';
             document.getElementById('evaluationContent').style.display = 'none';
-            document.getElementById('detailedAnalysis').style.display = 'none';
-            document.getElementById('recommendationsSection').style.display = 'none';
-            document.getElementById('actionableSection').style.display = 'none';
             loadEvaluationData();
         }
     </script>
