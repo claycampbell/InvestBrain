@@ -121,10 +121,14 @@
                                                 {% set signal_count = thesis.signals|length %}
                                                 <span class="badge bg-success">{{ signal_count }} signals</span>
                                             </div>
-                                            <div class="d-grid">
+                                            <div class="d-grid gap-2">
                                                 <a href="{{ url_for('monitor_thesis', id=thesis.id) }}" 
                                                    class="btn btn-primary">
                                                     <i class="fas fa-chart-line"></i> View Monitoring Dashboard
+                                                </a>
+                                                <a href="{{ url_for('thesis_evaluation_page', thesis_id=thesis.id) }}" 
+                                                   class="btn btn-outline-success">
+                                                    <i class="fas fa-microscope"></i> Strength Analysis
                                                 </a>
                                             </div>
                                         </div>
