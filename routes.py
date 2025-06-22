@@ -16,6 +16,7 @@ from services.alternative_company_service import AlternativeCompanyService
 from services.metric_selector import MetricSelector
 from services.data_adapter_service import DataAdapter
 from services.analysis_workflow_service import AnalysisWorkflowService
+from services.thesis_evaluator import ThesisEvaluator
 from config import Config
 
 # Initialize services
@@ -30,6 +31,7 @@ alternative_company_service = AlternativeCompanyService()
 metric_selector = MetricSelector()
 data_adapter = DataAdapter()
 analysis_workflow_service = AnalysisWorkflowService()
+thesis_evaluator = ThesisEvaluator()
 
 def save_thesis_analysis(thesis_text, analysis_result, signals_result):
     """Save completed analysis to database for monitoring"""
@@ -1355,6 +1357,79 @@ def test_eagle_response():
             'error': f'Test response generation failed: {str(e)}',
             'schema_valid': False
         })
+
+@app.route('/evaluate_thesis/<int:thesis_id>')
+def evaluate_thesis_strength(thesis_id):
+    """
+    Comprehensive thesis evaluation and strength analysis
+    """
+    try:
+        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        
+        # Get thesis data for evaluation
+        thesis_data = {
+            'core_claim': thesis.core_claim,
+            'core_analysis': thesis.core_analysis,
+            'assumptions': thesis.assumptions or [],
+            'causal_chain': thesis.causal_chain or [],
+            'counter_thesis': thesis.counter_thesis or [],
+            'metrics_to_track': thesis.metrics_to_track or [],
+            'mental_model': thesis.mental_model
+        }
+        
+        # Get document count for research quality assessment
+        document_count = DocumentUpload.query.filter_by(thesis_analysis_id=thesis_id).count()
+        
+        # Count Eagle API signals
+        eagle_signal_count = 0
+        if thesis.metrics_to_track:
+            for metric in thesis.metrics_to_track:
+                if isinstance(metric, dict) and metric.get('eagle_api'):
+                    eagle_signal_count += 1
+        
+        # Run comprehensive evaluation
+        strength_evaluation = thesis_evaluator.evaluate_thesis_strength(thesis_data)
+        quality_assessment = thesis_evaluator.generate_research_quality_score(
+            thesis_data, document_count, eagle_signal_count
+        )
+        
+        return jsonify({
+            'thesis_evaluation': {
+                'id': thesis_id,
+                'title': thesis.title,
+                'created_at': thesis.created_at.isoformat(),
+                'strength_analysis': strength_evaluation,
+                'quality_assessment': quality_assessment,
+                'metadata': {
+                    'document_count': document_count,
+                    'eagle_signals': eagle_signal_count,
+                    'total_metrics': len(thesis.metrics_to_track or []),
+                    'mental_model': thesis.mental_model
+                }
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"Thesis evaluation failed for ID {thesis_id}: {str(e)}")
+        return jsonify({
+            'error': f'Evaluation failed: {str(e)}',
+            'thesis_id': thesis_id
+        }), 500
+
+@app.route('/thesis_evaluation/<int:thesis_id>')
+def thesis_evaluation_page(thesis_id):
+    """
+    Thesis evaluation dashboard page
+    """
+    try:
+        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        return render_template('thesis_evaluation.html', 
+                             thesis=thesis, 
+                             thesis_id=thesis_id)
+    except Exception as e:
+        logging.error(f"Thesis evaluation page failed: {str(e)}")
+        flash('Unable to load thesis evaluation page', 'error')
+        return redirect(url_for('monitoring_dashboard'))
 
 @app.errorhandler(404)
 def not_found_error(error):
