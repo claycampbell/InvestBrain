@@ -320,10 +320,166 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Causal Chain Analysis -->
+                <div class="evaluation-card card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-link text-primary me-2"></i>
+                            Causal Chain Analysis
+                        </h5>
+                        <div id="causalChain">
+                            {% if thesis.causal_chain %}
+                                {% for step in thesis.causal_chain %}
+                                    <div class="causal-step border rounded p-3 mb-2 bg-light">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="badge bg-primary me-2">Step {{ loop.index }}</span>
+                                            <strong>{{ step.step_name if step.step_name else 'Analysis Step' }}</strong>
+                                        </div>
+                                        <p class="small mb-1">{{ step.description if step.description else step }}</p>
+                                        {% if step.evidence %}
+                                            <div class="mt-2">
+                                                <small class="text-muted"><strong>Evidence:</strong> {{ step.evidence }}</small>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted">No causal chain analysis available</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Counter-Thesis & Risk Scenarios -->
+                <div class="evaluation-card card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-balance-scale text-warning me-2"></i>
+                            Counter-Thesis & Risk Analysis
+                        </h5>
+                        
+                        {% if thesis.counter_thesis %}
+                            <div class="mb-4">
+                                <h6 class="text-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Counter-Thesis Scenarios
+                                </h6>
+                                {% for scenario in thesis.counter_thesis %}
+                                    <div class="risk-scenario border rounded p-3 mb-3 bg-warning bg-opacity-10">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <strong class="text-warning">{{ scenario.scenario_name if scenario.scenario_name else 'Risk Scenario' }}</strong>
+                                            {% if scenario.probability %}
+                                                <span class="badge bg-warning text-dark">{{ scenario.probability }}% probability</span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="small mb-2">{{ scenario.description if scenario.description else scenario }}</p>
+                                        {% if scenario.impact %}
+                                            <div class="mt-2">
+                                                <small class="text-muted"><strong>Potential Impact:</strong> {{ scenario.impact }}</small>
+                                            </div>
+                                        {% endif %}
+                                        {% if scenario.mitigation %}
+                                            <div class="mt-2">
+                                                <small class="text-success"><strong>Mitigation:</strong> {{ scenario.mitigation }}</small>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No counter-thesis analysis available</p>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
 
             <!-- Right Column: Recommendations & Actions -->
             <div class="evaluation-column">
+                <!-- Key Assumptions -->
+                <div class="evaluation-card card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-lightbulb text-info me-2"></i>
+                            Key Assumptions
+                        </h5>
+                        <div id="keyAssumptions">
+                            {% if thesis.assumptions %}
+                                {% for assumption in thesis.assumptions %}
+                                    <div class="assumption-item border rounded p-3 mb-2 bg-info bg-opacity-10">
+                                        <div class="d-flex align-items-start">
+                                            <i class="fas fa-arrow-right text-info me-2 mt-1"></i>
+                                            <div class="flex-grow-1">
+                                                <p class="small mb-1">{{ assumption.description if assumption.description else assumption }}</p>
+                                                {% if assumption.confidence %}
+                                                    <small class="text-muted">Confidence: {{ assumption.confidence }}%</small>
+                                                {% endif %}
+                                                {% if assumption.criticality %}
+                                                    <span class="badge bg-{{ 'danger' if assumption.criticality == 'High' else 'warning' if assumption.criticality == 'Medium' else 'success' }} ms-2">
+                                                        {{ assumption.criticality }} Impact
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted">No key assumptions documented</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monitoring Plan -->
+                <div class="evaluation-card card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-line text-success me-2"></i>
+                            Monitoring Plan
+                        </h5>
+                        <div id="monitoringPlan">
+                            {% if thesis.monitoring_plan %}
+                                <div class="monitoring-overview mb-3">
+                                    {% if thesis.monitoring_plan.objective %}
+                                        <div class="mb-2">
+                                            <small class="text-muted d-block"><strong>Objective:</strong></small>
+                                            <p class="small">{{ thesis.monitoring_plan.objective }}</p>
+                                        </div>
+                                    {% endif %}
+                                    {% if thesis.monitoring_plan.frequency %}
+                                        <div class="mb-2">
+                                            <small class="text-muted"><strong>Review Frequency:</strong> {{ thesis.monitoring_plan.frequency }}</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if thesis.monitoring_plan.data_pulls %}
+                                    <div class="data-pulls">
+                                        <h6 class="small text-success mb-2">Key Data Sources:</h6>
+                                        {% for pull in thesis.monitoring_plan.data_pulls %}
+                                            <div class="data-pull-item bg-light border rounded p-2 mb-2">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div>
+                                                        <strong class="small">{{ pull.category if pull.category else 'Data Source' }}</strong>
+                                                        <div class="text-muted small">{{ pull.data_source if pull.data_source else 'Internal' }}</div>
+                                                    </div>
+                                                    <span class="badge bg-secondary small">{{ pull.frequency if pull.frequency else 'Regular' }}</span>
+                                                </div>
+                                                {% if pull.metrics %}
+                                                    <div class="mt-1">
+                                                        <small class="text-muted">Metrics: {{ pull.metrics|join(', ') if pull.metrics is iterable else pull.metrics }}</small>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <p class="text-muted">No monitoring plan established</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Improvement Recommendations -->
                 <div class="evaluation-card card mb-4">
                     <div class="card-body">
