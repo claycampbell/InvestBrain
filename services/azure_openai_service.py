@@ -236,11 +236,11 @@ class AzureOpenAIService:
             messages = [
                 {
                     "role": "system",
-                    "content": "You are an expert investment analyst. Analyze the investment thesis and return a detailed JSON response with core_claim, core_analysis, causal_chain, assumptions, mental_model, counter_thesis_scenarios, metrics_to_track, and monitoring_plan."
+                    "content": "You are an investment analyst. Return a concise JSON response with: core_claim (1 sentence), core_analysis (2-3 sentences), assumptions (3 items), mental_model (1 word), metrics_to_track (empty array), monitoring_plan (1 sentence). Be brief and fast."
                 },
                 {
                     "role": "user", 
-                    "content": f"Analyze this investment thesis: {thesis_text}"
+                    "content": f"Analyze: {thesis_text}"
                 }
             ]
             
