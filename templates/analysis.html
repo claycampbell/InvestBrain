@@ -686,6 +686,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="small text-muted mb-2">
                                 <i class="fas fa-database"></i> Structured financial query
                                 <span class="badge bg-primary ms-2">Level 0</span>
+                                ${signalObj.eagle_api ? '<span class="badge bg-secondary ms-1">Eagle API</span>' : ''}
                                 ${signalObj.eagle_api ? '<span class="badge bg-warning ms-1"><i class="fas fa-eagle"></i> Real-time</span>' : ''}
                             </div>
                         </div>
