@@ -171,11 +171,8 @@ def analyze():
             azure_service = AzureOpenAIService()
             analysis_response = azure_service.analyze_thesis(thesis_text)
             
-            # Parse JSON response from Azure OpenAI
-            if isinstance(analysis_response, str):
-                analysis_result = json.loads(analysis_response)
-            else:
-                analysis_result = analysis_response
+            # Azure OpenAI now returns parsed JSON object directly
+            analysis_result = analysis_response
             
             # Add Eagle API signals to the Azure analysis
             local_service = LocalAnalysisService()

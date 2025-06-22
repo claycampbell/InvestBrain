@@ -250,17 +250,18 @@ class AzureOpenAIService:
             if isinstance(response, str):
                 try:
                     parsed_response = json.loads(response)
-                    return response
+                    # Return the parsed JSON object, not the string
+                    return parsed_response
                 except json.JSONDecodeError:
                     # If response isn't valid JSON, wrap it
                     company_name = self._extract_company_name(thesis_text) or "the company"
-                    return json.dumps({
+                    return {
                         "core_claim": f"Investment analysis for {company_name}",
                         "core_analysis": response[:500],
                         "assumptions": ["Market conditions remain stable"],
                         "mental_model": "Fundamental Analysis",
                         "metrics_to_track": []
-                    })
+                    }
             
         except Exception as e:
             logging.error(f"Azure OpenAI analysis failed: {str(e)}")
