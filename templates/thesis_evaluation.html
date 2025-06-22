@@ -79,30 +79,30 @@
             margin-bottom: 2rem;
         }
         
-        /* Force multi-column layout */
+        /* Force CSS Grid Layout */
+        .evaluation-content {
+            display: grid !important;
+            gap: 1.5rem;
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+        
+        .evaluation-column {
+            display: block !important;
+            min-height: 1px;
+        }
+        
         @media (min-width: 1200px) {
-            .evaluation-content .col-lg-4 {
-                flex: 0 0 33.333333%;
-                max-width: 33.333333%;
-            }
-            .evaluation-content .col-lg-5 {
-                flex: 0 0 41.666667%;
-                max-width: 41.666667%;
-            }
-            .evaluation-content .col-lg-3 {
-                flex: 0 0 25%;
-                max-width: 25%;
+            .evaluation-content {
+                grid-template-columns: 1fr 1.3fr 0.8fr;
             }
         }
         
         @media (min-width: 992px) and (max-width: 1199px) {
-            .evaluation-content .col-md-6 {
-                flex: 0 0 50%;
-                max-width: 50%;
+            .evaluation-content {
+                grid-template-columns: 1fr 1fr;
             }
-            .evaluation-content .col-md-12 {
-                flex: 0 0 100%;
-                max-width: 100%;
+            .evaluation-content > div:nth-child(3) {
+                grid-column: 1 / -1;
             }
             .radar-chart {
                 height: 350px;
@@ -110,13 +110,8 @@
         }
         
         @media (max-width: 991px) {
-            .evaluation-content .col-lg-4, 
-            .evaluation-content .col-lg-5, 
-            .evaluation-content .col-lg-3,
-            .evaluation-content .col-md-6,
-            .evaluation-content .col-md-12 {
-                flex: 0 0 100%;
-                max-width: 100%;
+            .evaluation-content {
+                grid-template-columns: 1fr;
             }
             .radar-chart {
                 height: 300px;
@@ -211,10 +206,10 @@
         </div>
 
         <!-- Main Dashboard Grid -->
-        <div class="row evaluation-content" id="evaluationContent" style="display: none;">
+        <div class="evaluation-content" id="evaluationContent" style="display: none;">
             
             <!-- Left Column: Scores & Analysis -->
-            <div class="col-lg-4 col-md-6">
+            <div class="evaluation-column">
                 <!-- Strength Overview -->
                 <div class="evaluation-card card mb-4">
                     <div class="card-body">
@@ -286,7 +281,7 @@
             </div>
 
             <!-- Center Column: Radar Chart & Insights -->
-            <div class="col-lg-5 col-md-6">
+            <div class="evaluation-column">
                 <!-- Radar Chart -->
                 <div class="evaluation-card card mb-4">
                     <div class="card-body">
@@ -328,7 +323,7 @@
             </div>
 
             <!-- Right Column: Recommendations & Actions -->
-            <div class="col-lg-3 col-md-12">
+            <div class="evaluation-column">
                 <!-- Improvement Recommendations -->
                 <div class="evaluation-card card mb-4">
                     <div class="card-body">
