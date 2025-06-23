@@ -202,7 +202,21 @@ Return a JSON object with this exact structure:
     "Monitor quarterly revenue growth acceleration as primary success indicator",
     "Track competitive market share data monthly",
     "Set stop-loss at 15% below entry price if growth thesis breaks down"
-  ]
+  ],
+  "market_sentiment": {
+    "analyst_consensus": "Mixed to Positive",
+    "consensus_score": "Buy",
+    "price_target": "$285 avg (Range: $180-$420)",
+    "upside_potential": "+15%",
+    "key_themes": [
+      "Autonomous driving leadership remains key differentiator",
+      "Regulatory approval timeline uncertainty affects valuation",
+      "Competition intensifying but Tesla maintains data advantage",
+      "Market expects significant robotaxi revenue by 2026-2027"
+    ],
+    "sell_side_view": "Cautiously optimistic on long-term prospects",
+    "institutional_positioning": "Mixed - growth funds overweight, value funds underweight"
+  }
 }}
 
 Provide rigorous, institutional-quality analysis that would be valuable for professional investors making capital allocation decisions.

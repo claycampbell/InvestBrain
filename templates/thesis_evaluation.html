@@ -373,7 +373,7 @@
                                         <div class="d-flex justify-content-between align-items-start mb-2">
                                             <strong class="text-warning">{{ scenario.scenario_name if scenario.scenario_name else 'Risk Scenario' }}</strong>
                                             {% if scenario.probability %}
-                                                <span class="badge bg-warning text-dark">{{ scenario.probability }}% probability</span>
+                                                <span class="badge bg-warning text-dark">{{ scenario.probability }}</span>
                                             {% endif %}
                                         </div>
                                         <p class="small mb-2">{{ scenario.description if scenario.description else scenario }}</p>
@@ -397,6 +397,19 @@
                                 <p class="mb-0 mt-2">No counter-thesis scenarios were identified. Consider analyzing potential risks, bear case scenarios, and alternative outcomes to strengthen risk assessment.</p>
                             </div>
                         {% endif %}
+                    </div>
+                </div>
+
+                <!-- Sell-Side & Market Sentiment -->
+                <div class="evaluation-card card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-bar text-info me-2"></i>
+                            Sell-Side & Market Sentiment
+                        </h5>
+                        <div id="marketSentiment">
+                            <!-- Populated by JavaScript from AI analysis -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -602,6 +615,9 @@
             
             // Display insights
             displayInsights(strength);
+            
+            // Display market sentiment
+            displayMarketSentiment(evaluationData);
             
             // Show the main dashboard
             document.getElementById('evaluationContent').style.display = 'block';
