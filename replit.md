@@ -98,7 +98,11 @@ The Investment Thesis Intelligence System is a sophisticated Flask-based web app
 - Graceful degradation when external services unavailable
 
 ## Changelog
-- June 23, 2025. Initial setup
+- June 23, 2025: Added Significance Mapping and Smart Prioritization features
+  - Implemented AI-powered research vs signal analysis
+  - Created visual mapping dashboard for thesis connections
+  - Added priority matrix and actionable insights system
+- June 23, 2025: Initial setup
 
 ## User Preferences
 
