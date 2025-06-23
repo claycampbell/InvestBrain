@@ -32,8 +32,8 @@ class DataAdapter:
     def execute_query(self, query: str) -> Dict[str, Any]:
         """Execute a GraphQL query and return results"""
         if not self.token:
-            logging.warning("AZURE_OPENAI_TOKEN not configured for Eagle API, using test data")
-            # Return test data when authentication not available
+            logging.info("EAGLE_API_TOKEN not configured, using mock data for testing")
+            # Return mock data when authentication not available
             return self.test_api.get_test_response_for_company()['test_response']
             
         try:
