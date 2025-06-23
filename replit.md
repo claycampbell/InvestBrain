@@ -98,6 +98,12 @@ The Investment Thesis Intelligence System is a sophisticated Flask-based web app
 - Graceful degradation when external services unavailable
 
 ## Changelog
+- June 23, 2025: Enhanced Significance Analysis Reliability
+  - Implemented robust fallback mechanisms for Azure OpenAI connection failures
+  - Added comprehensive error handling and logging throughout analysis pipeline
+  - Created keyword-based connection analysis as backup method for significance mapping
+  - Enhanced smart prioritization with deterministic fallback algorithms
+  - System now provides meaningful analysis even when AI services are temporarily unavailable
 - June 23, 2025: Completed Eagle API Integration with Mock Data Support
   - Fixed Eagle API data integration in analysis dashboard
   - Resolved data type handling issues in signal processing 
