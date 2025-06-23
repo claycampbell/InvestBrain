@@ -25,7 +25,7 @@
                         <i class="fas fa-microscope"></i> Strength Analysis
                     </a>
                     <a href="/simulation/{{ thesis.id }}" class="btn btn-warning me-2">
-                        <i class="fas fa-play-circle"></i> Run Simulation
+                        <i class="fas fa-play-circle"></i> Run Illustration
                     </a>
                     <a href="/thesis/{{ thesis.id }}/backtest" class="btn btn-primary me-2">
                         <i class="fas fa-chart-area"></i> Run Backtest
@@ -308,31 +308,31 @@
         </div>
     </div>
 
-    <!-- Simulation Section -->
+    <!-- Illustration Section -->
     <div class="row mt-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-area text-info"></i> Thesis Simulation
+                        <i class="fas fa-chart-area text-info"></i> Thesis Illustration
                     </h5>
                     <div class="d-flex gap-2">
-                        <select class="form-select form-select-sm" id="simulationType" style="width: auto;">
+                        <select class="form-select form-select-sm" id="illustrationType" style="width: auto;">
                             <option value="performance">Performance Track</option>
                             <option value="events">Event Scenarios</option>
                         </select>
-                        <button class="btn btn-info btn-sm" onclick="showSimulationModal()">
-                            <i class="fas fa-play"></i> Run Simulation
+                        <button class="btn btn-info btn-sm" onclick="showIllustrationModal()">
+                            <i class="fas fa-play"></i> Run Illustration
                         </button>
                     </div>
                 </div>
                 <div class="card-body">
-                    <div id="simulationResults" class="d-none">
+                    <div id="illustrationResults" class="d-none">
                         <!-- Main Performance Chart -->
                         <div class="row mb-4">
                             <div class="col-12">
                                 <div class="position-relative">
-                                    <div id="simulationChart"></div>
+                                    <div id="illustrationChart"></div>
                                 </div>
                             </div>
                         </div>
@@ -351,12 +351,12 @@
                         </div>
                     </div>
                     
-                    <div id="simulationEmpty" class="text-center py-5">
+                    <div id="illustrationEmpty" class="text-center py-5">
                         <i class="fas fa-chart-area text-muted fa-4x mb-3"></i>
-                        <h6 class="text-muted">Thesis Simulation</h6>
-                        <p class="text-muted mb-3">Run realistic simulations to test your thesis over time</p>
-                        <button class="btn btn-info" onclick="showSimulationModal()">
-                            <i class="fas fa-play"></i> Start Simulation
+                        <h6 class="text-muted">Thesis Illustration</h6>
+                        <p class="text-muted mb-3">Run realistic illustrations to test your thesis over time</p>
+                        <button class="btn btn-info" onclick="showIllustrationModal()">
+                            <i class="fas fa-play"></i> Start Illustration
                         </button>
                     </div>
                 </div>
@@ -1342,18 +1342,18 @@
     });
 </script>
 
-<!-- Simulation Modal -->
-<div class="modal fade" id="simulationModal" tabindex="-1">
+<!-- Illustration Modal -->
+<div class="modal fade" id="illustrationModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-chart-area"></i> Configure Simulation
+                    <i class="fas fa-chart-area"></i> Configure Illustration
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="simulationForm">
+                <form id="illustrationForm">
                     <div class="mb-3">
                         <label for="timeHorizon" class="form-label">Time Horizon</label>
                         <div class="input-group">
@@ -1361,7 +1361,7 @@
                                    value="3" min="1" max="10" required>
                             <span class="input-group-text">years</span>
                         </div>
-                        <div class="form-text">Simulate thesis performance over this time period</div>
+                        <div class="form-text">Illustrate thesis performance over this time period</div>
                     </div>
                     
                     <div class="mb-3">
