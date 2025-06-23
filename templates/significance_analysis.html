@@ -349,10 +349,13 @@
                 const scores = research.element_scores[element] || {};
                 const score = scores.overall_score || 0;
                 html += `
-                    <div class="research-node mb-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>#${index + 1} ${element.replace('_', ' ').toUpperCase()}</strong>
-                            <span class="badge bg-light text-dark">${score}/10</span>
+                    <div class="d-flex align-items-center mb-3 p-3 bg-light border rounded-3 shadow-sm">
+                        <div class="research-node me-3" style="min-width: 180px;">
+                            ${element.replace('_', ' ').toUpperCase()}
+                        </div>
+                        <div class="ms-auto text-center">
+                            <span class="priority-score d-block">${score}</span>
+                            <span class="score-label">Score</span>
                         </div>
                     </div>
                 `;
@@ -370,10 +373,13 @@
                 const scores = signals.signal_categories[category] || {};
                 const strength = scores.overall_strength || 0;
                 html += `
-                    <div class="signal-node mb-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong>#${index + 1} ${category.replace('_', ' ').toUpperCase()}</strong>
-                            <span class="badge bg-light text-dark">${strength}/10</span>
+                    <div class="d-flex align-items-center mb-3 p-3 bg-light border rounded-3 shadow-sm">
+                        <div class="signal-node me-3" style="min-width: 180px;">
+                            ${category.replace('_', ' ').toUpperCase()}
+                        </div>
+                        <div class="ms-auto text-center">
+                            <span class="priority-score d-block">${strength}</span>
+                            <span class="score-label">Strength</span>
                         </div>
                     </div>
                 `;
