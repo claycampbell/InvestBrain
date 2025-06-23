@@ -247,12 +247,8 @@ def view_thesis(id):
     signals = SignalMonitoring.query.filter_by(thesis_analysis_id=id).all()
     documents = DocumentUpload.query.filter_by(thesis_analysis_id=id).all()
     
-    # Get parsed thesis data (to_dict() already handles JSON parsing)
-    thesis_data = thesis.to_dict()
-    
     return render_template('thesis_analysis.html', 
-                         thesis=thesis,
-                         thesis_data=thesis_data,
+                         thesis=thesis, 
                          signals=signals,
                          documents=documents,
                          view_mode=True)
@@ -1427,13 +1423,8 @@ def thesis_evaluation_page(thesis_id):
     """
     try:
         thesis = ThesisAnalysis.query.get_or_404(thesis_id)
-        
-        # Get parsed thesis data (to_dict() already handles JSON parsing)
-        thesis_data = thesis.to_dict()
-        
         return render_template('thesis_evaluation.html', 
-                             thesis=thesis,
-                             thesis_data=thesis_data,
+                             thesis=thesis, 
                              thesis_id=thesis_id)
     except Exception as e:
         logging.error(f"Thesis evaluation page failed: {str(e)}")

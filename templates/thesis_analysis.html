@@ -38,7 +38,7 @@
                         <button class="btn btn-outline-secondary me-2" onclick="exportAnalysis()">
                             <i class="fas fa-download"></i> Export
                         </button>
-                        <a href="{{ url_for('index') }}" class="btn btn-primary">
+                        <a href="{{ url_for('new_thesis') }}" class="btn btn-primary">
                             <i class="fas fa-plus"></i> New Analysis
                         </a>
                     </div>
@@ -89,17 +89,11 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            {% if thesis_data.causal_chain and thesis_data.causal_chain|length > 0 %}
+                            {% if thesis.causal_chain %}
                                 <div class="causal-chain">
-                                    {% for step in thesis_data.causal_chain %}
+                                    {% for step in thesis.causal_chain %}
                                         <div class="causal-step">
-                                            <strong>{{ loop.index }}. {{ step.step_name if step.step_name else step }}</strong>
-                                            {% if step.description %}
-                                                <p class="small text-muted mt-1">{{ step.description }}</p>
-                                            {% endif %}
-                                            {% if step.evidence %}
-                                                <p class="small mt-1"><em>Evidence: {{ step.evidence }}</em></p>
-                                            {% endif %}
+                                            <strong>{{ loop.index }}. {{ step }}</strong>
                                         </div>
                                     {% endfor %}
                                 </div>
@@ -193,19 +187,11 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            {% if thesis_data.counter_thesis and thesis_data.counter_thesis|length > 0 %}
+                            {% if thesis.counter_thesis %}
                                 <div class="alert alert-warning">
                                     <ul class="mb-0">
-                                        {% for scenario in thesis_data.counter_thesis %}
-                                            <li>
-                                                <strong>{{ scenario.scenario_name if scenario.scenario_name else scenario }}</strong>
-                                                {% if scenario.description %}
-                                                    <br><small class="text-muted">{{ scenario.description }}</small>
-                                                {% endif %}
-                                                {% if scenario.probability %}
-                                                    <br><small><em>Probability: {{ scenario.probability }}</em></small>
-                                                {% endif %}
-                                            </li>
+                                        {% for point in thesis.counter_thesis %}
+                                            <li>{{ point }}</li>
                                         {% endfor %}
                                     </ul>
                                 </div>
