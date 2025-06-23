@@ -29,7 +29,7 @@
         </div>
     </div>
 
-    <!-- Simulation Controls -->
+    <!-- Illustration Controls -->
     <div class="row mb-4">
         <div class="col-lg-6">
             <div class="card">
@@ -69,7 +69,7 @@
         <div class="col-lg-6">
             <div class="card">
                 <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-bolt"></i> Event Simulation</h6>
+                    <h6 class="mb-0"><i class="fas fa-bolt"></i> Event Illustration</h6>
                 </div>
                 <div class="card-body">
                     <form id="eventForm">
@@ -95,7 +95,7 @@
                             </select>
                         </div>
                         <button type="submit" class="btn btn-warning">
-                            <i class="fas fa-bolt"></i> Simulate Event
+                            <i class="fas fa-bolt"></i> Illustrate Event
                         </button>
                     </form>
                 </div>
@@ -103,13 +103,13 @@
         </div>
     </div>
 
-    <!-- Simulation Results -->
-    <div id="simulationResults" style="display: none;">
+    <!-- Illustration Results -->
+    <div id="illustrationResults" style="display: none;">
         <div class="row">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-chart-area"></i> Simulation Results</h6>
+                        <h6 class="mb-0"><i class="fas fa-chart-area"></i> Illustration Results</h6>
                     </div>
                     <div class="card-body">
                         <div id="resultsContent"></div>
@@ -136,14 +136,14 @@
     </div>
 
     <!-- Loading Modal -->
-    <div class="modal fade" id="simulationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="illustrationModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-body text-center py-4">
                     <div class="spinner-border text-primary mb-3" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
-                    <h5>Running Simulation...</h5>
+                    <h5>Running Illustration...</h5>
                     <p class="text-muted mb-0">Analyzing scenarios and generating forecasts</p>
                     <div class="progress mt-3">
                         <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function runSimulation(type, params) {
         // Show loading modal
-        const modal = new bootstrap.Modal(document.getElementById('simulationModal'));
+        const modal = new bootstrap.Modal(document.getElementById('illustrationModal'));
         modal.show();
         
         // Simulate progress
