@@ -41,24 +41,34 @@
             color: #6c757d;
         }
 
+        .research-node, .signal-node {
+            color: white;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            margin: 0.25rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 44px;
+            transition: all 0.2s ease;
+        }
+
         .research-node {
             background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            border-radius: 8px;
-            padding: 0.5rem;
-            margin: 0.25rem;
-            font-size: 0.85rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .signal-node {
             background: linear-gradient(135deg, #27ae60, #229954);
-            color: white;
-            border-radius: 8px;
-            padding: 0.5rem;
-            margin: 0.25rem;
-            font-size: 0.85rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .research-node:hover, .signal-node:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.2);
         }
 
         .connection-line {
@@ -69,15 +79,28 @@
         }
 
         .priority-score {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: #667eea;
         }
 
-        .score-excellent { color: var(--success-color); }
-        .score-good { color: var(--accent-color); }
-        .score-moderate { color: var(--warning-color); }
-        .score-poor { color: var(--danger-color); }
+        .score-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .score-excellent { color: #27ae60; }
+        .score-good { color: #3498db; }
+        .score-moderate { color: #f39c12; }
+        .score-poor { color: #e74c3c; }
 
         .insight-card {
             border-left: 4px solid var(--accent-color);
@@ -376,11 +399,16 @@
                     
                     if (research && signal) {
                         html += `
-                            <div class="d-flex align-items-center mb-2 p-2 border rounded">
-                                <div class="research-node me-2" style="flex: 1;">${research.title}</div>
-                                <i class="fas fa-arrow-right mx-2"></i>
-                                <div class="signal-node ms-2" style="flex: 1;">${signal.title}</div>
-                                <span class="badge bg-primary ms-2">${(connection.strength * 100).toFixed(0)}%</span>
+                            <div class="d-flex align-items-center mb-3 p-3 bg-light border rounded-3 shadow-sm">
+                                <div class="research-node me-3" style="min-width: 200px;">${research.title}</div>
+                                <div class="d-flex align-items-center mx-3">
+                                    <div class="connection-line" style="width: 40px; height: 3px; background: linear-gradient(90deg, #3498db, #27ae60);"></div>
+                                </div>
+                                <div class="signal-node ms-3" style="min-width: 200px;">${signal.title}</div>
+                                <div class="ms-auto">
+                                    <span class="priority-score text-center d-block">${(connection.strength * 100).toFixed(0)}</span>
+                                    <span class="score-label">Strength</span>
+                                </div>
                             </div>
                         `;
                     }

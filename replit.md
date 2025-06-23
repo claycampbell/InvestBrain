@@ -98,6 +98,12 @@ The Investment Thesis Intelligence System is a sophisticated Flask-based web app
 - Graceful degradation when external services unavailable
 
 ## Changelog
+- June 23, 2025: Completed Eagle API Integration with Mock Data Support
+  - Fixed Eagle API data integration in analysis dashboard
+  - Resolved data type handling issues in signal processing 
+  - Enhanced signal classification to handle mixed data formats
+  - Eagle API signals now properly appear in "Internal Research Data" section
+  - System uses EAGLE_API_TOKEN environment variable when available, gracefully falls back to mock data
 - June 23, 2025: Added Significance Mapping and Smart Prioritization features
   - Implemented AI-powered research vs signal analysis
   - Created visual mapping dashboard for thesis connections
