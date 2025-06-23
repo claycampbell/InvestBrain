@@ -311,7 +311,7 @@ JSON: {{"market": [100,98.5,102.3,...], "thesis": [100,102.1,104.3,...]}}"""
         
         # Generate event-based alerts
         for event in events:
-            if event.get('impact_type') == 'negative' and event.get('magnitude') in ['significant', 'major']:
+            if event.get('impact_type') == 'negative' and event.get('magnitude') in ['substantial', 'major']:
                 alert_triggers.append({
                     'signal_name': f"{event.get('title', 'Market Event')} Alert",
                     'condition': f"Event impact: {event.get('description', 'Unknown impact')}",

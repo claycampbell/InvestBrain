@@ -524,7 +524,7 @@ Return JSON array only:
         """Map impact type to magnitude"""
         magnitude_map = {
             'positive': 'moderate',
-            'negative': 'significant', 
+            'negative': 'substantial', 
             'neutral': 'low',
             'validation': 'moderate',
             'warning': 'moderate'
@@ -639,7 +639,7 @@ Return JSON format:
         
         # Generate event-based alerts
         for event in events:
-            if event.get('impact_type') == 'negative' and event.get('magnitude') in ['significant', 'major']:
+            if event.get('impact_type') == 'negative' and event.get('magnitude') in ['substantial', 'major']:
                 alert_triggers.append({
                     'signal_name': event.get('title', 'ML Event'),
                     'condition': f"ML event simulation: {event.get('description', 'Unknown impact')}",

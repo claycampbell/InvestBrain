@@ -500,7 +500,7 @@ Provide rigorous, institutional-quality analysis that would be valuable for prof
         elif score >= 55:
             return "Moderate research quality with basic analysis framework but limited depth or data support."
         else:
-            return "Below-standard research quality requiring significant enhancement in analysis depth and data integration."
+            return "Below-standard research quality requiring substantial improvement in analysis depth and data integration."
     
     def _fallback_quality_score(self) -> Dict[str, Any]:
         """Fallback quality scoring when evaluation fails"""

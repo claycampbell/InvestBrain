@@ -35,7 +35,7 @@ def test_signal_description_validation():
     print("-" * 40)
     
     signal_name = "Top Fund Holdings Analysis"
-    signal_description = "Identify which AMF-eligible mutual funds hold significant positions in Microsoft to assess institutional confidence and ownership concentration"
+    signal_description = "Identify which AMF-eligible mutual funds hold substantial positions in Microsoft to assess institutional confidence and ownership concentration"
     
     query_structure = {
         "entities": ["Microsoft"],

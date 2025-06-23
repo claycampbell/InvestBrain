@@ -36,7 +36,7 @@ def test_company_name_validation():
     print("-" * 40)
     
     signal_name = "Top Fund Holdings Analysis"
-    signal_description = "Identify which AMF-eligible mutual funds hold significant positions to assess institutional confidence and ownership concentration"
+    signal_description = "Identify which AMF-eligible mutual funds hold substantial positions to assess institutional confidence and ownership concentration"
     company_name = "Novo Nordisk"
     
     query_structure = {
