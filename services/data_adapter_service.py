@@ -9,6 +9,7 @@ import logging
 import json
 from datetime import datetime
 from .test_eagle_api_responses import TestEagleAPIResponses
+from .mock_eagle_api import MockEagleAPI
 
 if TYPE_CHECKING:
     from services.metric_selector import MetricSelector
@@ -18,12 +19,15 @@ class DataAdapter:
     
     def __init__(self):
         self.eagle_url = "https://eagle-gamma.capgroup.com/svc-backend/graphql"
-        self.token = os.getenv('AZURE_OPENAI_TOKEN')
+        self.token = os.getenv('EAGLE_API_TOKEN')
         self.test_api = TestEagleAPIResponses()
+        self.mock_api = MockEagleAPI()
         self.headers = {
             'Authorization': f'Bearer {self.token}',
             'Content-Type': 'application/json',
         }
+        if not self.token:
+            logging.info("EAGLE_API_TOKEN not configured, using mock Eagle API for frontend testing")
     
     def execute_query(self, query: str) -> Dict[str, Any]:
         """Execute a GraphQL query and return results"""
@@ -138,7 +142,7 @@ class DataAdapter:
         """Get test response matching Eagle API schema for frontend validation"""
         return self.test_api.get_test_response_for_company(ticker=company_ticker, sedol_id=sedol_id)
     
-    def fetch_company_metrics(self, company_ticker: str, metric_categories: List[str] = None, sedol_id: str = None) -> Dict[str, Any]:
+    def fetch_company_metrics(self, company_ticker: str, metric_categories: List[str] = None, sedol_id: str = "") -> Dict[str, Any]:
         """Fetch comprehensive metrics for a company using ticker and optional SEDOL ID"""
         from services.metric_selector import MetricSelector
         
@@ -162,6 +166,10 @@ class DataAdapter:
         
         # Remove duplicates
         unique_metrics = list(set(all_metrics))
+        
+        # Use mock Eagle API for realistic testing when token not available
+        if not self.token:
+            return self.mock_api.get_company_metrics(company_ticker, metric_categories or [], sedol_id)
         
         # Fetch the metrics using both ticker and SEDOL if available
         if sedol_id:
