@@ -1423,8 +1423,34 @@ def thesis_evaluation_page(thesis_id):
     """
     try:
         thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        
+        # Parse JSON fields for template consumption
+        thesis_data = thesis.to_dict()
+        
+        # Parse causal_chain if it's a JSON string
+        if isinstance(thesis_data.get('causal_chain'), str):
+            try:
+                thesis_data['causal_chain'] = json.loads(thesis_data['causal_chain'])
+            except (json.JSONDecodeError, TypeError):
+                thesis_data['causal_chain'] = []
+        
+        # Parse counter_thesis if it's a JSON string  
+        if isinstance(thesis_data.get('counter_thesis'), str):
+            try:
+                thesis_data['counter_thesis'] = json.loads(thesis_data['counter_thesis'])
+            except (json.JSONDecodeError, TypeError):
+                thesis_data['counter_thesis'] = []
+                
+        # Parse assumptions if it's a JSON string
+        if isinstance(thesis_data.get('assumptions'), str):
+            try:
+                thesis_data['assumptions'] = json.loads(thesis_data['assumptions'])
+            except (json.JSONDecodeError, TypeError):
+                thesis_data['assumptions'] = []
+        
         return render_template('thesis_evaluation.html', 
-                             thesis=thesis, 
+                             thesis=thesis,
+                             thesis_data=thesis_data,
                              thesis_id=thesis_id)
     except Exception as e:
         logging.error(f"Thesis evaluation page failed: {str(e)}")

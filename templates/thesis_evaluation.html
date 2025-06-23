@@ -329,8 +329,8 @@
                             Causal Chain Analysis
                         </h5>
                         <div id="causalChain">
-                            {% if thesis.causal_chain and thesis.causal_chain|length > 0 %}
-                                {% for step in thesis.causal_chain %}
+                            {% if thesis_data.causal_chain and thesis_data.causal_chain|length > 0 %}
+                                {% for step in thesis_data.causal_chain %}
                                     <div class="causal-step border rounded p-3 mb-2 bg-light">
                                         <div class="d-flex align-items-center mb-2">
                                             <span class="badge bg-primary me-2">Step {{ loop.index }}</span>
@@ -363,12 +363,12 @@
                             Counter-Thesis & Risk Analysis
                         </h5>
                         
-                        {% if thesis.counter_thesis and thesis.counter_thesis|length > 0 %}
+                        {% if thesis_data.counter_thesis and thesis_data.counter_thesis|length > 0 %}
                             <div class="mb-4">
                                 <h6 class="text-warning">
                                     <i class="fas fa-exclamation-triangle me-1"></i>Counter-Thesis Scenarios
                                 </h6>
-                                {% for scenario in thesis.counter_thesis %}
+                                {% for scenario in thesis_data.counter_thesis %}
                                     <div class="risk-scenario border rounded p-3 mb-3 bg-warning bg-opacity-10">
                                         <div class="d-flex justify-content-between align-items-start mb-2">
                                             <strong class="text-warning">{{ scenario.scenario_name if scenario.scenario_name else 'Risk Scenario' }}</strong>
@@ -424,8 +424,8 @@
                             Key Assumptions
                         </h5>
                         <div id="keyAssumptions">
-                            {% if thesis.assumptions %}
-                                {% for assumption in thesis.assumptions %}
+                            {% if thesis_data.assumptions %}
+                                {% for assumption in thesis_data.assumptions %}
                                     <div class="assumption-item border rounded p-3 mb-2 bg-info bg-opacity-10">
                                         <div class="d-flex align-items-start">
                                             <i class="fas fa-arrow-right text-info me-2 mt-1"></i>
@@ -471,6 +471,23 @@
                                     <p class="mb-0 mt-2">No specific monitoring strategy was defined. Consider establishing key metrics, data sources, and review frequency to track thesis performance.</p>
                                 </div>
                             {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Market Sentiment Analysis -->
+                <div class="evaluation-card card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-bar text-info me-2"></i>
+                            Market Sentiment & Sell-Side Analysis
+                        </h5>
+                        <div id="marketSentiment">
+                            <div class="alert alert-info">
+                                <i class="fas fa-spinner fa-spin me-2"></i>
+                                <strong>Loading Market Sentiment...</strong>
+                                <p class="mb-0 mt-2">Generating real-time sell-side analysis and institutional positioning assessment.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -743,6 +760,83 @@
                 div.innerHTML = `<i class="fas fa-tasks text-primary me-2"></i>${item}`;
                 actionsContainer.appendChild(div);
             });
+            
+            // Market sentiment analysis
+            if (strength.market_sentiment) {
+                displayMarketSentiment(strength);
+            }
+        }
+
+        function displayMarketSentiment(evaluationData) {
+            const sentimentContainer = document.getElementById('marketSentiment');
+            
+            if (evaluationData.market_sentiment) {
+                const sentiment = evaluationData.market_sentiment;
+                sentimentContainer.innerHTML = `
+                    <div class="market-sentiment-overview mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="sentiment-metric bg-light border rounded p-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-info mb-1">Analyst Consensus</h6>
+                                            <small class="text-muted">${sentiment.analyst_consensus || 'Mixed'}</small>
+                                        </div>
+                                        <span class="badge bg-info">${sentiment.consensus_score || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="sentiment-metric bg-light border rounded p-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-success mb-1">Price Target</h6>
+                                            <small class="text-muted">${sentiment.price_target || 'Varied'}</small>
+                                        </div>
+                                        <span class="badge bg-success">${sentiment.upside_potential || 'TBD'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${sentiment.key_themes ? `
+                            <div class="market-themes mb-3">
+                                <h6 class="text-primary mb-2">
+                                    <i class="fas fa-trending-up me-1"></i>Key Market Themes
+                                </h6>
+                                ${sentiment.key_themes.map(theme => `
+                                    <div class="theme-item border rounded p-2 mb-2 bg-primary bg-opacity-10">
+                                        <small>${theme}</small>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="sell-side-view bg-light border rounded p-2">
+                                    <small class="text-muted d-block"><strong>Sell-Side View:</strong></small>
+                                    <small>${sentiment.sell_side_view || 'Mixed outlook'}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="institutional-view bg-light border rounded p-2">
+                                    <small class="text-muted d-block"><strong>Institutional Positioning:</strong></small>
+                                    <small>${sentiment.institutional_positioning || 'Varied positioning'}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                sentimentContainer.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        <strong>Market Sentiment Analysis Loading...</strong>
+                        <p class="mb-0 mt-2">Generating real-time sell-side analysis and market sentiment assessment.</p>
+                    </div>
+                `;
+            }
         }
 
         function formatDimensionName(dimension) {
