@@ -17,6 +17,8 @@ from services.metric_selector import MetricSelector
 from services.data_adapter_service import DataAdapter
 from services.analysis_workflow_service import AnalysisWorkflowService
 from services.thesis_evaluator import ThesisEvaluator
+from services.significance_mapping_service import SignificanceMappingService
+from services.smart_prioritization_service import SmartPrioritizationService
 from config import Config
 
 # Initialize services
@@ -32,6 +34,8 @@ metric_selector = MetricSelector()
 data_adapter = DataAdapter()
 analysis_workflow_service = AnalysisWorkflowService()
 thesis_evaluator = ThesisEvaluator()
+significance_mapper = SignificanceMappingService()
+smart_prioritizer = SmartPrioritizationService()
 
 def save_thesis_analysis(thesis_text, analysis_result, signals_result):
     """Save completed analysis to database for monitoring"""
@@ -1430,6 +1434,62 @@ def thesis_evaluation_page(thesis_id):
         logging.error(f"Thesis evaluation page failed: {str(e)}")
         flash('Unable to load thesis evaluation page', 'error')
         return redirect(url_for('monitoring_dashboard'))
+
+@app.route('/api/significance_mapping/<int:thesis_id>')
+def get_significance_mapping(thesis_id):
+    """
+    Generate significance mapping between research elements and signal patterns
+    """
+    try:
+        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        thesis_data = thesis.to_dict()
+        
+        mapping_data = significance_mapper.generate_significance_map(thesis_data)
+        insights = significance_mapper.get_connection_insights(mapping_data)
+        
+        return jsonify({
+            'success': True,
+            'mapping_data': mapping_data,
+            'insights': insights,
+            'thesis_id': thesis_id
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Failed to generate significance mapping: {str(e)}'
+        }), 500
+
+@app.route('/api/smart_prioritization/<int:thesis_id>')
+def get_smart_prioritization(thesis_id):
+    """
+    Generate AI-powered prioritization for research elements and signal patterns
+    """
+    try:
+        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        thesis_data = thesis.to_dict()
+        
+        prioritization_result = smart_prioritizer.generate_dual_prioritization(thesis_data)
+        
+        return jsonify({
+            'success': True,
+            'prioritization': prioritization_result,
+            'thesis_id': thesis_id
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Failed to generate smart prioritization: {str(e)}'
+        }), 500
+
+@app.route('/significance_analysis/<int:thesis_id>')
+def significance_analysis_page(thesis_id):
+    """
+    Dedicated page for significance mapping and prioritization analysis
+    """
+    thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+    return render_template('significance_analysis.html', thesis=thesis)
 
 @app.errorhandler(404)
 def not_found_error(error):
