@@ -266,23 +266,32 @@ class AzureOpenAIService:
                 try:
                     parsed_response = json.loads(response)
                     # Validate that all required fields are present and properly populated
+                    # Validate response completeness
+                    is_incomplete = False
+                    
                     if ('causal_chain' not in parsed_response or 
                         not isinstance(parsed_response['causal_chain'], list) or 
                         len(parsed_response['causal_chain']) < 2):
                         logging.warning("Incomplete Azure OpenAI response: insufficient causal_chain data")
-                        raise ValueError("Incomplete causal_chain")
+                        is_incomplete = True
                     
                     if ('counter_thesis' not in parsed_response or 
                         not isinstance(parsed_response['counter_thesis'], list) or 
                         len(parsed_response['counter_thesis']) < 1):
                         logging.warning("Incomplete Azure OpenAI response: missing counter_thesis data")
-                        raise ValueError("Missing counter_thesis")
+                        is_incomplete = True
+                    
+                    if is_incomplete:
+                        # Generate complete fallback with company-specific data
+                        logging.info("Generating complete fallback analysis with structured counter-thesis")
+                        return self._generate_fallback_analysis(thesis_text)
                     
                     return parsed_response
                 except (json.JSONDecodeError, ValueError) as e:
-                    # If response isn't valid JSON or incomplete, use complete fallback
-                    logging.warning(f"Invalid or incomplete Azure OpenAI response: {str(e)}")
-                    # Fall through to complete fallback analysis below
+                    # If response isn't valid JSON, use complete fallback
+                    logging.warning(f"Invalid Azure OpenAI response format: {str(e)}")
+                    company_name = self._extract_company_name(thesis_text) or "the company"
+                    return self._generate_fallback_analysis(thesis_text)
             
         except Exception as e:
             logging.error(f"Azure OpenAI analysis failed: {str(e)}")
