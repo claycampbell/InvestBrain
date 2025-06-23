@@ -1449,11 +1449,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${causalChain.slice(0, 6).map((link, index) => `
                             <div class="timeline-item ${index === causalChain.length - 1 ? 'timeline-end' : ''}">
                                 <div class="timeline-marker bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 12px;">
-                                    ${link.chain_link || index + 1}
+                                    ${link.step || link.chain_link || index + 1}
                                 </div>
                                 <div class="timeline-content ms-3">
-                                    <h6 class="mb-1">${link.event}</h6>
-                                    <p class="text-muted small mb-2">${link.explanation}</p>
+                                    <h6 class="mb-1">${link.step_name || link.event || 'Analysis Step'}</h6>
+                                    <p class="text-muted small mb-2">${link.description || link.explanation || ''}</p>
+                                    ${link.evidence ? `<p class="small text-primary"><em>Evidence: ${link.evidence}</em></p>` : ''}
                                 </div>
                             </div>
                         `).join('')}

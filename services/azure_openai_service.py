@@ -279,16 +279,10 @@ class AzureOpenAIService:
                         raise ValueError("Missing counter_thesis")
                     
                     return parsed_response
-                except (json.JSONDecodeError, ValueError):
-                    # If response isn't valid JSON, wrap it
-                    company_name = self._extract_company_name(thesis_text) or "the company"
-                    return {
-                        "core_claim": f"Investment analysis for {company_name}",
-                        "core_analysis": response[:500],
-                        "assumptions": ["Market conditions remain stable"],
-                        "mental_model": "Fundamental Analysis",
-                        "metrics_to_track": []
-                    }
+                except (json.JSONDecodeError, ValueError) as e:
+                    # If response isn't valid JSON or incomplete, use complete fallback
+                    logging.warning(f"Invalid or incomplete Azure OpenAI response: {str(e)}")
+                    # Fall through to complete fallback analysis below
             
         except Exception as e:
             logging.error(f"Azure OpenAI analysis failed: {str(e)}")
