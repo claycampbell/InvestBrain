@@ -24,6 +24,9 @@
                     <a href="{{ url_for('thesis_evaluation_page', thesis_id=thesis.id) }}" class="btn btn-success me-2">
                         <i class="fas fa-microscope"></i> Strength Analysis
                     </a>
+                    <a href="{{ url_for('significance_analysis_page', thesis_id=thesis.id) }}" class="btn btn-info me-2">
+                        <i class="fas fa-project-diagram"></i> Significance Analysis
+                    </a>
                     <a href="/simulation/{{ thesis.id }}" class="btn btn-warning me-2">
                         <i class="fas fa-play-circle"></i> Run Illustration
                     </a>

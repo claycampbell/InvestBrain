@@ -122,7 +122,7 @@ class SmartPrioritizationService:
             """
             
             response = self.ai_service.generate_completion(
-                prompt=prompt,
+                messages=[{"role": "user", "content": prompt}],
                 max_tokens=1500,
                 temperature=0.2
             )

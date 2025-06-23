@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Significance Analysis - {{ thesis.title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --background-color: #ecf0f1;
+            --text-color: #2c3e50;
+            --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            border: none;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1.5rem;
+            border-radius: 10px;
+        }
+
+        .card-header {
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+        }
+
+        .significance-map-container {
+            height: 500px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .priority-matrix {
+            width: 100%;
+            height: 400px;
+            position: relative;
+        }
+
+        .priority-quadrant {
+            position: absolute;
+            border: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #6c757d;
+        }
+
+        .research-node {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin: 0.25rem;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .signal-node {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin: 0.25rem;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .connection-line {
+            position: absolute;
+            background: linear-gradient(90deg, #3498db, #27ae60);
+            height: 2px;
+            border-radius: 1px;
+        }
+
+        .priority-score {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .score-excellent { color: var(--success-color); }
+        .score-good { color: var(--accent-color); }
+        .score-moderate { color: var(--warning-color); }
+        .score-poor { color: var(--danger-color); }
+
+        .insight-card {
+            border-left: 4px solid var(--accent-color);
+            background: #f8f9fa;
+        }
+
+        .action-item {
+            background: white;
+            border-left: 4px solid var(--warning-color);
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+
+        .connection-strength-high { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+        .connection-strength-medium { background: linear-gradient(90deg, #f39c12, #e67e22); }
+        .connection-strength-low { background: linear-gradient(90deg, #95a5a6, #7f8c8d); }
+
+        .network-graph {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+
+        .matrix-position {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1><i class="fas fa-project-diagram me-3"></i>Significance Analysis</h1>
+                    <p class="mb-0">Research Importance vs Signal Strength Analysis for: <strong>{{ thesis.title }}</strong></p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{{ url_for('view_thesis', id=thesis.id) }}" class="btn btn-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Thesis
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <!-- Priority Matrix Overview -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-th me-2"></i>Priority Matrix: Research vs Signal Strength</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="priority-matrix" id="priorityMatrix">
+                                    <!-- Quadrants -->
+                                    <div class="priority-quadrant" style="top: 0; left: 0; width: 50%; height: 50%; background: rgba(39, 174, 96, 0.1);">
+                                        High Research<br>Low Signal
+                                    </div>
+                                    <div class="priority-quadrant" style="top: 0; right: 0; width: 50%; height: 50%; background: rgba(46, 204, 113, 0.2);">
+                                        High Research<br>High Signal
+                                    </div>
+                                    <div class="priority-quadrant" style="bottom: 0; left: 0; width: 50%; height: 50%; background: rgba(231, 76, 60, 0.1);">
+                                        Low Research<br>Low Signal
+                                    </div>
+                                    <div class="priority-quadrant" style="bottom: 0; right: 0; width: 50%; height: 50%; background: rgba(52, 152, 219, 0.1);">
+                                        Low Research<br>High Signal
+                                    </div>
+                                    <!-- Position marker will be added by JavaScript -->
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h6>Overall Balance Score</h6>
+                                    <div class="priority-score" id="balanceScore">Loading...</div>
+                                    <p class="text-muted" id="balanceDescription">Analyzing alignment...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Research and Signal Prioritization -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-book me-2"></i>Research Element Priority</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="researchPriorityList" class="loading-spinner">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading research analysis...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-signal me-2"></i>Signal Pattern Priority</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="signalPriorityList" class="loading-spinner">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Loading signal analysis...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Significance Mapping Visualization -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-network-wired me-2"></i>Research-Signal Connection Map</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="significanceNetworkGraph" class="network-graph">
+                            <div class="loading-spinner">
+                                <div class="spinner-border text-info" role="status">
+                                    <span class="visually-hidden">Building connection map...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actionable Insights -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card insight-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-lightbulb me-2"></i>Key Insights</h5>
+                    </div>
+                    <div class="card-body" id="keyInsights">
+                        <div class="loading-spinner">
+                            <div class="spinner-border text-warning" role="status">
+                                <span class="visually-hidden">Generating insights...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tasks me-2"></i>Recommended Actions</h5>
+                    </div>
+                    <div class="card-body" id="recommendedActions">
+                        <div class="loading-spinner">
+                            <div class="spinner-border text-danger" role="status">
+                                <span class="visually-hidden">Loading recommendations...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const thesisId = {{ thesis.id }};
+        let mappingData = null;
+        let prioritizationData = null;
+
+        // Load both significance mapping and prioritization data
+        async function loadSignificanceAnalysis() {
+            try {
+                const [mappingResponse, prioritizationResponse] = await Promise.all([
+                    fetch(`/api/significance_mapping/${thesisId}`),
+                    fetch(`/api/smart_prioritization/${thesisId}`)
+                ]);
+
+                if (mappingResponse.ok && prioritizationResponse.ok) {
+                    mappingData = await mappingResponse.json();
+                    prioritizationData = await prioritizationResponse.json();
+                    
+                    renderPriorityMatrix();
+                    renderResearchPriority();
+                    renderSignalPriority();
+                    renderConnectionMap();
+                    renderInsights();
+                    renderRecommendations();
+                } else {
+                    showError('Failed to load significance analysis data');
+                }
+            } catch (error) {
+                showError('Error loading analysis: ' + error.message);
+            }
+        }
+
+        function renderPriorityMatrix() {
+            const matrix = prioritizationData.prioritization.priority_matrix;
+            const balanceScore = document.getElementById('balanceScore');
+            const balanceDescription = document.getElementById('balanceDescription');
+            const priorityMatrix = document.getElementById('priorityMatrix');
+
+            // Update balance score
+            const score = (matrix.research_score + matrix.signal_score) / 2;
+            balanceScore.textContent = score.toFixed(1);
+            balanceScore.className = 'priority-score ' + getScoreClass(score);
+            balanceDescription.textContent = matrix.quadrant_description;
+
+            // Add position marker
+            const marker = document.createElement('div');
+            marker.className = 'matrix-position';
+            marker.style.left = (matrix.matrix_position.x * 100) + '%';
+            marker.style.bottom = (matrix.matrix_position.y * 100) + '%';
+            marker.title = `Research: ${matrix.research_score.toFixed(1)}, Signal: ${matrix.signal_score.toFixed(1)}`;
+            priorityMatrix.appendChild(marker);
+        }
+
+        function renderResearchPriority() {
+            const research = prioritizationData.prioritization.research_prioritization;
+            const container = document.getElementById('researchPriorityList');
+            
+            let html = '';
+            research.priority_ranking.forEach((element, index) => {
+                const scores = research.element_scores[element] || {};
+                const score = scores.overall_score || 0;
+                html += `
+                    <div class="research-node mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>#${index + 1} ${element.replace('_', ' ').toUpperCase()}</strong>
+                            <span class="badge bg-light text-dark">${score}/10</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function renderSignalPriority() {
+            const signals = prioritizationData.prioritization.signal_prioritization;
+            const container = document.getElementById('signalPriorityList');
+            
+            let html = '';
+            signals.signal_priority_ranking.forEach((category, index) => {
+                const scores = signals.signal_categories[category] || {};
+                const strength = scores.overall_strength || 0;
+                html += `
+                    <div class="signal-node mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>#${index + 1} ${category.replace('_', ' ').toUpperCase()}</strong>
+                            <span class="badge bg-light text-dark">${strength}/10</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function renderConnectionMap() {
+            const container = document.getElementById('significanceNetworkGraph');
+            const connections = mappingData.mapping_data.connections || [];
+            const researchNodes = mappingData.mapping_data.research_nodes || [];
+            const signalNodes = mappingData.mapping_data.signal_nodes || [];
+
+            // Simple visualization of connections
+            let html = '<div class="p-3">';
+            
+            if (connections.length > 0) {
+                html += '<h6>Strong Connections:</h6>';
+                connections.filter(c => c.strength > 0.7).forEach(connection => {
+                    const research = researchNodes.find(r => r.id === connection.research_id);
+                    const signal = signalNodes.find(s => s.id === connection.signal_id);
+                    
+                    if (research && signal) {
+                        html += `
+                            <div class="d-flex align-items-center mb-2 p-2 border rounded">
+                                <div class="research-node me-2" style="flex: 1;">${research.title}</div>
+                                <i class="fas fa-arrow-right mx-2"></i>
+                                <div class="signal-node ms-2" style="flex: 1;">${signal.title}</div>
+                                <span class="badge bg-primary ms-2">${(connection.strength * 100).toFixed(0)}%</span>
+                            </div>
+                        `;
+                    }
+                });
+            } else {
+                html += '<p class="text-muted">No strong connections identified. Consider strengthening research-signal alignment.</p>';
+            }
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function renderInsights() {
+            const insights = mappingData.insights || {};
+            const container = document.getElementById('keyInsights');
+            
+            let html = '';
+            if (insights.key_findings && insights.key_findings.length > 0) {
+                insights.key_findings.forEach(finding => {
+                    html += `<p><i class="fas fa-check-circle text-success me-2"></i>${finding}</p>`;
+                });
+            }
+            
+            html += `
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <small class="text-muted">Connection Quality:</small>
+                        <div class="fw-bold text-${getQualityColor(insights.connection_quality)}">${insights.connection_quality || 'Unknown'}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">Research-Signal Alignment:</small>
+                        <div class="fw-bold">${((insights.research_signal_alignment || 0) * 100).toFixed(0)}%</div>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        function renderRecommendations() {
+            const actions = prioritizationData.prioritization.actionable_insights || [];
+            const container = document.getElementById('recommendedActions');
+            
+            let html = '';
+            actions.forEach(action => {
+                const priorityClass = action.priority === 'high' ? 'border-danger' : 
+                                   action.priority === 'medium' ? 'border-warning' : 'border-info';
+                html += `
+                    <div class="action-item ${priorityClass} mb-2">
+                        <h6 class="mb-1">${action.title}</h6>
+                        <small class="text-muted">${action.description}</small>
+                        <div class="mt-1">
+                            <span class="badge bg-${action.priority === 'high' ? 'danger' : action.priority === 'medium' ? 'warning' : 'info'}">${action.priority}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (html === '') {
+                html = '<p class="text-muted">No specific recommendations available.</p>';
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function getScoreClass(score) {
+            if (score >= 8) return 'score-excellent';
+            if (score >= 6) return 'score-good';
+            if (score >= 4) return 'score-moderate';
+            return 'score-poor';
+        }
+
+        function getQualityColor(quality) {
+            switch(quality) {
+                case 'high': return 'success';
+                case 'moderate': return 'warning';
+                case 'low': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        function showError(message) {
+            const containers = ['researchPriorityList', 'signalPriorityList', 'significanceNetworkGraph', 'keyInsights', 'recommendedActions'];
+            containers.forEach(id => {
+                document.getElementById(id).innerHTML = `<div class="alert alert-danger">${message}</div>`;
+            });
+        }
+
+        // Initialize the analysis
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSignificanceAnalysis();
+        });
+    </script>
+</body>
+</html>
