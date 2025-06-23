@@ -178,16 +178,29 @@ def analyze():
             azure_service = AzureOpenAIService()
             analysis_response = azure_service.analyze_thesis(thesis_text)
             
-            # Azure OpenAI now returns parsed JSON object directly
-            analysis_result = analysis_response
+            # Ensure analysis_result is a dictionary
+            if isinstance(analysis_response, str):
+                try:
+                    analysis_result = json.loads(analysis_response)
+                except json.JSONDecodeError:
+                    analysis_result = {'core_claim': analysis_response, 'metrics_to_track': []}
+            elif isinstance(analysis_response, dict):
+                analysis_result = analysis_response
+            else:
+                analysis_result = {'core_claim': 'Analysis completed', 'metrics_to_track': []}
             
             # Add Eagle API signals to the Azure analysis
             reliable_service = ReliableAnalysisService()
             eagle_signals = reliable_service.extract_eagle_signals_for_thesis(thesis_text)
             if eagle_signals:
-                if 'metrics_to_track' not in analysis_result:
-                    analysis_result['metrics_to_track'] = []
-                analysis_result['metrics_to_track'].extend(eagle_signals)
+                # Ensure metrics_to_track exists and is a list
+                current_metrics = analysis_result.get('metrics_to_track', [])
+                if not isinstance(current_metrics, list):
+                    current_metrics = []
+                
+                # Add Eagle signals to the beginning for dashboard visibility
+                analysis_result['metrics_to_track'] = eagle_signals + current_metrics
+                logging.info(f"Added {len(eagle_signals)} Eagle API signals to analysis")
                 
         except Exception as e:
             logging.warning(f"Azure OpenAI unavailable, using fallback: {str(e)}")
