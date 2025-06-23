@@ -247,5 +247,9 @@ class DataAdapter:
         }
         """
         
-        result = self.execute_query(test_query)
-        return result.get('success', False) or 'error' not in result
+        try:
+            result = self.execute_query(test_query)
+            return result.get('success', False) and 'error' not in result
+        except Exception as e:
+            logging.warning(f"Eagle API connection validation failed: {str(e)}")
+            return False
