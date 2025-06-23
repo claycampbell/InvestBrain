@@ -236,11 +236,51 @@ class AzureOpenAIService:
             messages = [
                 {
                     "role": "system",
-                    "content": "You are an investment analyst. Return a concise JSON response with: core_claim (1 sentence), core_analysis (2-3 sentences), assumptions (3 items), mental_model (1 word), metrics_to_track (empty array), monitoring_plan (1 sentence). Be brief and fast."
+                    "content": """You are an institutional investment analyst. Analyze the investment thesis and return a comprehensive JSON response with ALL required fields:
+
+{
+  "core_claim": "One clear sentence summarizing the investment opportunity",
+  "core_analysis": "2-3 sentences explaining the key investment logic and drivers",
+  "causal_chain": [
+    {"chain_link": 1, "event": "Primary driver", "explanation": "How this creates value"},
+    {"chain_link": 2, "event": "Secondary effect", "explanation": "How this amplifies returns"},
+    {"chain_link": 3, "event": "Value realization", "explanation": "How this translates to investment returns"}
+  ],
+  "assumptions": [
+    "Key assumption 1 about market conditions",
+    "Key assumption 2 about company execution", 
+    "Key assumption 3 about competitive dynamics"
+  ],
+  "mental_model": "Growth/Value/GARP/Contrarian",
+  "counter_thesis": {
+    "scenarios": [
+      {
+        "scenario": "Primary risk scenario",
+        "probability": "Low/Medium/High",
+        "impact": "Description of negative impact on thesis",
+        "mitigation": "How to reduce this risk"
+      }
+    ]
+  },
+  "metrics_to_track": [],
+  "monitoring_plan": {
+    "objective": "Clear monitoring objective for thesis validation",
+    "data_pulls": [
+      {
+        "category": "Financial Performance",
+        "metrics": ["Revenue", "Margins", "Cash Flow"],
+        "data_source": "FactSet/Bloomberg",
+        "frequency": "quarterly"
+      }
+    ]
+  }
+}
+
+Return only valid JSON. Be comprehensive but concise."""
                 },
                 {
                     "role": "user", 
-                    "content": f"Analyze: {thesis_text}"
+                    "content": f"Analyze this investment thesis: {thesis_text}"
                 }
             ]
             
@@ -273,7 +313,7 @@ class AzureOpenAIService:
             company_name = self._extract_company_name(thesis_text) or "NVIDIA"
             ticker_symbol = self._extract_ticker_symbol(thesis_text) or "NVDA"
             sedol_id = self._extract_sedol_id(thesis_text) or "2379504"
-            return json.dumps({
+            return {
                 "core_claim": f"Strong investment opportunity in {company_name} ({ticker_symbol}) driven by technological leadership and market expansion",
                 "core_analysis": f"{company_name} demonstrates compelling risk-adjusted returns with sustainable competitive advantages in high-growth markets",
                 "causal_chain": [
@@ -287,14 +327,16 @@ class AzureOpenAIService:
                     "Execution on strategic initiatives"
                 ],
                 "mental_model": "Growth",
-                "counter_thesis_scenarios": [
-                    {
-                        "scenario": "Market saturation",
-                        "description": "Growth slows as market matures",
-                        "trigger_conditions": ["Declining market growth"],
-                        "data_signals": ["Revenue growth deceleration"]
-                    }
-                ],
+                "counter_thesis": {
+                    "scenarios": [
+                        {
+                            "scenario": "Market saturation",
+                            "probability": "Medium",
+                            "impact": "Growth slows as market matures",
+                            "mitigation": "Diversification into adjacent markets"
+                        }
+                    ]
+                },
                 "metrics_to_track": [
                     {
                         "name": "Quarterly Revenue Growth",
@@ -381,7 +423,7 @@ class AzureOpenAIService:
                     "sedol_id": sedol_id,
                     "company_name": company_name
                 }
-            })
+            }
         
         system_prompt = """You are an expert investment analyst. Analyze investment theses and provide structured analysis with comprehensive company identification.
 
