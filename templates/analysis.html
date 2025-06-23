@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
 
                     <!-- Monitoring Strategy -->
-                    ${generateMonitoringPlanCard(thesisData.monitoring_plan)}
+                    ${generateSimpleMonitoringPlan(thesisData.monitoring_plan)}
 
                     <!-- Signal Classification -->
                     <div class="card mb-4">
@@ -498,8 +498,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <h6 class="mb-0"><i class="fas fa-signal text-info"></i> Trackable Signals</h6>
                         </div>
                         <div class="card-body">
-                            ${generateSignalsByLevel(signalData.signals_by_level)}
-                            ${generateActualSignalsDisplay(signalData)}
+                            ${generateTrackableMetrics(thesisData.metrics_to_track)}
                         </div>
                     </div>
 
@@ -1479,8 +1478,8 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
     
-    function generateMonitoringPlanCard(monitoringPlan) {
-        if (!monitoringPlan || typeof monitoringPlan !== 'object') {
+    function generateSimpleMonitoringPlan(monitoringPlan) {
+        if (!monitoringPlan) {
             return `
                 <div class="card mb-4">
                     <div class="card-header">
@@ -1491,6 +1490,79 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             `;
+        }
+        
+        return `
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-line text-success"></i> Monitoring Strategy</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-primary border-0">
+                        <i class="fas fa-bullseye me-2"></i><strong>Monitoring Plan:</strong><br>
+                        <p class="mb-0 mt-2">${monitoringPlan}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function generateTrackableMetrics(metricsToTrack) {
+        if (!metricsToTrack || !Array.isArray(metricsToTrack)) {
+            return '<p class="text-muted">No trackable metrics identified</p>';
+        }
+
+        return metricsToTrack.map((metric, index) => {
+            // Handle both string metrics and object metrics
+            if (typeof metric === 'string') {
+                return `
+                    <div class="border rounded p-3 mb-3 bg-light">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-info me-2">${index + 1}</span>
+                            <strong>${metric}</strong>
+                        </div>
+                        <div class="small text-muted">Manual tracking required</div>
+                    </div>
+                `;
+            } else if (typeof metric === 'object' && metric.name) {
+                return `
+                    <div class="border rounded p-3 mb-3 ${metric.eagle_api ? 'border-success bg-success bg-opacity-10' : 'bg-light'}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-1">
+                                    <span class="badge ${metric.eagle_api ? 'bg-success' : 'bg-info'} me-2">${index + 1}</span>
+                                    <strong>${metric.name}</strong>
+                                    ${metric.eagle_api ? '<span class="badge bg-success ms-2"><i class="fas fa-database"></i> Eagle API</span>' : ''}
+                                </div>
+                                ${metric.description ? `<p class="small text-muted mb-2">${metric.description}</p>` : ''}
+                                <div class="small">
+                                    ${metric.data_source ? `<span class="badge bg-light text-dark me-1"><i class="fas fa-source"></i> ${metric.data_source}</span>` : ''}
+                                    ${metric.frequency ? `<span class="badge bg-light text-dark me-1"><i class="fas fa-clock"></i> ${metric.frequency}</span>` : ''}
+                                    ${metric.company_ticker ? `<span class="badge bg-primary me-1">${metric.company_ticker}</span>` : ''}
+                                </div>
+                            </div>
+                            ${metric.current_value ? `
+                                <div class="text-end">
+                                    <div class="h6 mb-0 text-success">${(parseFloat(metric.current_value) * 100).toFixed(1)}%</div>
+                                    <small class="text-muted">Current Value</small>
+                                </div>
+                            ` : ''}
+                        </div>
+                        ${metric.threshold ? `
+                            <div class="small text-warning">
+                                <i class="fas fa-bell"></i> Alert threshold: ${metric.threshold}${metric.threshold_type ? ` (${metric.threshold_type})` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+            return '';
+        }).join('');
+    }
+
+    function generateMonitoringPlanCard(monitoringPlan) {
+        if (!monitoringPlan || typeof monitoringPlan !== 'object') {
+            return generateSimpleMonitoringPlan(monitoringPlan);
         }
         
         return `
