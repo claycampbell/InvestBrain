@@ -573,9 +573,24 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!scenarios || !Array.isArray(scenarios)) return '<p class="text-muted">No counter-thesis scenarios identified</p>';
         
         return scenarios.slice(0, 4).map((scenario, index) => `
-            <div class="border rounded p-3 mb-3">
-                <h6 class="text-danger">${scenario.scenario || `Scenario ${index + 1}`}</h6>
+            <div class="border rounded p-3 mb-3 border-warning bg-warning bg-opacity-10">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="text-warning mb-0">${scenario.scenario_name || scenario.scenario || `Risk Scenario ${index + 1}`}</h6>
+                    ${scenario.probability ? `<span class="badge bg-warning text-dark">${scenario.probability}</span>` : ''}
+                </div>
                 <p class="small mb-2">${scenario.description || 'No description available'}</p>
+                ${scenario.impact ? `
+                    <div class="mb-2">
+                        <strong class="small text-danger">Impact:</strong>
+                        <span class="small">${scenario.impact}</span>
+                    </div>
+                ` : ''}
+                ${scenario.mitigation ? `
+                    <div class="mb-2">
+                        <strong class="small text-success">Mitigation:</strong>
+                        <span class="small">${scenario.mitigation}</span>
+                    </div>
+                ` : ''}
                 ${scenario.trigger_conditions ? `
                     <div class="mb-2">
                         <strong class="small">Trigger Conditions:</strong>
