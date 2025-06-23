@@ -903,7 +903,7 @@ JSON format: [{{"month": 6, "title": "Event Title", "description": "Brief descri
         }
         
         return {
-            'title': f'{thesis.title} - {scenario_names.get(scenario, scenario.title())} Simulation',
+            'title': f'{thesis.title} - {scenario_names.get(scenario, scenario.title())} Illustration',
             'primary_metric': 'Performance Index',
             'y_axis_label': 'Cumulative Performance (%)',
             'color': scenario_colors.get(scenario, 'rgb(75, 192, 192)'),

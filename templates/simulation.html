@@ -371,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const thesisId = {{ thesis.id }};
     const thesisTitle = "{{ thesis.title or 'Unknown Thesis' }}";
 
-    // Time horizon forecast simulation
+    // Time horizon forecast illustration
     forecastForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -386,14 +386,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Convert time horizon string to numeric value
         const timeHorizonNumeric = parseTimeHorizon(timeHorizon);
         
-        runSimulation('forecast', {
+        runIllustration('forecast', {
             thesis_id: thesisId,
             time_horizon: timeHorizonNumeric,
             scenario_type: scenarioType
         });
     });
 
-    // Event simulation
+    // Event illustration
     eventForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        runSimulation('event', {
+        runIllustration('event', {
             thesis_id: thesisId,
             event_type: eventType,
             event_severity: eventSeverity
@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return timeMap[timeString] || 1;
     }
 
-    function runSimulation(type, params) {
+    function runIllustration(type, params) {
         // Show loading modal
         const modal = new bootstrap.Modal(document.getElementById('illustrationModal'));
         modal.show();
@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
             progressBar.style.width = progress + '%';
         }, 800);
 
-        // Submit simulation request
+        // Submit illustration request
         fetch(`/api/thesis/${thesisId}/simulate`, {
             method: 'POST',
             headers: {
@@ -446,7 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({
                 ...params,
-                simulation_type: type,
+                illustration_type: type,
                 scenario: params.scenario_type || 'neutral',
                 volatility: 'medium',
                 include_events: true
@@ -459,25 +459,25 @@ document.addEventListener('DOMContentLoaded', function() {
             
             setTimeout(() => {
                 modal.hide();
-                displaySimulationResults(data, type);
+                displayIllustrationResults(data, type);
             }, 1000);
         })
         .catch(error => {
             clearInterval(interval);
             modal.hide();
-            console.error('Simulation error:', error);
-            alert('Simulation failed. Please try again.');
+            console.error('Illustration error:', error);
+            alert('Illustration failed. Please try again.');
         });
     }
 
-    function displaySimulationResults(data, type) {
-        const resultsDiv = document.getElementById('simulationResults');
+    function displayIllustrationResults(data, type) {
+        const resultsDiv = document.getElementById('illustrationResults');
         const contentDiv = document.getElementById('resultsContent');
         
         if (data.error) {
             contentDiv.innerHTML = generateErrorDisplay(data);
         } else {
-            contentDiv.innerHTML = generateLLMSimulationResults(data, type);
+            contentDiv.innerHTML = generateLLMIllustrationResults(data, type);
             
             // Display alert triggers if available
             if (data.alert_triggers && data.alert_triggers.length > 0) {
@@ -489,9 +489,9 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsDiv.scrollIntoView({ behavior: 'smooth' });
     }
 
-    function generateLLMSimulationResults(data, type) {
+    function generateLLMIllustrationResults(data, type) {
         const scenario = data.scenario_analysis || {};
-        const metadata = data.simulation_metadata || {};
+        const metadata = data.illustration_metadata || {};
         
         return `
             <div class="row">
@@ -549,7 +549,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <h5 class="alert-heading">
                     <i class="fas fa-exclamation-triangle"></i> ${data.message || 'Simulation Error'}
                 </h5>
-                <p>${data.description || 'An error occurred during simulation.'}</p>
+                <p>${data.description || 'An error occurred during illustration.'}</p>
                 ${data.action_needed ? `<hr><p class="mb-0"><strong>Action needed:</strong> ${data.action_needed}</p>` : ''}
             </div>
         `;
@@ -562,7 +562,7 @@ document.addEventListener('DOMContentLoaded', function() {
         contentDiv.innerHTML = `
             <div class="alert alert-info">
                 <h6><i class="fas fa-bell"></i> ${triggers.length} Alert(s) Triggered</h6>
-                <p>The simulation has activated the following monitoring alerts:</p>
+                <p>The illustration has activated the following monitoring alerts:</p>
             </div>
             
             ${triggers.map((alert, index) => `
