@@ -51,6 +51,18 @@ class SignalClassifier:
         Extract and classify signals from AI analysis results with Level 0-5 hierarchy
         """
         try:
+            # Ensure ai_analysis is a dictionary
+            if isinstance(ai_analysis, str):
+                try:
+                    ai_analysis = json.loads(ai_analysis)
+                except json.JSONDecodeError:
+                    logging.error("Failed to parse AI analysis as JSON")
+                    ai_analysis = {}
+            
+            if not isinstance(ai_analysis, dict):
+                logging.error(f"AI analysis is not a dictionary: {type(ai_analysis)}")
+                ai_analysis = {}
+            
             all_signals = []
             
             # Generate Level 0 Raw Economic Activity signals first
@@ -81,6 +93,11 @@ class SignalClassifier:
             logging.info(f"Processing {len(metrics_to_track)} metrics from AI analysis")
             
             for metric in metrics_to_track:
+                # Ensure metric is a dictionary, skip if string or invalid
+                if not isinstance(metric, dict):
+                    logging.warning(f"Skipping invalid metric format: {type(metric)}")
+                    continue
+                
                 # Map AI signal types to our enum
                 signal_type = metric.get('type', 'Level_2_Derived_Metrics')
                 level = self._parse_signal_level(signal_type)
