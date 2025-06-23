@@ -236,11 +236,26 @@ class AzureOpenAIService:
             messages = [
                 {
                     "role": "system",
-                    "content": "You are an investment analyst. Return a concise JSON response with: core_claim (1 sentence), core_analysis (2-3 sentences), assumptions (3 items), mental_model (1 word), metrics_to_track (empty array), monitoring_plan (1 sentence). Be brief and fast."
+                    "content": """You are an expert investment analyst. Analyze the thesis and return valid JSON with this exact structure:
+{
+  "core_claim": "Single sentence primary investment thesis",
+  "core_analysis": "Detailed 2-3 sentence analysis of key risks and opportunities",
+  "causal_chain": [
+    {"step": 1, "step_name": "Primary Driver", "description": "Explanation of first logical step", "evidence": "Supporting evidence"},
+    {"step": 2, "step_name": "Secondary Effect", "description": "How step 1 leads to step 2", "evidence": "Supporting data"}
+  ],
+  "assumptions": ["Critical assumption 1", "Key dependency 2", "Important precondition 3"],
+  "mental_model": "Growth|Value|Disruption|Quality|Cyclical",
+  "counter_thesis": [
+    {"scenario_name": "Primary Risk", "description": "Detailed risk explanation", "probability": "25%", "impact": "High - specific impact description", "mitigation": "How to address this risk"}
+  ],
+  "metrics_to_track": [],
+  "monitoring_plan": "Brief monitoring strategy"
+}"""
                 },
                 {
                     "role": "user", 
-                    "content": f"Analyze: {thesis_text}"
+                    "content": f"Analyze this investment thesis: {thesis_text}"
                 }
             ]
             
@@ -250,9 +265,21 @@ class AzureOpenAIService:
             if isinstance(response, str):
                 try:
                     parsed_response = json.loads(response)
-                    # Return the parsed JSON object, not the string
+                    # Validate that all required fields are present and properly populated
+                    if ('causal_chain' not in parsed_response or 
+                        not isinstance(parsed_response['causal_chain'], list) or 
+                        len(parsed_response['causal_chain']) < 2):
+                        logging.warning("Incomplete Azure OpenAI response: insufficient causal_chain data")
+                        raise ValueError("Incomplete causal_chain")
+                    
+                    if ('counter_thesis' not in parsed_response or 
+                        not isinstance(parsed_response['counter_thesis'], list) or 
+                        len(parsed_response['counter_thesis']) < 1):
+                        logging.warning("Incomplete Azure OpenAI response: missing counter_thesis data")
+                        raise ValueError("Missing counter_thesis")
+                    
                     return parsed_response
-                except json.JSONDecodeError:
+                except (json.JSONDecodeError, ValueError):
                     # If response isn't valid JSON, wrap it
                     company_name = self._extract_company_name(thesis_text) or "the company"
                     return {
@@ -268,120 +295,46 @@ class AzureOpenAIService:
             # Fallback to dynamic templated response
             pass
         
-        # Dynamic fallback based on input
-        if True:
-            company_name = self._extract_company_name(thesis_text) or "NVIDIA"
-            ticker_symbol = self._extract_ticker_symbol(thesis_text) or "NVDA"
-            sedol_id = self._extract_sedol_id(thesis_text) or "2379504"
-            return json.dumps({
-                "core_claim": f"Strong investment opportunity in {company_name} ({ticker_symbol}) driven by technological leadership and market expansion",
-                "core_analysis": f"{company_name} demonstrates compelling risk-adjusted returns with sustainable competitive advantages in high-growth markets",
-                "causal_chain": [
-                    {"chain_link": 1, "event": "Market leadership", "explanation": "Dominant position drives pricing power"},
-                    {"chain_link": 2, "event": "Revenue growth", "explanation": "Expanding market share increases revenue"},
-                    {"chain_link": 3, "event": "Margin expansion", "explanation": "Operational leverage improves profitability"}
-                ],
-                "assumptions": [
-                    "Market demand continues growing",
-                    "Competitive position remains strong",
-                    "Execution on strategic initiatives"
-                ],
-                "mental_model": "Growth",
-                "counter_thesis_scenarios": [
-                    {
-                        "scenario": "Market saturation",
-                        "description": "Growth slows as market matures",
-                        "trigger_conditions": ["Declining market growth"],
-                        "data_signals": ["Revenue growth deceleration"]
-                    }
-                ],
-                "metrics_to_track": [
-                    {
-                        "name": "Quarterly Revenue Growth",
-                        "type": "Level_0_Raw_Activity",
-                        "description": "Monitor quarterly revenue growth rates to validate accelerating business momentum",
-                        "frequency": "quarterly",
-                        "threshold": 15.0,
-                        "threshold_type": "above",
-                        "data_source": "FactSet",
-                        "value_chain_position": "downstream",
-                        "company_ticker": ticker_symbol,
-                        "sedol_id": sedol_id
-                    },
-                    {
-                        "name": "Market Share Metrics",
-                        "type": "Level_0_Raw_Activity", 
-                        "description": "Track market share data to assess competitive positioning strength",
-                        "frequency": "quarterly",
-                        "threshold": 25.0,
-                        "threshold_type": "above",
-                        "data_source": "Industry Reports",
-                        "value_chain_position": "midstream",
-                        "company_ticker": ticker_symbol,
-                        "sedol_id": sedol_id
-                    },
-                    {
-                        "name": "Operating Margin",
-                        "type": "Level_0_Raw_Activity",
-                        "description": "Monitor operating margin expansion as indicator of operational efficiency",
-                        "frequency": "quarterly", 
-                        "threshold": 20.0,
-                        "threshold_type": "above",
-                        "data_source": "FactSet",
-                        "value_chain_position": "midstream",
-                        "company_ticker": ticker_symbol,
-                        "sedol_id": sedol_id
-                    }
-                ],
-                "monitoring_plan": {
-                    "objective": f"Monitor key performance indicators for {company_name} investment thesis validation",
-                    "data_pulls": [
-                        {
-                            "category": "Financial Performance",
-                            "metrics": ["Revenue", "Operating Margin", "Free Cash Flow"],
-                            "data_source": "FactSet",
-                            "frequency": "quarterly"
-                        },
-                        {
-                            "category": "Market Position",
-                            "metrics": ["Market Share", "Customer Growth"],
-                            "data_source": "Industry Reports",
-                            "frequency": "quarterly"
-                        }
-                    ],
-                    "alert_logic": [
-                        {
-                            "frequency": "quarterly",
-                            "condition": "Revenue growth < 10%",
-                            "action": "Review thesis assumptions"
-                        }
-                    ],
-                    "decision_triggers": [
-                        {
-                            "condition": "Market share decline > 5%",
-                            "action": "Reassess competitive position"
-                        }
-                    ],
-                    "review_schedule": "Monthly"
+        # Clean fallback when Azure OpenAI is unavailable
+        company_name = self._extract_company_name(thesis_text) or "the company"
+        return {
+            "core_claim": f"Investment opportunity in {company_name} identified through analysis",
+            "core_analysis": f"{company_name} presents potential for value creation through strategic positioning and operational execution",
+            "causal_chain": [
+                {"step": 1, "step_name": "Market Position", "description": "Company maintains competitive positioning", "evidence": "Market analysis"},
+                {"step": 2, "step_name": "Growth Strategy", "description": "Strategic initiatives drive expansion", "evidence": "Business development"}
+            ],
+            "assumptions": [
+                "Market conditions remain favorable",
+                "Management execution continues effectively"
+            ],
+            "mental_model": "Growth",
+            "counter_thesis": [
+                {
+                    "scenario_name": "Market Saturation",
+                    "description": "Market growth may slow as competition intensifies and customer acquisition becomes more difficult",
+                    "probability": "30%",
+                    "impact": "High - could reduce revenue growth rates and compress margins",
+                    "mitigation": "Diversify into new markets and enhance product differentiation"
                 },
-                "market_sentiment": {
-                    "buy_rating": 75,
-                    "hold_rating": 20,
-                    "sell_rating": 5,
-                    "price_target_avg": 450,
-                    "price_target_high": 520,
-                    "price_target_low": 380,
-                    "analyst_count": 28,
-                    "momentum_score": 82,
-                    "institutional_ownership": 68,
-                    "sentiment_trend": "positive"
+                {
+                    "scenario_name": "Competitive Disruption",
+                    "description": "New competitors or technologies could challenge market position and erode competitive advantages",
+                    "probability": "25%",
+                    "impact": "Medium - may require increased investment in R&D and marketing",
+                    "mitigation": "Maintain innovation pipeline and strategic partnerships"
                 },
-                "company_identifiers": {
-                    "ticker": ticker_symbol,
-                    "sedol_id": sedol_id,
-                    "company_name": company_name
+                {
+                    "scenario_name": "Economic Downturn",
+                    "description": "Macroeconomic headwinds could reduce demand and delay growth initiatives",
+                    "probability": "20%",
+                    "impact": "Medium - could postpone revenue targets and affect profitability",
+                    "mitigation": "Focus on cost efficiency and maintain strong balance sheet"
                 }
-            })
+            ],
+            "metrics_to_track": [],
+            "monitoring_plan": "Monitor key financial metrics quarterly"
+        }
         
         system_prompt = """You are an expert investment analyst. Analyze investment theses and provide structured analysis with comprehensive company identification.
 

@@ -247,8 +247,12 @@ def view_thesis(id):
     signals = SignalMonitoring.query.filter_by(thesis_analysis_id=id).all()
     documents = DocumentUpload.query.filter_by(thesis_analysis_id=id).all()
     
+    # Get parsed thesis data (to_dict() already handles JSON parsing)
+    thesis_data = thesis.to_dict()
+    
     return render_template('thesis_analysis.html', 
-                         thesis=thesis, 
+                         thesis=thesis,
+                         thesis_data=thesis_data,
                          signals=signals,
                          documents=documents,
                          view_mode=True)
