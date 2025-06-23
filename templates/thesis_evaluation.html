@@ -329,7 +329,7 @@
                             Causal Chain Analysis
                         </h5>
                         <div id="causalChain">
-                            {% if thesis.causal_chain %}
+                            {% if thesis.causal_chain and thesis.causal_chain|length > 0 %}
                                 {% for step in thesis.causal_chain %}
                                     <div class="causal-step border rounded p-3 mb-2 bg-light">
                                         <div class="d-flex align-items-center mb-2">
@@ -345,7 +345,11 @@
                                     </div>
                                 {% endfor %}
                             {% else %}
-                                <p class="text-muted">No causal chain analysis available</p>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Causal Chain Analysis Not Available</strong>
+                                    <p class="mb-0 mt-2">This thesis analysis does not include a detailed causal chain breakdown. Consider adding logical step-by-step reasoning to strengthen the investment case.</p>
+                                </div>
                             {% endif %}
                         </div>
                     </div>
@@ -359,7 +363,7 @@
                             Counter-Thesis & Risk Analysis
                         </h5>
                         
-                        {% if thesis.counter_thesis %}
+                        {% if thesis.counter_thesis and thesis.counter_thesis|length > 0 %}
                             <div class="mb-4">
                                 <h6 class="text-warning">
                                     <i class="fas fa-exclamation-triangle me-1"></i>Counter-Thesis Scenarios
@@ -387,7 +391,11 @@
                                 {% endfor %}
                             </div>
                         {% else %}
-                            <p class="text-muted">No counter-thesis analysis available</p>
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Counter-Thesis Analysis Missing</strong>
+                                <p class="mb-0 mt-2">No counter-thesis scenarios were identified. Consider analyzing potential risks, bear case scenarios, and alternative outcomes to strengthen risk assessment.</p>
+                            </div>
                         {% endif %}
                     </div>
                 </div>
@@ -409,21 +417,17 @@
                                         <div class="d-flex align-items-start">
                                             <i class="fas fa-arrow-right text-info me-2 mt-1"></i>
                                             <div class="flex-grow-1">
-                                                <p class="small mb-1">{{ assumption.description if assumption.description else assumption }}</p>
-                                                {% if assumption.confidence %}
-                                                    <small class="text-muted">Confidence: {{ assumption.confidence }}%</small>
-                                                {% endif %}
-                                                {% if assumption.criticality %}
-                                                    <span class="badge bg-{{ 'danger' if assumption.criticality == 'High' else 'warning' if assumption.criticality == 'Medium' else 'success' }} ms-2">
-                                                        {{ assumption.criticality }} Impact
-                                                    </span>
-                                                {% endif %}
+                                                <p class="small mb-0">{{ assumption }}</p>
                                             </div>
                                         </div>
                                     </div>
                                 {% endfor %}
                             {% else %}
-                                <p class="text-muted">No key assumptions documented</p>
+                                <div class="alert alert-secondary">
+                                    <i class="fas fa-lightbulb me-2"></i>
+                                    <strong>Key Assumptions Not Documented</strong>
+                                    <p class="mb-0 mt-2">No explicit assumptions were identified. Consider documenting critical assumptions that could affect the investment thesis outcome.</p>
+                                </div>
                             {% endif %}
                         </div>
                     </div>
@@ -438,43 +442,21 @@
                         </h5>
                         <div id="monitoringPlan">
                             {% if thesis.monitoring_plan %}
-                                <div class="monitoring-overview mb-3">
-                                    {% if thesis.monitoring_plan.objective %}
-                                        <div class="mb-2">
-                                            <small class="text-muted d-block"><strong>Objective:</strong></small>
-                                            <p class="small">{{ thesis.monitoring_plan.objective }}</p>
+                                <div class="monitoring-overview bg-light border rounded p-3">
+                                    <div class="d-flex align-items-start">
+                                        <i class="fas fa-eye text-success me-2 mt-1"></i>
+                                        <div class="flex-grow-1">
+                                            <h6 class="text-success mb-2">Monitoring Strategy</h6>
+                                            <p class="small mb-0">{{ thesis.monitoring_plan }}</p>
                                         </div>
-                                    {% endif %}
-                                    {% if thesis.monitoring_plan.frequency %}
-                                        <div class="mb-2">
-                                            <small class="text-muted"><strong>Review Frequency:</strong> {{ thesis.monitoring_plan.frequency }}</small>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                {% if thesis.monitoring_plan.data_pulls %}
-                                    <div class="data-pulls">
-                                        <h6 class="small text-success mb-2">Key Data Sources:</h6>
-                                        {% for pull in thesis.monitoring_plan.data_pulls %}
-                                            <div class="data-pull-item bg-light border rounded p-2 mb-2">
-                                                <div class="d-flex justify-content-between align-items-start">
-                                                    <div>
-                                                        <strong class="small">{{ pull.category if pull.category else 'Data Source' }}</strong>
-                                                        <div class="text-muted small">{{ pull.data_source if pull.data_source else 'Internal' }}</div>
-                                                    </div>
-                                                    <span class="badge bg-secondary small">{{ pull.frequency if pull.frequency else 'Regular' }}</span>
-                                                </div>
-                                                {% if pull.metrics %}
-                                                    <div class="mt-1">
-                                                        <small class="text-muted">Metrics: {{ pull.metrics|join(', ') if pull.metrics is iterable else pull.metrics }}</small>
-                                                    </div>
-                                                {% endif %}
-                                            </div>
-                                        {% endfor %}
                                     </div>
-                                {% endif %}
+                                </div>
                             {% else %}
-                                <p class="text-muted">No monitoring plan established</p>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-chart-line me-2"></i>
+                                    <strong>Monitoring Plan Not Established</strong>
+                                    <p class="mb-0 mt-2">No specific monitoring strategy was defined. Consider establishing key metrics, data sources, and review frequency to track thesis performance.</p>
+                                </div>
                             {% endif %}
                         </div>
                     </div>
