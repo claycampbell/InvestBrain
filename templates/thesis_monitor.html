@@ -757,23 +757,23 @@
         }, 5000);
     }
 
-    // Simulation functionality
-    let simulationChart = null;
+    // Illustration functionality
+    let illustrationChart = null;
 
-    function showSimulationModal() {
-        const modal = new bootstrap.Modal(document.getElementById('simulationModal'));
+    function showIllustrationModal() {
+        const modal = new bootstrap.Modal(document.getElementById('illustrationModal'));
         modal.show();
     }
 
-    async function runSimulation() {
+    async function runIllustration() {
         const timeHorizon = document.getElementById('timeHorizon').value;
-        const scenario = document.getElementById('simulationScenario').value;
+        const scenario = document.getElementById('illustrationScenario').value;
         const volatility = document.getElementById('volatility').value;
         const includeEvents = document.getElementById('includeEvents').checked;
-        const simulationType = document.getElementById('simulationType').value;
+        const illustrationType = document.getElementById('illustrationType').value;
 
-        document.getElementById('runSimBtn').disabled = true;
-        document.getElementById('runSimBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running...';
+        document.getElementById('runIllustrationBtn').disabled = true;
+        document.getElementById('runIllustrationBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running...';
 
         try {
             const response = await fetch('/api/thesis/{{ thesis.id }}/simulate', {
@@ -786,7 +786,7 @@
                     scenario: scenario,
                     volatility: volatility,
                     include_events: includeEvents,
-                    simulation_type: simulationType
+                    simulation_type: illustrationType
                 })
             });
 
@@ -800,36 +800,36 @@
                     return;
                 }
                 
-                displaySimulationResults(data);
-                bootstrap.Modal.getInstance(document.getElementById('simulationModal')).hide();
-                showAlert('Simulation completed successfully', 'success');
+                displayIllustrationResults(data);
+                bootstrap.Modal.getInstance(document.getElementById('illustrationModal')).hide();
+                showAlert('Illustration completed successfully', 'success');
             } else {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.message || 'Network connection failed');
             }
         } catch (error) {
-            showAlert('Error running simulation: ' + error.message, 'danger');
+            showAlert('Error running illustration: ' + error.message, 'danger');
         } finally {
-            document.getElementById('runSimBtn').disabled = false;
-            document.getElementById('runSimBtn').innerHTML = '<i class="fas fa-play"></i> Run Simulation';
+            document.getElementById('runIllustrationBtn').disabled = false;
+            document.getElementById('runIllustrationBtn').innerHTML = '<i class="fas fa-play"></i> Run Illustration';
         }
     }
 
-    function displaySimulationResults(data) {
+    function displayIllustrationResults(data) {
         try {
             // Validate input data
             if (!data) {
-                throw new Error('No simulation data received');
+                throw new Error('No illustration data received');
             }
             
-            document.getElementById('simulationEmpty').classList.add('d-none');
-            document.getElementById('simulationResults').classList.remove('d-none');
+            document.getElementById('illustrationEmpty').classList.add('d-none');
+            document.getElementById('illustrationResults').classList.remove('d-none');
 
             // Create or update chart
-            const ctx = document.getElementById('simulationChart');
+            const ctx = document.getElementById('illustrationChart');
             
-            if (simulationChart) {
-                simulationChart.destroy();
+            if (illustrationChart) {
+                illustrationChart.destroy();
             }
 
             // Extract chart data from nested structure with comprehensive fallbacks
@@ -839,12 +839,12 @@
             
             // Validate essential data
             if (!Array.isArray(timeline) || timeline.length === 0) {
-                throw new Error('Invalid timeline data in simulation results');
+                throw new Error('Invalid timeline data in illustration results');
             }
             
             // Ensure chart configuration is properly structured
             const chartConfig = data.chart_config || {
-                title: '{{ thesis.title|e|replace("'", "\\'") }} - Simulation Results',
+                title: '{{ thesis.title|e|replace("'", "\\'") }} - Illustration Results',
                 y_axis_label: 'Performance Index (%)',
                 primary_metric: 'Thesis Performance'
             };
@@ -1003,8 +1003,8 @@
             }
         };
 
-        simulationChart = new ApexCharts(ctx, chartOptions);
-        simulationChart.render();
+        illustrationChart = new ApexCharts(ctx, chartOptions);
+        illustrationChart.render();
 
         // Generate signal-specific charts
         generateSignalCharts(data, timelineData);
@@ -1018,12 +1018,12 @@
         }
         
         } catch (error) {
-            console.error('Error displaying simulation results:', error);
-            showAlert('Failed to display simulation results: ' + error.message, 'danger');
+            console.error('Error displaying illustration results:', error);
+            showAlert('Failed to display illustration results: ' + error.message, 'danger');
             
             // Reset to empty state on error
-            document.getElementById('simulationResults').classList.add('d-none');
-            document.getElementById('simulationEmpty').classList.remove('d-none');
+            document.getElementById('illustrationResults').classList.add('d-none');
+            document.getElementById('illustrationEmpty').classList.remove('d-none');
         }
     }
 
@@ -1365,8 +1365,8 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="simulationScenario" class="form-label">Scenario Type</label>
-                        <select class="form-select" id="simulationScenario" required>
+                        <label for="illustrationScenario" class="form-label">Scenario Type</label>
+                        <select class="form-select" id="illustrationScenario" required>
                             <option value="base">Base Case - Expected trajectory</option>
                             <option value="bull">Bull Case - Optimistic scenario</option>
                             <option value="bear">Bear Case - Pessimistic scenario</option>
@@ -1393,8 +1393,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-info" onclick="runSimulation()" id="runSimBtn">
-                    <i class="fas fa-play"></i> Run Simulation
+                <button type="button" class="btn btn-info" onclick="runIllustration()" id="runIllustrationBtn">
+                    <i class="fas fa-play"></i> Run Illustration
                 </button>
             </div>
         </div>
