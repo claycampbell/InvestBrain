@@ -213,7 +213,7 @@ class ReliableAnalysisService:
                     ]
                 },
                 'metrics_to_track': self._create_tracking_signals(thesis_text, [ticker] if ticker else []),
-                'monitoring_plan': self._create_monitoring_plan([])
+                'monitoring_plan': self._create_comprehensive_monitoring_plan([])
             }
             
             # Add Eagle API signals if available
@@ -262,7 +262,7 @@ class ReliableAnalysisService:
         
         return primary_ticker, primary_sedol
     
-    def _get_eagle_metrics_for_thesis(self, ticker: str, thesis_text: str, sedol_id: str = None) -> List[Dict[str, Any]]:
+    def _get_eagle_metrics_for_thesis(self, ticker: str, thesis_text: str, sedol_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """Get relevant Eagle API metrics based on thesis content and company identifiers"""
         try:
             categories = self._determine_relevant_categories(thesis_text)
@@ -333,8 +333,8 @@ class ReliableAnalysisService:
         else:
             return abs(value) * 0.9
     
-    def _create_monitoring_plan(self, metrics: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Create a comprehensive monitoring plan"""
+    def _create_comprehensive_monitoring_plan(self, metrics: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Create a comprehensive monitoring plan for analysis"""
         return {
             "objective": "Monitor and validate thesis performance with quantified thresholds",
             "validation_framework": {
@@ -343,7 +343,7 @@ class ReliableAnalysisService:
                         "metric": "Primary Performance Indicator",
                         "target_threshold": ">15%",
                         "measurement_frequency": "quarterly",
-                        "data_source": "FactSet",
+                        "data_source": "FactSet",  
                         "validation_logic": "Direct measurement to validate thesis"
                     }
                 ]
@@ -358,8 +358,8 @@ class ReliableAnalysisService:
             'core_analysis': "Unable to complete comprehensive analysis",
             'assumptions': ["Market conditions remain stable"],
             'mental_model': 'Fundamental Analysis',
-            'metrics_to_track': [],
-            'monitoring_plan': self._create_monitoring_plan([])
+            'metrics_to_track': self._create_tracking_signals(thesis_text, []),
+            'monitoring_plan': self._create_comprehensive_monitoring_plan([])
         }
     
     def _create_tracking_signals(self, thesis_text: str, entities: List[str]) -> List[Dict]:

@@ -19,6 +19,7 @@ from services.analysis_workflow_service import AnalysisWorkflowService
 from services.thesis_evaluator import ThesisEvaluator
 from services.significance_mapping_service import SignificanceMappingService
 from services.smart_prioritization_service import SmartPrioritizationService
+from services.reliable_analysis_service import ReliableAnalysisService
 from config import Config
 
 # Initialize services
