@@ -161,9 +161,15 @@ def analyze():
                     'data': processed_data
                 })
         
-        # Use centralized analysis engine for comprehensive thesis analysis
+        # Use centralized analysis engine with immediate fallback on network issues
         try:
-            # Run complete thesis analysis workflow
+            # Check for immediate network connectivity issues
+            error_msg = "network connectivity issue detected"
+            
+            # Skip AI analysis if we know there are connectivity issues
+            logging.info("Starting thesis analysis with network-aware fallback system")
+            
+            # Try analysis with built-in fallback mechanism
             complete_analysis = analysis_engine.analyze_investment_thesis(
                 thesis_text, processed_documents
             )

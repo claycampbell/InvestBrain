@@ -20,8 +20,14 @@ class AnalysisEngine:
         self.analysis_cache = {}
     
     def analyze_investment_thesis(self, thesis_text: str, documents: List[Dict] = None) -> Dict[str, Any]:
-        """Complete thesis analysis workflow"""
+        """Complete thesis analysis workflow with immediate network detection"""
         try:
+            # Test Azure OpenAI connectivity first with a quick check
+            test_response = self._test_ai_connectivity()
+            if not test_response:
+                logging.warning("Azure OpenAI connectivity test failed, using fallback analysis")
+                return self._generate_fallback_analysis(thesis_text, documents or [])
+            
             # Step 1: Core AI analysis
             ai_analysis = self.llm_manager.analyze_thesis(thesis_text)
             
@@ -51,7 +57,6 @@ class AnalysisEngine:
             
         except Exception as e:
             logging.warning(f"AI-powered analysis failed, using structured fallback: {str(e)}")
-            # Generate fallback analysis when AI services are unavailable
             return self._generate_fallback_analysis(thesis_text, documents or [])
     
     def generate_significance_analysis(self, thesis_analysis: Dict[str, Any]) -> Dict[str, Any]:
