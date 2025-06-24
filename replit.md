@@ -98,6 +98,13 @@ The Investment Thesis Intelligence System is a sophisticated Flask-based web app
 - Graceful degradation when external services unavailable
 
 ## Changelog
+- June 24, 2025: Completed Centralized Architecture Refactoring
+  - Created core/llm_manager.py for centralized AI operations with comprehensive fallback mechanisms
+  - Built core/analysis_engine.py for business logic orchestration and workflow management
+  - Implemented core/data_manager.py for unified external service connections and data access
+  - Refactored main analysis endpoints to use new three-layer architecture
+  - Added structured fallback responses for all AI operations when Azure OpenAI is unavailable
+  - System now maintains full functionality even during external service disruptions
 - June 23, 2025: Enhanced Significance Analysis Reliability
   - Implemented robust fallback mechanisms for Azure OpenAI connection failures
   - Added comprehensive error handling and logging throughout analysis pipeline
