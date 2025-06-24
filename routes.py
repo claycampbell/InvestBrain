@@ -1,6 +1,7 @@
 import os
 import logging
 import json
+from datetime import datetime
 from flask import render_template, request, redirect, url_for, flash, jsonify, session
 from werkzeug.utils import secure_filename
 from app import app, db
@@ -160,63 +161,62 @@ def analyze():
                     'data': processed_data
                 })
         
-        # Use Azure OpenAI for dynamic analysis with Eagle API integration
-        from services.azure_openai_service import AzureOpenAIService
-        from services.reliable_analysis_service import ReliableAnalysisService
-        
+        # Use centralized analysis engine for comprehensive thesis analysis
         try:
-            # Try Azure OpenAI first for authentic analysis
-            azure_service = AzureOpenAIService()
-            analysis_response = azure_service.analyze_thesis(thesis_text)
+            # Run complete thesis analysis workflow
+            complete_analysis = analysis_engine.analyze_investment_thesis(
+                thesis_text, processed_documents
+            )
             
-            # Ensure analysis_result is a dictionary
-            if isinstance(analysis_response, str):
-                try:
-                    analysis_result = json.loads(analysis_response)
-                except json.JSONDecodeError:
-                    analysis_result = {'core_claim': analysis_response, 'metrics_to_track': []}
-            elif isinstance(analysis_response, dict):
-                analysis_result = analysis_response
-            else:
-                analysis_result = {'core_claim': 'Analysis completed', 'metrics_to_track': []}
+            analysis_result = complete_analysis['thesis_analysis']
+            classified_signals = complete_analysis['signals']
+            monitoring_plan = complete_analysis['monitoring_plan']
             
-            # Add Eagle API signals to the Azure analysis
-            reliable_service = ReliableAnalysisService()
-            eagle_signals = reliable_service.extract_eagle_signals_for_thesis(thesis_text)
-            if eagle_signals:
-                # Ensure metrics_to_track exists and is a list
-                current_metrics = analysis_result.get('metrics_to_track', [])
-                if not isinstance(current_metrics, list):
-                    current_metrics = []
-                
-                # Add Eagle signals to the beginning for dashboard visibility
-                analysis_result['metrics_to_track'] = eagle_signals + current_metrics
-                logging.info(f"Added {len(eagle_signals)} Eagle API signals to analysis")
-                
+            # Extract signals for database storage
+            signals_result = {
+                'signals': [],
+                'total_signals_identified': complete_analysis['metadata']['total_signals']
+            }
+            
+            # Flatten classified signals for storage
+            for level, level_signals in classified_signals.items():
+                for signal in level_signals:
+                    signals_result['signals'].append({
+                        'name': signal.get('name', 'Unknown Signal'),
+                        'type': level,
+                        'description': signal.get('description', ''),
+                        'data_source': signal.get('data_source', 'Unknown'),
+                        'frequency': signal.get('frequency', 'weekly'),
+                        'threshold_type': signal.get('threshold_type', 'above'),
+                        'predictive_power': signal.get('predictive_power', 'medium')
+                    })
+            
         except Exception as e:
-            logging.warning(f"Azure OpenAI unavailable, using fallback: {str(e)}")
-            # Fallback to reliable analysis only if Azure OpenAI fails
-            reliable_service = ReliableAnalysisService()
-            analysis_result = reliable_service.analyze_thesis_comprehensive(thesis_text)
+            logging.error(f"Analysis engine failed: {str(e)}")
+            return jsonify({
+                'error': 'Analysis service temporarily unavailable. Please try again.',
+                'details': str(e)
+            }), 500
         
-        # Extract signals from AI analysis and documents using the classification hierarchy
-        signals_result = signal_classifier.extract_signals_from_ai_analysis(
-            analysis_result, 
-            processed_documents, 
-            focus_primary=focus_primary_signals
-        )
-        
-        # Save analysis to database for monitoring
-        thesis_id = save_thesis_analysis(thesis_text, analysis_result, signals_result)
+        # Save analysis to database for monitoring using data manager
+        thesis_data = {
+            'title': f"Investment Thesis Analysis - {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+            'original_thesis': thesis_text,
+            **analysis_result,
+            'metrics_to_track': signals_result['signals']
+        }
+        thesis_id = data_manager.save_thesis_analysis(thesis_data)
         
         # Combine results
         combined_result = {
             'thesis_analysis': analysis_result,
             'signal_extraction': signals_result,
+            'monitoring_plan': monitoring_plan,
             'processed_documents': len(processed_documents),
             'focus_primary_signals': focus_primary_signals,
             'thesis_id': thesis_id,
-            'published': True
+            'published': True,
+            'metadata': complete_analysis['metadata']
         }
         
         return jsonify(combined_result)
@@ -1373,48 +1373,13 @@ def evaluate_thesis_strength(thesis_id):
     Comprehensive thesis evaluation and strength analysis
     """
     try:
-        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
-        
-        # Get thesis data for evaluation
-        thesis_data = {
-            'core_claim': thesis.core_claim,
-            'core_analysis': thesis.core_analysis,
-            'assumptions': thesis.assumptions or [],
-            'causal_chain': thesis.causal_chain or [],
-            'counter_thesis': thesis.counter_thesis or [],
-            'metrics_to_track': thesis.metrics_to_track or [],
-            'mental_model': thesis.mental_model
-        }
-        
-        # Get document count for research quality assessment
-        document_count = DocumentUpload.query.filter_by(thesis_analysis_id=thesis_id).count()
-        
-        # Count Eagle API signals
-        eagle_signal_count = 0
-        if thesis.metrics_to_track:
-            for metric in thesis.metrics_to_track:
-                if isinstance(metric, dict) and metric.get('eagle_api'):
-                    eagle_signal_count += 1
-        
-        # Run comprehensive evaluation
-        strength_evaluation = thesis_evaluator.evaluate_thesis_strength(thesis_data)
-        quality_assessment = thesis_evaluator.generate_research_quality_score(
-            thesis_data, document_count, eagle_signal_count
-        )
+        # Use analysis engine for comprehensive evaluation
+        evaluation_result = analysis_engine.evaluate_thesis_strength(thesis_id)
         
         return jsonify({
             'thesis_evaluation': {
                 'id': thesis_id,
-                'title': thesis.title,
-                'created_at': thesis.created_at.isoformat(),
-                'strength_analysis': strength_evaluation,
-                'quality_assessment': quality_assessment,
-                'metadata': {
-                    'document_count': document_count,
-                    'eagle_signals': eagle_signal_count,
-                    'total_metrics': len(thesis.metrics_to_track or []),
-                    'mental_model': thesis.mental_model
-                }
+                **evaluation_result
             }
         })
         

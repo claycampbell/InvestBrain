@@ -26,8 +26,8 @@ class DataManager:
     def _init_data_adapters(self):
         """Initialize external data service adapters"""
         try:
-            from services.data_adapter_service import DataAdapterService
-            self.data_adapter = DataAdapterService()
+            from services.data_adapter_service import DataAdapter
+            self.data_adapter = DataAdapter()
         except Exception as e:
             logging.warning(f"Data adapter initialization failed: {str(e)}")
             self.data_adapter = None
