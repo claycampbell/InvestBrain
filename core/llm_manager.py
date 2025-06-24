@@ -195,8 +195,13 @@ class LLMManager:
             
             return result
             
-        except Exception as e:
-            logging.warning(f"LLM call failed, using structured fallback: {str(e)}")
+        except (TimeoutError, ConnectionError, Exception) as e:
+            error_msg = str(e).lower()
+            # Check for network-related errors that should trigger fallbacks
+            if any(keyword in error_msg for keyword in ['timeout', 'connection', 'network', 'ssl', 'recv', 'unavailable']):
+                logging.warning(f"Network error detected, using structured fallback: {str(e)}")
+            else:
+                logging.warning(f"LLM call failed, using structured fallback: {str(e)}")
             return self._generate_structured_fallback(prompt)
     
     def _clean_json_response(self, response: str) -> str:

@@ -192,11 +192,87 @@ def analyze():
                     })
             
         except Exception as e:
-            logging.error(f"Analysis engine failed: {str(e)}")
-            return jsonify({
-                'error': 'Analysis service temporarily unavailable. Please try again.',
-                'details': str(e)
-            }), 500
+            error_msg = str(e).lower()
+            
+            # Check if it's a network/timeout error and use fallback analysis
+            if any(keyword in error_msg for keyword in ['timeout', 'connection', 'network', 'ssl', 'recv']):
+                logging.warning(f"Network timeout detected, using fallback analysis: {str(e)}")
+                
+                # Generate fallback analysis directly
+                fallback_analysis = {
+                    'core_claim': 'Investment thesis analysis (network issue - manual review recommended)',
+                    'core_analysis': f'Network connectivity issue prevented AI analysis. Manual review needed for: {thesis_text[:150]}...',
+                    'causal_chain': ['Market opportunity analysis needed', 'Competitive position review required', 'Financial projections to validate'],
+                    'assumptions': ['Market growth continues', 'Company execution remains strong', 'Competitive advantages sustained'],
+                    'mental_model': 'Fundamental analysis framework - manual review mode',
+                    'counter_thesis': {
+                        'scenario_1': 'Market conditions deteriorate or competition increases',
+                        'scenario_2': 'Company execution challenges or regulatory headwinds'
+                    }
+                }
+                
+                fallback_signals = {
+                    'signals': [
+                        {
+                            'name': 'Revenue Growth Rate',
+                            'type': 'Level_1_Primary_Signals',
+                            'description': 'Quarterly revenue growth tracking',
+                            'data_source': 'Financial reports',
+                            'frequency': 'quarterly',
+                            'threshold_type': 'above',
+                            'predictive_power': 'high'
+                        },
+                        {
+                            'name': 'Market Position Indicator',
+                            'type': 'Level_2_Derived_Metrics',
+                            'description': 'Competitive market standing assessment',
+                            'data_source': 'Industry analysis',
+                            'frequency': 'monthly',
+                            'threshold_type': 'change_percent',
+                            'predictive_power': 'medium'
+                        }
+                    ],
+                    'total_signals_identified': 2
+                }
+                
+                # Save fallback analysis to database
+                thesis_data = {
+                    'title': f"Thesis Analysis (Fallback) - {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+                    'original_thesis': thesis_text,
+                    **fallback_analysis,
+                    'metrics_to_track': fallback_signals['signals']
+                }
+                thesis_id = data_manager.save_thesis_analysis(thesis_data)
+                
+                return jsonify({
+                    'thesis_analysis': fallback_analysis,
+                    'signal_extraction': fallback_signals,
+                    'monitoring_plan': {
+                        'daily_checks': [],
+                        'weekly_reviews': ['Revenue tracking', 'Market analysis'],
+                        'monthly_analysis': ['Performance review', 'Competitive assessment'],
+                        'alert_thresholds': {'price_change': 0.05},
+                        'priority_signals': ['Revenue Growth Rate']
+                    },
+                    'processed_documents': len(processed_documents),
+                    'focus_primary_signals': focus_primary_signals,
+                    'thesis_id': thesis_id,
+                    'published': True,
+                    'metadata': {
+                        'analysis_timestamp': datetime.now().isoformat(),
+                        'total_signals': 2,
+                        'ai_confidence': 0.3,
+                        'data_quality': 'manual_review_required',
+                        'fallback_mode': True,
+                        'reason': 'Network connectivity issue with AI service'
+                    }
+                })
+            else:
+                logging.error(f"Analysis engine failed: {str(e)}")
+                return jsonify({
+                    'error': 'Analysis service temporarily unavailable. Please try again.',
+                    'details': str(e)
+                }), 500
         
         # Save analysis to database for monitoring using data manager
         thesis_data = {

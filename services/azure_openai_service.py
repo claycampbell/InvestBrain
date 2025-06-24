@@ -41,30 +41,37 @@ class AzureOpenAIService:
         if not self.client:
             raise Exception("Azure OpenAI client not initialized")
         
-        max_retries = 5
-        retry_delay = 2
+        max_retries = 2  # Reduce retries to fail faster
+        retry_delay = 1
         
         for attempt in range(max_retries):
             try:
                 model_name = self.deployment_name.lower()
                 
+                # Add aggressive timeout to prevent hanging
+                import httpx
+                timeout_config = httpx.Timeout(8.0)  # 8 second timeout
+                
                 if 'o1' in model_name or 'o4' in model_name:
                     response = self.client.chat.completions.create(
                         messages=messages,
-                        model=self.deployment_name
+                        model=self.deployment_name,
+                        timeout=timeout_config
                     )
                 elif 'gpt-4o' in model_name:
                     response = self.client.chat.completions.create(
                         messages=messages,
                         model=self.deployment_name,
-                        max_completion_tokens=max_tokens
+                        max_completion_tokens=max_tokens,
+                        timeout=timeout_config
                     )
                 else:
                     response = self.client.chat.completions.create(
                         messages=messages,
                         model=self.deployment_name,
                         temperature=temperature,
-                        max_tokens=max_tokens
+                        max_tokens=max_tokens,
+                        timeout=timeout_config
                     )
                 
                 logging.info("Azure OpenAI response received")
