@@ -195,7 +195,7 @@ class LLMManager:
             
             return result
             
-        except (TimeoutError, ConnectionError, Exception) as e:
+        except Exception as e:
             error_msg = str(e).lower()
             # Check for network-related errors that should trigger fallbacks
             if any(keyword in error_msg for keyword in ['timeout', 'connection', 'network', 'ssl', 'recv', 'unavailable']):
