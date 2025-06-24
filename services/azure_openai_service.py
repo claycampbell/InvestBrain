@@ -42,7 +42,7 @@ class AzureOpenAIService:
             raise Exception("Azure OpenAI client not initialized")
         
         max_retries = 1  # Single attempt to fail fast
-        retry_delay = 0.1
+        retry_delay = 0
         
         for attempt in range(max_retries):
             try:
@@ -50,7 +50,7 @@ class AzureOpenAIService:
                 
                 # Add very aggressive timeout to prevent hanging
                 import httpx
-                timeout_config = httpx.Timeout(3.0)  # 3 second timeout
+                timeout_config = httpx.Timeout(2.0)  # 2 second timeout
                 
                 if 'o1' in model_name or 'o4' in model_name:
                     response = self.client.chat.completions.create(
