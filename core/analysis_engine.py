@@ -20,18 +20,14 @@ class AnalysisEngine:
         self.analysis_cache = {}
     
     def analyze_investment_thesis(self, thesis_text: str, documents: List[Dict] = None) -> Dict[str, Any]:
-        """Complete thesis analysis workflow with immediate network detection"""
+        """Complete thesis analysis workflow"""
         try:
-            # Test Azure OpenAI connectivity first with a quick check
-            test_response = self._test_ai_connectivity()
-            if not test_response:
-                logging.warning("Azure OpenAI connectivity test failed, using fallback analysis")
-                return self._generate_fallback_analysis(thesis_text, documents or [])
-            
             # Step 1: Core AI analysis
+            logging.info("Starting AI-powered thesis analysis")
             ai_analysis = self.llm_manager.analyze_thesis(thesis_text)
             
             # Step 2: Extract monitoring signals
+            logging.info("Extracting monitoring signals")
             signals_data = self.llm_manager.extract_signals(ai_analysis, documents or [])
             
             # Step 3: Enrich with external data
@@ -43,6 +39,7 @@ class AnalysisEngine:
             # Step 5: Generate monitoring plan
             monitoring_plan = self._create_monitoring_plan(classified_signals)
             
+            logging.info(f"Analysis completed successfully with {len(enriched_signals)} signals")
             return {
                 'thesis_analysis': ai_analysis,
                 'signals': classified_signals,
