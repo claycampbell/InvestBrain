@@ -20,13 +20,18 @@ class AnalysisEngine:
         self.analysis_cache = {}
     
     def analyze_investment_thesis(self, thesis_text: str, documents: List[Dict] = None) -> Dict[str, Any]:
-        """Complete thesis analysis workflow"""
+        """Complete thesis analysis workflow with network-aware fallback"""
+        # Check if Azure OpenAI is experiencing issues and use structured fallback immediately
+        if self._should_use_fallback():
+            logging.info("Using structured fallback due to network connectivity issues")
+            return self._generate_fallback_analysis(thesis_text, documents or [])
+        
         try:
-            # Step 1: Core AI analysis
+            # Step 1: Core AI analysis with timeout protection
             logging.info("Starting AI-powered thesis analysis")
             ai_analysis = self.llm_manager.analyze_thesis(thesis_text)
             
-            # Step 2: Extract monitoring signals
+            # Step 2: Extract monitoring signals with timeout protection
             logging.info("Extracting monitoring signals")
             signals_data = self.llm_manager.extract_signals(ai_analysis, documents or [])
             
@@ -48,7 +53,8 @@ class AnalysisEngine:
                     'analysis_timestamp': datetime.utcnow().isoformat(),
                     'total_signals': len(enriched_signals),
                     'ai_confidence': self._calculate_confidence_score(ai_analysis),
-                    'data_quality': self._assess_data_quality(enriched_signals)
+                    'data_quality': self._assess_data_quality(enriched_signals),
+                    'fallback_mode': False
                 }
             }
             
@@ -162,6 +168,12 @@ class AnalysisEngine:
         except Exception as e:
             logging.warning(f"AI-powered evaluation failed, using baseline assessment: {str(e)}")
             return self._generate_fallback_evaluation(thesis_id)
+    
+    def _should_use_fallback(self) -> bool:
+        """Quick check to determine if we should use fallback mode immediately"""
+        # For now, use fallback during network connectivity issues
+        # This could be enhanced with health checks or connection pooling
+        return False  # Allow AI attempts but with fast timeouts
     
     def _enrich_signals_with_data(self, signals: List[Dict]) -> List[Dict]:
         """Enrich signals with external data context"""

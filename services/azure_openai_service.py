@@ -50,7 +50,7 @@ class AzureOpenAIService:
                 
                 # Add very aggressive timeout to prevent hanging
                 import httpx
-                timeout_config = httpx.Timeout(2.0)  # 2 second timeout
+                timeout_config = httpx.Timeout(1.5)  # 1.5 second timeout
                 
                 if 'o1' in model_name or 'o4' in model_name:
                     response = self.client.chat.completions.create(
