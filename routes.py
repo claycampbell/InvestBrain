@@ -5,38 +5,29 @@ from flask import render_template, request, redirect, url_for, flash, jsonify, s
 from werkzeug.utils import secure_filename
 from app import app, db
 from models import ThesisAnalysis, DocumentUpload, SignalMonitoring, NotificationLog
-from services.thesis_analyzer import ThesisAnalyzer
+from core import LLMManager, AnalysisEngine, DataManager
 from services.document_processor import DocumentProcessor
-from services.signal_classifier import SignalClassifier
 from services.notification_service import NotificationService
 from services.query_parser_service import QueryParserService
 from services.data_validation_service import DataValidationService
 from services.sparkline_service import SparklineService
 from services.alternative_company_service import AlternativeCompanyService
 from services.metric_selector import MetricSelector
-from services.data_adapter_service import DataAdapter
-from services.analysis_workflow_service import AnalysisWorkflowService
-from services.thesis_evaluator import ThesisEvaluator
-from services.significance_mapping_service import SignificanceMappingService
-from services.smart_prioritization_service import SmartPrioritizationService
-from services.reliable_analysis_service import ReliableAnalysisService
 from config import Config
 
-# Initialize services
-thesis_analyzer = ThesisAnalyzer()
+# Initialize centralized architecture
+llm_manager = LLMManager()
+analysis_engine = AnalysisEngine()
+data_manager = DataManager()
+
+# Initialize specialized services
 document_processor = DocumentProcessor()
-signal_classifier = SignalClassifier()
 notification_service = NotificationService()
 query_parser = QueryParserService()
 data_validator = DataValidationService()
 sparkline_service = SparklineService()
 alternative_company_service = AlternativeCompanyService()
 metric_selector = MetricSelector()
-data_adapter = DataAdapter()
-analysis_workflow_service = AnalysisWorkflowService()
-thesis_evaluator = ThesisEvaluator()
-significance_mapper = SignificanceMappingService()
-smart_prioritizer = SmartPrioritizationService()
 
 def save_thesis_analysis(thesis_text, analysis_result, signals_result):
     """Save completed analysis to database for monitoring"""

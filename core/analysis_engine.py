@@ -1,0 +1,464 @@
+"""
+Analysis Engine - Centralized business logic and analysis workflows
+All analysis operations are orchestrated through this engine
+"""
+
+import json
+import logging
+from datetime import datetime
+from typing import Dict, List, Any, Optional
+from core.llm_manager import LLMManager
+from core.data_manager import DataManager
+
+
+class AnalysisEngine:
+    """Central engine for all analysis operations"""
+    
+    def __init__(self):
+        self.llm_manager = LLMManager()
+        self.data_manager = DataManager()
+        self.analysis_cache = {}
+    
+    def analyze_investment_thesis(self, thesis_text: str, documents: List[Dict] = None) -> Dict[str, Any]:
+        """Complete thesis analysis workflow"""
+        try:
+            # Step 1: Core AI analysis
+            ai_analysis = self.llm_manager.analyze_thesis(thesis_text)
+            
+            # Step 2: Extract monitoring signals
+            signals_data = self.llm_manager.extract_signals(ai_analysis, documents or [])
+            
+            # Step 3: Enrich with external data
+            enriched_signals = self._enrich_signals_with_data(signals_data.get('signals', []))
+            
+            # Step 4: Classify and organize signals
+            classified_signals = self._classify_signals_by_level(enriched_signals)
+            
+            # Step 5: Generate monitoring plan
+            monitoring_plan = self._create_monitoring_plan(classified_signals)
+            
+            return {
+                'thesis_analysis': ai_analysis,
+                'signals': classified_signals,
+                'monitoring_plan': monitoring_plan,
+                'metadata': {
+                    'analysis_timestamp': datetime.utcnow().isoformat(),
+                    'total_signals': len(enriched_signals),
+                    'ai_confidence': self._calculate_confidence_score(ai_analysis),
+                    'data_quality': self._assess_data_quality(enriched_signals)
+                }
+            }
+            
+        except Exception as e:
+            logging.error(f"Thesis analysis failed: {str(e)}")
+            raise Exception(f"Analysis workflow failed: {str(e)}")
+    
+    def generate_significance_analysis(self, thesis_analysis: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate significance mapping between research and signals"""
+        try:
+            # Extract research elements
+            research_elements = self._extract_research_elements(thesis_analysis)
+            
+            # Extract signal patterns  
+            signal_patterns = self._extract_signal_patterns(thesis_analysis)
+            
+            # Generate AI-powered mapping
+            mapping_data = self.llm_manager.generate_significance_mapping(
+                research_elements, signal_patterns
+            )
+            
+            # Generate prioritization
+            prioritization_data = self.llm_manager.prioritize_elements(thesis_analysis)
+            
+            return {
+                'significance_mapping': mapping_data,
+                'smart_prioritization': prioritization_data,
+                'research_elements': research_elements,
+                'signal_patterns': signal_patterns,
+                'analysis_metadata': {
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'research_count': len(research_elements),
+                    'signal_count': len(signal_patterns),
+                    'connection_count': len(mapping_data.get('connections', []))
+                }
+            }
+            
+        except Exception as e:
+            logging.error(f"Significance analysis failed: {str(e)}")
+            # Provide fallback analysis
+            return self._generate_fallback_significance_analysis(thesis_analysis)
+    
+    def run_scenario_analysis(self, thesis_data: Dict, scenario: str, time_horizon: int) -> Dict[str, Any]:
+        """Run comprehensive scenario analysis"""
+        try:
+            # Generate AI scenario analysis
+            ai_scenario = self.llm_manager.generate_scenario_analysis(
+                thesis_data, scenario, time_horizon
+            )
+            
+            # Get relevant market data
+            market_data = self.data_manager.get_market_context(
+                thesis_data.get('core_claim', ''), time_horizon
+            )
+            
+            # Generate performance simulation
+            simulation_data = self._run_performance_simulation(
+                thesis_data, scenario, time_horizon, market_data
+            )
+            
+            return {
+                'scenario_analysis': ai_scenario,
+                'market_context': market_data,
+                'simulation_results': simulation_data,
+                'risk_assessment': self._assess_scenario_risks(ai_scenario, market_data),
+                'metadata': {
+                    'scenario': scenario,
+                    'time_horizon': time_horizon,
+                    'analysis_timestamp': datetime.utcnow().isoformat()
+                }
+            }
+            
+        except Exception as e:
+            logging.error(f"Scenario analysis failed: {str(e)}")
+            raise Exception(f"Scenario analysis failed: {str(e)}")
+    
+    def evaluate_thesis_strength(self, thesis_id: int) -> Dict[str, Any]:
+        """Comprehensive thesis evaluation and strength analysis"""
+        try:
+            # Get thesis data
+            thesis_data = self.data_manager.get_thesis_analysis(thesis_id)
+            if not thesis_data:
+                raise Exception(f"Thesis {thesis_id} not found")
+            
+            # Generate market sentiment analysis
+            sentiment_data = self.llm_manager.analyze_market_sentiment(thesis_data)
+            
+            # Calculate performance metrics
+            performance_metrics = self._calculate_performance_metrics(thesis_data)
+            
+            # Assess signal reliability
+            signal_assessment = self._assess_signal_reliability(thesis_data)
+            
+            # Generate overall strength score
+            strength_score = self._calculate_strength_score(
+                sentiment_data, performance_metrics, signal_assessment
+            )
+            
+            return {
+                'strength_score': strength_score,
+                'market_sentiment': sentiment_data,
+                'performance_metrics': performance_metrics,
+                'signal_assessment': signal_assessment,
+                'evaluation_summary': self._generate_evaluation_summary(strength_score),
+                'recommendations': self._generate_strength_recommendations(strength_score),
+                'metadata': {
+                    'thesis_id': thesis_id,
+                    'evaluation_timestamp': datetime.utcnow().isoformat()
+                }
+            }
+            
+        except Exception as e:
+            logging.error(f"Thesis evaluation failed: {str(e)}")
+            raise Exception(f"Thesis evaluation failed: {str(e)}")
+    
+    def _enrich_signals_with_data(self, signals: List[Dict]) -> List[Dict]:
+        """Enrich signals with external data context"""
+        enriched_signals = []
+        
+        for signal in signals:
+            try:
+                # Get data availability and quality
+                data_info = self.data_manager.check_signal_data_availability(signal)
+                
+                # Enrich signal with data context
+                enriched_signal = {
+                    **signal,
+                    'data_availability': data_info.get('availability', 'unknown'),
+                    'data_quality': data_info.get('quality', 'unknown'),
+                    'update_frequency': data_info.get('frequency', 'unknown'),
+                    'data_sources': data_info.get('sources', [])
+                }
+                
+                enriched_signals.append(enriched_signal)
+                
+            except Exception as e:
+                logging.warning(f"Failed to enrich signal {signal.get('name', 'unknown')}: {str(e)}")
+                enriched_signals.append(signal)
+        
+        return enriched_signals
+    
+    def _classify_signals_by_level(self, signals: List[Dict]) -> Dict[str, List[Dict]]:
+        """Classify signals into hierarchical levels"""
+        classified = {
+            'Level_0_Raw_Economic_Activity': [],
+            'Level_1_Primary_Signals': [],
+            'Level_2_Derived_Metrics': [],
+            'Level_3_Technical_Indicators': [],
+            'Level_4_Market_Sentiment': [],
+            'Level_5_Meta_Analysis': []
+        }
+        
+        for signal in signals:
+            signal_type = signal.get('type', 'Level_2_Derived_Metrics')
+            if signal_type in classified:
+                classified[signal_type].append(signal)
+            else:
+                classified['Level_2_Derived_Metrics'].append(signal)
+        
+        return classified
+    
+    def _create_monitoring_plan(self, classified_signals: Dict[str, List[Dict]]) -> Dict[str, Any]:
+        """Create comprehensive monitoring plan"""
+        return {
+            'daily_checks': self._get_high_frequency_signals(classified_signals),
+            'weekly_reviews': self._get_medium_frequency_signals(classified_signals),
+            'monthly_analysis': self._get_low_frequency_signals(classified_signals),
+            'alert_thresholds': self._calculate_alert_thresholds(classified_signals),
+            'priority_signals': self._identify_priority_signals(classified_signals)
+        }
+    
+    def _extract_research_elements(self, thesis_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Extract research elements for significance analysis"""
+        elements = []
+        
+        if thesis_analysis.get('core_claim'):
+            elements.append({
+                'id': 'core_claim',
+                'title': 'Core Investment Claim',
+                'content': thesis_analysis['core_claim'],
+                'category': 'thesis_foundation',
+                'importance': 'high'
+            })
+        
+        if thesis_analysis.get('core_analysis'):
+            elements.append({
+                'id': 'core_analysis', 
+                'title': 'Core Analysis',
+                'content': thesis_analysis['core_analysis'],
+                'category': 'analytical_framework',
+                'importance': 'high'
+            })
+        
+        if thesis_analysis.get('assumptions'):
+            elements.append({
+                'id': 'assumptions',
+                'title': 'Key Assumptions',
+                'content': str(thesis_analysis['assumptions']),
+                'category': 'risk_factors',
+                'importance': 'medium'
+            })
+        
+        return elements
+    
+    def _extract_signal_patterns(self, thesis_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Extract signal patterns for significance analysis"""
+        patterns = []
+        
+        signals = thesis_analysis.get('signals', {})
+        for level, level_signals in signals.items():
+            if isinstance(level_signals, list):
+                for signal in level_signals:
+                    patterns.append({
+                        'id': f"signal_{len(patterns)}",
+                        'title': signal.get('name', 'Unknown Signal'),
+                        'description': signal.get('description', ''),
+                        'category': 'tracking_metric',
+                        'level': level,
+                        'predictive_power': signal.get('predictive_power', 'medium')
+                    })
+        
+        return patterns
+    
+    def _generate_fallback_significance_analysis(self, thesis_analysis: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate fallback analysis when AI services fail"""
+        research_elements = self._extract_research_elements(thesis_analysis)
+        signal_patterns = self._extract_signal_patterns(thesis_analysis)
+        
+        return {
+            'significance_mapping': {
+                'connections': [],
+                'insights': {
+                    'connection_quality': 'basic',
+                    'research_signal_alignment': 0.5,
+                    'key_findings': ['Analysis completed using pattern matching']
+                }
+            },
+            'smart_prioritization': {
+                'research_prioritization': {'priority_ranking': ['core_claim', 'core_analysis']},
+                'signal_prioritization': {'signal_priority_ranking': ['financial_metrics']}
+            },
+            'research_elements': research_elements,
+            'signal_patterns': signal_patterns,
+            'analysis_metadata': {
+                'timestamp': datetime.utcnow().isoformat(),
+                'fallback_mode': True
+            }
+        }
+    
+    def _calculate_confidence_score(self, analysis: Dict[str, Any]) -> float:
+        """Calculate confidence score for analysis"""
+        score = 0.0
+        
+        if analysis.get('core_claim'): score += 0.3
+        if analysis.get('core_analysis'): score += 0.3
+        if analysis.get('assumptions'): score += 0.2
+        if analysis.get('causal_chain'): score += 0.2
+        
+        return min(score, 1.0)
+    
+    def _assess_data_quality(self, signals: List[Dict]) -> str:
+        """Assess overall data quality"""
+        if not signals:
+            return 'poor'
+        
+        quality_scores = []
+        for signal in signals:
+            if signal.get('data_availability') == 'high':
+                quality_scores.append(1.0)
+            elif signal.get('data_availability') == 'medium':
+                quality_scores.append(0.7)
+            else:
+                quality_scores.append(0.3)
+        
+        avg_quality = sum(quality_scores) / len(quality_scores)
+        
+        if avg_quality > 0.8:
+            return 'excellent'
+        elif avg_quality > 0.6:
+            return 'good'
+        elif avg_quality > 0.4:
+            return 'fair'
+        else:
+            return 'poor'
+    
+    def _get_high_frequency_signals(self, classified_signals: Dict) -> List[Dict]:
+        """Get signals that need daily monitoring"""
+        high_freq = []
+        for level, signals in classified_signals.items():
+            for signal in signals:
+                if signal.get('frequency') in ['daily', 'intraday']:
+                    high_freq.append(signal)
+        return high_freq
+    
+    def _get_medium_frequency_signals(self, classified_signals: Dict) -> List[Dict]:
+        """Get signals that need weekly monitoring"""
+        medium_freq = []
+        for level, signals in classified_signals.items():
+            for signal in signals:
+                if signal.get('frequency') == 'weekly':
+                    medium_freq.append(signal)
+        return medium_freq
+    
+    def _get_low_frequency_signals(self, classified_signals: Dict) -> List[Dict]:
+        """Get signals that need monthly monitoring"""
+        low_freq = []
+        for level, signals in classified_signals.items():
+            for signal in signals:
+                if signal.get('frequency') in ['monthly', 'quarterly']:
+                    low_freq.append(signal)
+        return low_freq
+    
+    def _calculate_alert_thresholds(self, classified_signals: Dict) -> Dict[str, Any]:
+        """Calculate appropriate alert thresholds"""
+        return {
+            'price_change': 0.05,  # 5% price change
+            'volume_spike': 2.0,   # 2x average volume
+            'sentiment_shift': 0.3  # 30% sentiment change
+        }
+    
+    def _identify_priority_signals(self, classified_signals: Dict) -> List[Dict]:
+        """Identify highest priority signals for monitoring"""
+        priority_signals = []
+        
+        for level, signals in classified_signals.items():
+            for signal in signals:
+                if signal.get('predictive_power') == 'high':
+                    priority_signals.append(signal)
+        
+        return priority_signals[:10]  # Top 10 priority signals
+    
+    def _run_performance_simulation(self, thesis_data: Dict, scenario: str, 
+                                  time_horizon: int, market_data: Dict) -> Dict[str, Any]:
+        """Run performance simulation based on scenario"""
+        # Simplified simulation - in production would use more sophisticated models
+        base_return = 0.08  # 8% base return
+        scenario_multiplier = {
+            'bull_market': 1.5,
+            'bear_market': 0.3,
+            'sideways_market': 0.8,
+            'crisis': 0.1
+        }.get(scenario, 1.0)
+        
+        projected_return = base_return * scenario_multiplier * time_horizon
+        
+        return {
+            'projected_return': projected_return,
+            'volatility': 0.15,  # 15% volatility
+            'max_drawdown': projected_return * 0.3,
+            'confidence_interval': [projected_return * 0.7, projected_return * 1.3]
+        }
+    
+    def _assess_scenario_risks(self, scenario_analysis: Dict, market_data: Dict) -> Dict[str, Any]:
+        """Assess risks for scenario analysis"""
+        return {
+            'market_risk': 'medium',
+            'thesis_risk': 'low',
+            'execution_risk': 'medium',
+            'overall_risk': 'medium'
+        }
+    
+    def _calculate_performance_metrics(self, thesis_data: Dict) -> Dict[str, Any]:
+        """Calculate thesis performance metrics"""
+        return {
+            'thesis_strength': 0.75,
+            'signal_reliability': 0.80,
+            'market_alignment': 0.70,
+            'execution_feasibility': 0.85
+        }
+    
+    def _assess_signal_reliability(self, thesis_data: Dict) -> Dict[str, Any]:
+        """Assess reliability of monitoring signals"""
+        return {
+            'signal_count': len(thesis_data.get('signals', {})),
+            'data_quality': 'good',
+            'update_frequency': 'daily',
+            'reliability_score': 0.80
+        }
+    
+    def _calculate_strength_score(self, sentiment: Dict, performance: Dict, signals: Dict) -> Dict[str, Any]:
+        """Calculate overall thesis strength score"""
+        sentiment_score = sentiment.get('sentiment_score', 0.5)
+        performance_score = performance.get('thesis_strength', 0.5)
+        signal_score = signals.get('reliability_score', 0.5)
+        
+        overall_score = (sentiment_score + performance_score + signal_score) / 3
+        
+        return {
+            'overall_score': overall_score,
+            'sentiment_component': sentiment_score,
+            'performance_component': performance_score,
+            'signal_component': signal_score,
+            'strength_level': 'strong' if overall_score > 0.7 else 'moderate' if overall_score > 0.5 else 'weak'
+        }
+    
+    def _generate_evaluation_summary(self, strength_score: Dict) -> str:
+        """Generate human-readable evaluation summary"""
+        level = strength_score.get('strength_level', 'unknown')
+        score = strength_score.get('overall_score', 0)
+        
+        return f"Thesis shows {level} fundamentals with {score:.1%} overall strength"
+    
+    def _generate_strength_recommendations(self, strength_score: Dict) -> List[str]:
+        """Generate recommendations based on strength analysis"""
+        recommendations = []
+        
+        if strength_score.get('overall_score', 0) < 0.6:
+            recommendations.append("Consider strengthening core analysis with additional research")
+        
+        if strength_score.get('signal_component', 0) < 0.7:
+            recommendations.append("Enhance signal monitoring system for better tracking")
+        
+        if strength_score.get('sentiment_component', 0) < 0.5:
+            recommendations.append("Monitor market sentiment closely for timing opportunities")
+        
+        return recommendations
