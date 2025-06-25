@@ -26,8 +26,8 @@ class AzureOpenAIService:
                 api_key=self.api_key,
                 api_version=api_version,
                 azure_endpoint=endpoint,
-                timeout=120.0,  # Increased timeout
-                max_retries=3   # More retries
+                timeout=60.0,   # 60 second timeout for Azure OpenAI
+                max_retries=2   # Reasonable retries
             )
             
             logging.info("Azure OpenAI client initialized successfully")
@@ -41,16 +41,16 @@ class AzureOpenAIService:
         if not self.client:
             raise Exception("Azure OpenAI client not initialized")
         
-        max_retries = 1  # Single attempt to fail fast
-        retry_delay = 0
+        max_retries = 2  # Allow retries for Azure OpenAI reliability
+        retry_delay = 2
         
         for attempt in range(max_retries):
             try:
                 model_name = self.deployment_name.lower()
                 
-                # Add very aggressive timeout to prevent hanging
+                # Use reasonable timeout for Azure OpenAI calls
                 import httpx
-                timeout_config = httpx.Timeout(1.5)  # 1.5 second timeout
+                timeout_config = httpx.Timeout(30.0)  # 30 second timeout
                 
                 if 'o1' in model_name or 'o4' in model_name:
                     response = self.client.chat.completions.create(
@@ -212,6 +212,10 @@ class AzureOpenAIService:
                 "core_analysis": "Analysis temporarily unavailable due to service connectivity",
                 "status": "fallback_mode"
             })
+    
+    def is_available(self):
+        """Check if Azure OpenAI service is available"""
+        return self.client is not None and self.api_key is not None
     
     def _extract_company_name(self, text):
         """Extract company name from thesis text using simple pattern matching"""

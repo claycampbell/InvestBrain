@@ -43,10 +43,11 @@ class ReliableAnalysisService:
         
         user_prompt = f"Analyze: {thesis_text[:150]}..."
         
+        # Use proper timeout for Azure OpenAI success
         response = self.azure_openai.generate_completion([
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
-        ], max_tokens=1000, temperature=0.5)
+        ], max_tokens=1500, temperature=0.5)
         
         return self._parse_response(response)
     
@@ -189,14 +190,33 @@ class ReliableAnalysisService:
             return self._get_eagle_metrics_for_thesis(ticker, thesis_text, sedol_id)
         return []
     
-    def analyze_thesis_comprehensive(self, thesis_text: str) -> Dict[str, Any]:
-        """Comprehensive thesis analysis when AI services fail"""
+    def analyze_thesis_comprehensive(self, thesis_text: str, documents: List[Dict] = None) -> Dict[str, Any]:
+        """Comprehensive thesis analysis using Azure OpenAI as primary mechanism"""
         try:
+            logging.info("Starting comprehensive thesis analysis with Azure OpenAI as primary")
+            
+            # Try Azure OpenAI analysis first with proper timeout
+            if self.azure_openai.is_available():
+                try:
+                    logging.info("Attempting Azure OpenAI analysis with extended timeout")
+                    ai_result = self._try_azure_analysis(thesis_text)
+                    if ai_result and 'error' not in ai_result:
+                        logging.info("Azure OpenAI analysis successful")
+                        # Add Eagle API signals to AI result
+                        eagle_signals = self.extract_eagle_signals_for_thesis(thesis_text)
+                        if eagle_signals:
+                            ai_result['metrics_to_track'] = ai_result.get('metrics_to_track', []) + eagle_signals
+                        return ai_result
+                except Exception as e:
+                    logging.warning(f"Azure OpenAI analysis failed: {str(e)}")
+            
+            # Only fall back if Azure OpenAI completely fails
+            logging.info("Azure OpenAI unavailable, using structured analysis")
             ticker, sedol_id = self._extract_company_identifiers(thesis_text)
             
             analysis = {
                 'core_claim': f"Investment thesis analysis for {ticker or 'identified company'}",
-                'core_analysis': 'Reliable analysis of investment opportunity based on available metrics',
+                'core_analysis': 'Structured analysis of investment opportunity based on available metrics',
                 'assumptions': [
                     'Market conditions remain stable',
                     'Company fundamentals are accurately represented',
