@@ -98,6 +98,16 @@ The Investment Thesis Intelligence System is a sophisticated Flask-based web app
 - Graceful degradation when external services unavailable
 
 ## Changelog
+- June 25, 2025: Document Validation Module Implementation
+  - Created comprehensive document validation system for extracting and validating investment thesis from research documents
+  - Added DocumentValidation database model with full tracking of extraction confidence, analysis results, and analyst feedback
+  - Implemented DocumentValidationService with AI-powered thesis extraction and comprehensive validation pipeline
+  - Built complete web interface with upload, review, analysis, and results pages
+  - Added navigation integration and export functionality for analyst reports
+  - System extracts thesis from PDFs, Excel, and CSV files without requiring manual thesis input
+  - Validation workflow: Document Upload → AI Thesis Extraction → Manual Review → Comprehensive Analysis → Exportable Report
+  - Supports analyst feedback loop with rating system and detailed commentary
+  - Complete integration with existing analysis pipeline including Eagle API signals and monitoring setup
 - June 25, 2025: Complete Core Directory Dependency Removal 
   - Eliminated ALL core directory dependencies from routes.py and entire system
   - Updated Eagle metrics service to use Azure OpenAI directly instead of core directory LLMManager
