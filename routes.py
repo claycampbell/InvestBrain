@@ -125,6 +125,31 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
+    """Dashboard homepage with system overview"""
+    try:
+        # Get recent analyses
+        recent_analyses = ThesisAnalysis.query.order_by(ThesisAnalysis.created_at.desc()).limit(5).all()
+        
+        # Get active signals count
+        active_signals = SignalMonitoring.query.filter_by(status='active').count()
+        
+        # Get recent notifications
+        recent_notifications = NotificationLog.query.order_by(NotificationLog.sent_at.desc()).limit(5).all()
+        
+        return render_template('index.html', 
+                             recent_analyses=recent_analyses,
+                             active_signals=active_signals,
+                             recent_notifications=recent_notifications)
+    except Exception as e:
+        logging.error(f"Dashboard loading error: {str(e)}")
+        # Fallback to basic dashboard
+        return render_template('index.html', 
+                             recent_analyses=[],
+                             active_signals=0,
+                             recent_notifications=[])
+
+@app.route('/analysis')
+def new_thesis():
     """Main analysis interface for investment thesis and signal extraction"""
     return render_template('analysis.html')
 
