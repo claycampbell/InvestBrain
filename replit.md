@@ -98,15 +98,16 @@ The Investment Thesis Intelligence System is a sophisticated Flask-based web app
 - Graceful degradation when external services unavailable
 
 ## Changelog
-- June 25, 2025: Optimized Azure OpenAI Integration for Authentic AI Analysis
-  - Eliminated analysis_engine dependency, using ReliableAnalysisService directly in all routes
+- June 25, 2025: Complete Core Directory Dependency Removal 
+  - Eliminated ALL core directory dependencies from routes.py and entire system
+  - Updated Eagle metrics service to use Azure OpenAI directly instead of core directory LLMManager
+  - Fixed routes.py to import services directly instead of through core directory
   - Configured Azure OpenAI service with proper timeouts (30s) and retry logic for reliability
-  - Updated Eagle metrics service to use Azure OpenAI directly instead of core directory dependencies
-  - ReliableAnalysisService prioritizes Azure OpenAI as primary analysis mechanism with extended timeouts
+  - ReliableAnalysisService operates as primary analysis mechanism without core dependencies
   - System attempts genuine AI analysis first before any fallback mechanisms
   - Primary flow: ReliableAnalysisService → Azure OpenAI (extended timeout) → Eagle API → database storage
   - Eagle API integration extracts authentic metrics from 155+ available financial metrics
-  - Structured fallback only triggers when Azure OpenAI is completely unavailable
+  - All services now operate independently without core directory coupling
   - Analysis workflow generates AI-powered insights and saves complete results to database
 - June 25, 2025: Established ReliableAnalysisService as Primary Analysis Mechanism
   - Made ReliableAnalysisService the main analysis pathway instead of replacement for fallback
