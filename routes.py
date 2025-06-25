@@ -136,14 +136,14 @@ def index():
         # Get recent notifications
         recent_notifications = NotificationLog.query.order_by(NotificationLog.sent_at.desc()).limit(5).all()
         
-        return render_template('index.html', 
+        return render_template('simple_index.html', 
                              recent_analyses=recent_analyses,
                              active_signals=active_signals,
                              recent_notifications=recent_notifications)
     except Exception as e:
         logging.error(f"Dashboard loading error: {str(e)}")
         # Fallback to basic dashboard
-        return render_template('index.html', 
+        return render_template('simple_index.html', 
                              recent_analyses=[],
                              active_signals=0,
                              recent_notifications=[])
