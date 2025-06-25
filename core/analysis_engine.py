@@ -35,8 +35,12 @@ class AnalysisEngine:
             logging.info("Extracting monitoring signals")
             signals_data = self.llm_manager.extract_signals(ai_analysis, documents or [])
             
-            # Step 3: Enrich with external data
-            enriched_signals = self._enrich_signals_with_data(signals_data.get('signals', []))
+            # Step 3: Enrich with external data including Eagle API
+            enriched_signals = self._enrich_signals_with_data(
+                signals_data.get('signals', []), 
+                thesis_text, 
+                ai_analysis.get('metrics_to_track', [])
+            )
             
             # Step 4: Classify and organize signals
             classified_signals = self._classify_signals_by_level(enriched_signals)
@@ -60,7 +64,24 @@ class AnalysisEngine:
             
         except Exception as e:
             logging.warning(f"AI-powered analysis failed, using structured fallback: {str(e)}")
-            return self._generate_fallback_analysis(thesis_text, documents or [])
+            fallback_result = self._generate_fallback_analysis(thesis_text, documents or [])
+            
+            # Still try to add Eagle API data to fallback
+            try:
+                from services.eagle_metrics_service import EagleMetricsService
+                eagle_service = EagleMetricsService()
+                company_name = eagle_service.extract_company_name_from_thesis(thesis_text)
+                if company_name:
+                    eagle_data = eagle_service.get_eagle_metrics_data(company_name, [])
+                    if eagle_data.get('success'):
+                        # Add Eagle API signals to fallback
+                        eagle_signals = self._convert_eagle_data_to_signals(eagle_data, company_name)
+                        fallback_result['signals'].extend(eagle_signals)
+                        fallback_result['metadata']['eagle_api_signals'] = len(eagle_signals)
+            except Exception as eagle_error:
+                logging.warning(f"Could not add Eagle API data to fallback: {eagle_error}")
+            
+            return fallback_result
     
     def generate_significance_analysis(self, thesis_analysis: Dict[str, Any]) -> Dict[str, Any]:
         """Generate significance mapping between research and signals"""
@@ -175,9 +196,12 @@ class AnalysisEngine:
         # This could be enhanced with health checks or connection pooling
         return False  # Allow AI attempts but with fast timeouts
     
-    def _enrich_signals_with_data(self, signals: List[Dict]) -> List[Dict]:
-        """Enrich signals with external data context"""
+    def _enrich_signals_with_data(self, signals: List[Dict], thesis_text: str = '', metrics_to_track: List[str] = None) -> List[Dict]:
+        """Enrich signals with external data context including Eagle API metrics"""
         enriched_signals = []
+        
+        # Get Eagle API data if available
+        eagle_signals = self._get_eagle_api_signals(thesis_text, metrics_to_track or [])
         
         for signal in signals:
             try:

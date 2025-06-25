@@ -350,6 +350,12 @@ document.addEventListener('DOMContentLoaded', function() {
             window.loadAlternativeCompanies(data.thesis_id);
         }
         
+        // Load Eagle API results if metrics are available
+        if (data.signal_extraction && data.signal_extraction.metrics_to_track) {
+            const thesisText = document.querySelector('textarea[name="thesis_text"]').value;
+            window.loadEagleAPIResults(thesisText, data.signal_extraction.metrics_to_track);
+        }
+        
         // Scroll to results
         resultsDiv.scrollIntoView({ behavior: 'smooth' });
     }
@@ -491,6 +497,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     <!-- Monitoring Strategy -->
                     ${generateMonitoringPlanCard(thesisData.monitoring_plan)}
+
+                    <!-- Eagle API Results Section -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-chart-line text-success"></i> Real-Time Financial Data</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="eagle-api-results">
+                                <div class="text-center py-4">
+                                    <i class="fas fa-spinner fa-spin text-muted"></i>
+                                    <p class="text-muted mt-2">Loading Eagle API data...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Signal Classification -->
                     <div class="card mb-4">

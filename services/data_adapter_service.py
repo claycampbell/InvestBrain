@@ -110,6 +110,49 @@ class DataAdapter:
         
         return self.execute_query(query)
     
+    def get_eagle_metrics(self, sedol_id: str, metrics: List[str]) -> Dict[str, Any]:
+        """Fetch Eagle API metrics using SEDOL ID and metric list"""
+        if not metrics or not sedol_id:
+            return {'success': False, 'error': 'Missing sedol_id or metrics'}
+            
+        # Format metric names for GraphQL query
+        metrics_str = ','.join([f'"{m}"' for m in metrics])
+        
+        query = f"""
+        query {{
+            financialMetrics(
+                entityIds: [
+                    {{id: "{sedol_id}", type: SEDOL}}
+                ],
+                metricIds: [{metrics_str}]
+            ) {{
+                companyInfo {{
+                    name
+                    sedolId
+                    currency
+                }}
+                metrics {{
+                    name
+                    value
+                    category
+                    unit
+                    period
+                }}
+            }}
+        }}
+        """
+        
+        result = self.execute_query(query)
+        
+        if result and 'data' in result:
+            return {
+                'success': True,
+                'data': result['data'],
+                'timestamp': datetime.utcnow().isoformat()
+            }
+        else:
+            return {'success': False, 'error': 'No data returned from Eagle API'}
+
     def fetch_metric_values_with_sedol(self, metrics: List[str], company_ticker: str, sedol_id: str) -> Dict[str, Any]:
         """Fetch values for specific metrics using both ticker and SEDOL ID"""
         if not metrics:

@@ -1415,6 +1415,8 @@ def internal_data_analysis():
     """Internal data analysis dashboard page"""
     return render_template('internal_data_analysis.html')
 
+
+
 @app.route('/api/test-eagle-response')
 def test_eagle_response():
     """Test endpoint to validate Eagle API response schema for frontend"""
@@ -1542,6 +1544,42 @@ def significance_analysis_page(thesis_id):
     """
     thesis = ThesisAnalysis.query.get_or_404(thesis_id)
     return render_template('significance_analysis.html', thesis=thesis)
+
+
+
+@app.route('/api/eagle-metrics', methods=['POST'])
+def get_eagle_metrics():
+    """Get Eagle API metrics for a company with identified metrics and sedol_id extraction"""
+    try:
+        from services.data_adapter_service import DataAdapter
+        
+        request_data = request.get_json()
+        if not request_data:
+            return jsonify({'success': False, 'error': 'No data provided'})
+        
+        # Extract data from request
+        company_name = request_data.get('company_name', '')
+        thesis_text = request_data.get('thesis_text', '')
+        metrics_to_track = request_data.get('metrics_to_track', [])
+        
+        # Use data adapter to get Eagle API metrics
+        data_adapter = DataAdapter()
+        eagle_data = data_adapter.get_test_eagle_response(
+            company_ticker=company_name or "UNKNOWN",
+            sedol_id=""
+        )
+        
+        return jsonify(eagle_data)
+        
+    except Exception as e:
+        logging.error(f"Eagle metrics API error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to fetch Eagle API metrics',
+            'details': str(e)
+        })
+
+
 
 @app.errorhandler(404)
 def not_found_error(error):
