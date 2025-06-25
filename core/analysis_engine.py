@@ -28,36 +28,36 @@ class AnalysisEngine:
             
             # Use reliable analysis service as the primary mechanism
             logging.info("Using reliable analysis service as primary analysis mechanism")
-        reliable_service = ReliableAnalysisService()
-        
-        # Perform comprehensive analysis
-        analysis_result = reliable_service.analyze_thesis_comprehensive(thesis_text)
-        
-        # Extract Eagle API signals
-        eagle_signals = reliable_service.extract_eagle_signals_for_thesis(thesis_text)
-        
-        # Combine metrics and signals
-        all_signals = analysis_result.get('metrics_to_track', [])
-        if eagle_signals:
-            all_signals.extend(eagle_signals)
-        
-        # Generate monitoring plan
-        monitoring_plan = self._create_monitoring_plan(all_signals)
-        
-        logging.info(f"Analysis completed successfully with {len(all_signals)} signals")
-        return {
-            'thesis_analysis': analysis_result,
-            'signals': all_signals,
-            'monitoring_plan': monitoring_plan,
-            'metadata': {
-                'analysis_timestamp': datetime.utcnow().isoformat(),
-                'total_signals': len(all_signals),
-                'eagle_api_signals': len(eagle_signals),
-                'data_sources': ['Azure OpenAI', 'Eagle API', 'ReliableAnalysisService'],
-                'fallback_mode': False
+            reliable_service = ReliableAnalysisService()
+            
+            # Perform comprehensive analysis
+            analysis_result = reliable_service.analyze_thesis_comprehensive(thesis_text)
+            
+            # Extract Eagle API signals
+            eagle_signals = reliable_service.extract_eagle_signals_for_thesis(thesis_text)
+            
+            # Combine metrics and signals
+            all_signals = analysis_result.get('metrics_to_track', [])
+            if eagle_signals:
+                all_signals.extend(eagle_signals)
+            
+            # Generate monitoring plan
+            monitoring_plan = self._create_monitoring_plan(all_signals)
+            
+            logging.info(f"Analysis completed successfully with {len(all_signals)} signals")
+            return {
+                'thesis_analysis': analysis_result,
+                'signals': all_signals,
+                'monitoring_plan': monitoring_plan,
+                'metadata': {
+                    'analysis_timestamp': datetime.utcnow().isoformat(),
+                    'total_signals': len(all_signals),
+                    'eagle_api_signals': len(eagle_signals),
+                    'data_sources': ['Azure OpenAI', 'Eagle API', 'ReliableAnalysisService'],
+                    'fallback_mode': False
+                }
             }
-        }
-        
+            
         except Exception as e:
             logging.warning(f"AI-powered analysis failed, using structured fallback: {str(e)}")
             fallback_result = self._generate_fallback_analysis(thesis_text, documents or [])

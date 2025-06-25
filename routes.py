@@ -6,7 +6,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify, s
 from werkzeug.utils import secure_filename
 from app import app, db
 from models import ThesisAnalysis, DocumentUpload, SignalMonitoring, NotificationLog
-from core import LLMManager, AnalysisEngine, DataManager
+from core import LLMManager, DataManager
 from services.document_processor import DocumentProcessor
 from services.notification_service import NotificationService
 from services.query_parser_service import QueryParserService
@@ -18,7 +18,6 @@ from config import Config
 
 # Initialize centralized architecture
 llm_manager = LLMManager()
-analysis_engine = AnalysisEngine()
 data_manager = DataManager()
 
 # Initialize specialized services
@@ -1498,7 +1497,10 @@ def evaluate_thesis_strength(thesis_id):
     """
     try:
         # Use analysis engine for comprehensive evaluation
-        evaluation_result = analysis_engine.evaluate_thesis_strength(thesis_id)
+        # Use reliable analysis service for evaluation
+        from services.reliable_analysis_service import ReliableAnalysisService
+        reliable_service = ReliableAnalysisService()
+        evaluation_result = reliable_service.evaluate_thesis_strength(thesis_id)
         
         return jsonify({
             'thesis_evaluation': {
