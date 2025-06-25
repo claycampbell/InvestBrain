@@ -109,3 +109,50 @@ class NotificationLog(db.Model):
             'sent_at': self.sent_at.isoformat() if self.sent_at else None,
             'acknowledged': self.acknowledged
         }
+
+
+class DocumentValidation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(255), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
+    extracted_thesis = db.Column(Text, nullable=False)
+    key_findings = db.Column(JSON)
+    investment_logic = db.Column(Text)
+    risk_factors = db.Column(JSON)
+    target_metrics = db.Column(JSON)
+    document_summary = db.Column(Text)
+    confidence_score = db.Column(db.Float, default=0.0)
+    
+    # Analysis results
+    thesis_analysis_id = db.Column(db.Integer, db.ForeignKey('thesis_analysis.id'))
+    validation_report = db.Column(JSON)
+    analyst_report = db.Column(Text)
+    
+    # Status tracking
+    status = db.Column(db.String(50), default='pending')  # pending, validated, reviewed
+    analyst_feedback = db.Column(Text)
+    
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    thesis_analysis = db.relationship('ThesisAnalysis', backref='validations')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'filename': self.filename,
+            'extracted_thesis': self.extracted_thesis,
+            'key_findings': self.key_findings,
+            'investment_logic': self.investment_logic,
+            'risk_factors': self.risk_factors,
+            'target_metrics': self.target_metrics,
+            'document_summary': self.document_summary,
+            'confidence_score': self.confidence_score,
+            'thesis_analysis_id': self.thesis_analysis_id,
+            'validation_report': self.validation_report,
+            'status': self.status,
+            'analyst_feedback': self.analyst_feedback,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }

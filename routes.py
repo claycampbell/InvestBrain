@@ -5,7 +5,7 @@ from datetime import datetime
 from flask import render_template, request, redirect, url_for, flash, jsonify, session
 from werkzeug.utils import secure_filename
 from app import app, db
-from models import ThesisAnalysis, DocumentUpload, SignalMonitoring, NotificationLog
+from models import ThesisAnalysis, DocumentUpload, SignalMonitoring, NotificationLog, DocumentValidation
 # Removed core directory dependencies - using services directly
 from services.document_processor import DocumentProcessor
 from services.notification_service import NotificationService
