@@ -27,6 +27,10 @@ sparkline_service = SparklineService()
 alternative_company_service = AlternativeCompanyService()
 metric_selector = MetricSelector()
 
+# Initialize document validation service
+from services.document_validation_service import DocumentValidationService
+validation_service = DocumentValidationService()
+
 def save_thesis_analysis(thesis_text, analysis_result, signals_result):
     """Save completed analysis to database for monitoring"""
     try:
@@ -1647,3 +1651,239 @@ def not_found_error(error):
 def internal_error(error):
     db.session.rollback()
     return render_template('500.html'), 500
+
+
+# Document Validation Routes
+
+@app.route('/validation')
+def validation_dashboard():
+    """Document validation dashboard"""
+    validations = DocumentValidation.query.order_by(DocumentValidation.created_at.desc()).all()
+    return render_template('validation/dashboard.html', validations=validations)
+
+
+@app.route('/validation/upload', methods=['GET', 'POST'])
+def document_validation_upload():
+    """Upload document for thesis extraction and validation"""
+    if request.method == 'GET':
+        return render_template('validation/upload.html')
+    
+    try:
+        # Check if file was uploaded
+        if 'research_document' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+        
+        file = request.files['research_document']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if not allowed_file(file.filename):
+            return jsonify({'error': 'File type not supported'}), 400
+        
+        # Save uploaded file
+        filename = secure_filename(file.filename)
+        upload_dir = Config.UPLOAD_FOLDER
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir)
+        
+        file_path = os.path.join(upload_dir, filename)
+        file.save(file_path)
+        
+        # Extract thesis from document
+        extraction_result = validation_service.extract_thesis_from_document(file_path, filename)
+        
+        if not extraction_result['success']:
+            return jsonify({'error': extraction_result.get('error', 'Failed to extract thesis')}), 500
+        
+        # Save extraction results to database
+        validation_record = DocumentValidation(
+            filename=filename,
+            file_path=file_path,
+            extracted_thesis=extraction_result['extracted_thesis'],
+            key_findings=extraction_result['key_findings'],
+            investment_logic=extraction_result['investment_logic'],
+            risk_factors=extraction_result['risk_factors'],
+            target_metrics=extraction_result['target_metrics'],
+            document_summary=extraction_result['document_summary'],
+            confidence_score=extraction_result['confidence_score'],
+            status='extracted'
+        )
+        
+        db.session.add(validation_record)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'validation_id': validation_record.id,
+            'extracted_thesis': extraction_result['extracted_thesis'],
+            'confidence_score': extraction_result['confidence_score'],
+            'redirect_url': url_for('validation_review', validation_id=validation_record.id)
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in document validation upload: {str(e)}")
+        return jsonify({'error': 'Server error during file processing'}), 500
+
+
+@app.route('/validation/<int:validation_id>/review')
+def validation_review(validation_id):
+    """Review extracted thesis and initiate validation"""
+    validation = DocumentValidation.query.get_or_404(validation_id)
+    return render_template('validation/review.html', validation=validation)
+
+
+@app.route('/validation/<int:validation_id>/analyze', methods=['POST'])
+def validate_extracted_thesis(validation_id):
+    """Run analysis on extracted thesis and generate validation report"""
+    try:
+        validation = DocumentValidation.query.get_or_404(validation_id)
+        
+        # Get any manual adjustments from the form
+        extracted_thesis = request.form.get('extracted_thesis', validation.extracted_thesis)
+        
+        # Update the validation record if thesis was modified
+        if extracted_thesis != validation.extracted_thesis:
+            validation.extracted_thesis = extracted_thesis
+            validation.updated_at = datetime.utcnow()
+        
+        # Validate the extracted thesis through our analysis pipeline
+        validation_result = validation_service.validate_extracted_thesis(
+            extracted_thesis, 
+            validation.to_dict()
+        )
+        
+        if not validation_result['success']:
+            return jsonify({'error': validation_result.get('error', 'Validation failed')}), 500
+        
+        # Save analysis results
+        analysis_result = validation_result['analysis_result']
+        
+        # Create thesis analysis record
+        thesis_analysis = ThesisAnalysis(
+            title=f"Extracted: {validation.filename}",
+            original_thesis=extracted_thesis,
+            core_claim=analysis_result.get('core_claim', ''),
+            core_analysis=analysis_result.get('core_analysis', ''),
+            causal_chain=analysis_result.get('causal_chain', []),
+            assumptions=analysis_result.get('assumptions', []),
+            mental_model=analysis_result.get('mental_model', ''),
+            counter_thesis=analysis_result.get('counter_thesis', {}),
+            metrics_to_track=analysis_result.get('metrics_to_track', []),
+            monitoring_plan=analysis_result.get('monitoring_plan', {})
+        )
+        
+        db.session.add(thesis_analysis)
+        db.session.flush()  # Get the ID
+        
+        # Update validation record
+        validation.thesis_analysis_id = thesis_analysis.id
+        validation.validation_report = validation_result['validation_report']
+        validation.status = 'validated'
+        validation.updated_at = datetime.utcnow()
+        
+        # Generate analyst report
+        analyst_report = validation_service.generate_analyst_report(validation_result)
+        validation.analyst_report = analyst_report
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'thesis_analysis_id': thesis_analysis.id,
+            'validation_report': validation_result['validation_report'],
+            'redirect_url': url_for('validation_results', validation_id=validation.id)
+        })
+        
+    except Exception as e:
+        logging.error(f"Error validating extracted thesis: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Server error during validation'}), 500
+
+
+@app.route('/validation/<int:validation_id>/results')
+def validation_results(validation_id):
+    """Display validation results and analyst report"""
+    validation = DocumentValidation.query.get_or_404(validation_id)
+    thesis_analysis = None
+    
+    if validation.thesis_analysis_id:
+        thesis_analysis = ThesisAnalysis.query.get(validation.thesis_analysis_id)
+    
+    return render_template('validation/results.html', 
+                         validation=validation, 
+                         thesis_analysis=thesis_analysis)
+
+
+@app.route('/validation/<int:validation_id>/export')
+def export_validation_report(validation_id):
+    """Export validation report for analyst review"""
+    validation = DocumentValidation.query.get_or_404(validation_id)
+    
+    if not validation.analyst_report:
+        return jsonify({'error': 'Report not yet generated'}), 400
+    
+    # Return as downloadable text file
+    from flask import Response
+    
+    response = Response(
+        validation.analyst_report,
+        mimetype='text/plain',
+        headers={
+            'Content-Disposition': f'attachment; filename=validation_report_{validation.id}_{validation.filename}.txt'
+        }
+    )
+    
+    return response
+
+
+@app.route('/validation/<int:validation_id>/feedback', methods=['POST'])
+def analyst_feedback(validation_id):
+    """Receive feedback from analyst on validation results"""
+    try:
+        validation = DocumentValidation.query.get_or_404(validation_id)
+        
+        feedback = request.form.get('feedback', '')
+        rating = request.form.get('rating', '')
+        
+        # Update validation record with feedback
+        validation.analyst_feedback = feedback
+        validation.status = 'reviewed'
+        validation.updated_at = datetime.utcnow()
+        
+        # Store additional metadata if needed
+        feedback_data = {
+            'rating': rating,
+            'feedback': feedback,
+            'reviewed_at': datetime.utcnow().isoformat()
+        }
+        
+        # Update validation report with feedback
+        if validation.validation_report:
+            validation.validation_report['analyst_feedback'] = feedback_data
+        else:
+            validation.validation_report = {'analyst_feedback': feedback_data}
+        
+        db.session.commit()
+        
+        flash('Feedback submitted successfully', 'success')
+        return redirect(url_for('validation_results', validation_id=validation.id))
+        
+    except Exception as e:
+        logging.error(f"Error submitting analyst feedback: {str(e)}")
+        flash('Error submitting feedback', 'error')
+        return redirect(url_for('validation_results', validation_id=validation.id))
+
+
+@app.route('/validation/list')
+def validation_list():
+    """List all document validations with status"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    validations = DocumentValidation.query.order_by(
+        DocumentValidation.created_at.desc()
+    ).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    return render_template('validation/list.html', validations=validations)

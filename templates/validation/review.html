@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+
+{% block title %}Review Extracted Thesis - Investment Thesis Intelligence{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-1">
+                        <i class="fas fa-search text-primary"></i>
+                        Review Extracted Thesis
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Review and refine the AI-extracted investment thesis from: <strong>{{ validation.filename }}</strong>
+                    </p>
+                </div>
+                <div>
+                    <a href="{{ url_for('validation_dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extraction Confidence -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="alert-heading mb-1">
+                            <i class="fas fa-robot"></i> AI Extraction Complete
+                        </h5>
+                        <p class="mb-0">Thesis extracted with {{ (validation.confidence_score * 100)|round|int }}% confidence</p>
+                    </div>
+                    <div>
+                        <div class="progress" style="width: 200px; height: 25px;">
+                            {% set confidence_percent = (validation.confidence_score * 100)|round|int %}
+                            <div class="progress-bar 
+                                {% if confidence_percent >= 80 %}bg-success
+                                {% elif confidence_percent >= 60 %}bg-warning
+                                {% else %}bg-danger{% endif %}" 
+                                role="progressbar" 
+                                style="width: {{ confidence_percent }}%">
+                                {{ confidence_percent }}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Review Form -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit"></i> Extracted Investment Thesis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="validation-form">
+                        <input type="hidden" name="validation_id" value="{{ validation.id }}">
+                        
+                        <!-- Thesis Statement -->
+                        <div class="mb-4">
+                            <label for="extracted_thesis" class="form-label">
+                                <strong>Investment Thesis Statement</strong>
+                                <small class="text-muted">(Edit if needed)</small>
+                            </label>
+                            <textarea id="extracted_thesis" 
+                                      name="extracted_thesis" 
+                                      class="form-control" 
+                                      rows="6" 
+                                      placeholder="Review and refine the extracted thesis statement...">{{ validation.extracted_thesis }}</textarea>
+                            <div class="form-text">
+                                Make any necessary adjustments to improve clarity or accuracy before validation.
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-outline-secondary" onclick="resetThesis()">
+                                <i class="fas fa-undo"></i> Reset to Original
+                            </button>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check-circle"></i> Validate This Thesis
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Progress Display -->
+                    <div id="validation-progress" class="mt-4" style="display: none;">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary mb-3" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <h5>Running Comprehensive Analysis...</h5>
+                            <p class="text-muted">This may take up to 30 seconds</p>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Error Display -->
+                    <div id="error-message" class="alert alert-danger mt-3" style="display: none;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span id="error-text"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Extraction Details Sidebar -->
+        <div class="col-lg-4">
+            <!-- Document Summary -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-file-alt"></i> Document Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="small">{{ validation.document_summary or "Document analysis summary not available." }}</p>
+                </div>
+            </div>
+
+            <!-- Key Findings -->
+            {% if validation.key_findings %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightbulb"></i> Key Findings
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% for finding in validation.key_findings[:5] %}
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <small>{{ finding }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Investment Logic -->
+            {% if validation.investment_logic %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-brain"></i> Investment Logic
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="small">{{ validation.investment_logic }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Risk Factors -->
+            {% if validation.risk_factors %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-exclamation-triangle text-warning"></i> Risk Factors
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% for risk in validation.risk_factors[:3] %}
+                        <li class="mb-2">
+                            <i class="fas fa-exclamation-circle text-warning"></i>
+                            <small>{{ risk }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Target Metrics -->
+            {% if validation.target_metrics %}
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-line"></i> Target Metrics
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% for metric in validation.target_metrics[:3] %}
+                        <li class="mb-2">
+                            <i class="fas fa-chart-bar text-info"></i>
+                            <small>{{ metric }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.progress {
+    border-radius: 10px;
+}
+
+.card {
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+textarea {
+    font-family: 'Georgia', serif;
+    line-height: 1.6;
+}
+
+.list-unstyled li {
+    border-left: 3px solid transparent;
+    padding-left: 10px;
+    margin-bottom: 8px !important;
+}
+
+.list-unstyled li:hover {
+    border-left-color: var(--bs-primary);
+    background-color: rgba(0,123,255,0.05);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const validationForm = document.getElementById('validation-form');
+    const progressDiv = document.getElementById('validation-progress');
+    const errorDiv = document.getElementById('error-message');
+    const errorText = document.getElementById('error-text');
+    const originalThesis = {{ validation.extracted_thesis|tojson }};
+
+    // Form submission
+    validationForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(validationForm);
+        
+        // Show progress
+        progressDiv.style.display = 'block';
+        errorDiv.style.display = 'none';
+        validationForm.style.display = 'none';
+        
+        // Simulate progress
+        let progress = 0;
+        const progressBar = progressDiv.querySelector('.progress-bar');
+        const progressInterval = setInterval(function() {
+            progress += Math.random() * 10;
+            if (progress > 85) progress = 85;
+            progressBar.style.width = progress + '%';
+        }, 1000);
+
+        // Submit validation request
+        fetch(`/validation/{{ validation.id }}/analyze`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            clearInterval(progressInterval);
+            progressBar.style.width = '100%';
+            
+            if (data.success) {
+                // Redirect to results page
+                setTimeout(function() {
+                    window.location.href = data.redirect_url;
+                }, 1000);
+            } else {
+                showError(data.error || 'Validation failed');
+            }
+        })
+        .catch(error => {
+            clearInterval(progressInterval);
+            showError('Network error: ' + error.message);
+        });
+    });
+
+    window.resetThesis = function() {
+        document.getElementById('extracted_thesis').value = originalThesis;
+    };
+
+    function showError(message) {
+        errorText.textContent = message;
+        errorDiv.style.display = 'block';
+        progressDiv.style.display = 'none';
+        validationForm.style.display = 'block';
+    }
+
+    // Character count for thesis
+    const thesisTextarea = document.getElementById('extracted_thesis');
+    const charCountDiv = document.createElement('div');
+    charCountDiv.className = 'form-text text-end';
+    charCountDiv.id = 'char-count';
+    thesisTextarea.parentNode.appendChild(charCountDiv);
+
+    function updateCharCount() {
+        const count = thesisTextarea.value.length;
+        charCountDiv.textContent = `${count} characters`;
+    }
+
+    thesisTextarea.addEventListener('input', updateCharCount);
+    updateCharCount(); // Initial count
+});
+</script>
+{% endblock %}

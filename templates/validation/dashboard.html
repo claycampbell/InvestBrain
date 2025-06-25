@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+
+{% block title %}Document Validation Dashboard - Investment Thesis Intelligence{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-1">
+                        <i class="fas fa-file-alt text-primary"></i>
+                        Document Validation
+                    </h1>
+                    <p class="text-muted mb-0">Extract and validate investment thesis from research documents</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('document_validation_upload') }}" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Upload Document
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Documents</h5>
+                            <h2 class="mb-0">{{ validations|length }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-file-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Validated</h5>
+                            <h2 class="mb-0">{{ validations|selectattr('status', 'equalto', 'validated')|list|length }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Pending Review</h5>
+                            <h2 class="mb-0">{{ validations|selectattr('status', 'equalto', 'extracted')|list|length }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Reviewed</h5>
+                            <h2 class="mb-0">{{ validations|selectattr('status', 'equalto', 'reviewed')|list|length }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-star fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Validations -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history"></i> Recent Document Validations
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if validations %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Document</th>
+                                        <th>Extracted Thesis</th>
+                                        <th>Confidence</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for validation in validations[:10] %}
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-file"></i>
+                                            {{ validation.filename }}
+                                        </td>
+                                        <td>
+                                            <div class="text-truncate" style="max-width: 300px;" title="{{ validation.extracted_thesis }}">
+                                                {{ validation.extracted_thesis[:100] }}{% if validation.extracted_thesis|length > 100 %}...{% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                {% set confidence_percent = (validation.confidence_score * 100)|round|int %}
+                                                <div class="progress-bar 
+                                                    {% if confidence_percent >= 80 %}bg-success
+                                                    {% elif confidence_percent >= 60 %}bg-warning
+                                                    {% else %}bg-danger{% endif %}" 
+                                                    role="progressbar" 
+                                                    style="width: {{ confidence_percent }}%"
+                                                    aria-valuenow="{{ confidence_percent }}" 
+                                                    aria-valuemin="0" 
+                                                    aria-valuemax="100">
+                                                    {{ confidence_percent }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if validation.status == 'extracted' %}
+                                                <span class="badge bg-warning">Pending Review</span>
+                                            {% elif validation.status == 'validated' %}
+                                                <span class="badge bg-success">Validated</span>
+                                            {% elif validation.status == 'reviewed' %}
+                                                <span class="badge bg-info">Reviewed</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ validation.status.title() }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ validation.created_at.strftime('%Y-%m-%d %H:%M') if validation.created_at else 'Unknown' }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            {% if validation.status == 'extracted' %}
+                                                <a href="{{ url_for('validation_review', validation_id=validation.id) }}" 
+                                                   class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-eye"></i> Review
+                                                </a>
+                                            {% elif validation.status in ['validated', 'reviewed'] %}
+                                                <a href="{{ url_for('validation_results', validation_id=validation.id) }}" 
+                                                   class="btn btn-sm btn-success">
+                                                    <i class="fas fa-chart-line"></i> Results
+                                                </a>
+                                                <a href="{{ url_for('export_validation_report', validation_id=validation.id) }}" 
+                                                   class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-download"></i> Export
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        {% if validations|length > 10 %}
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('validation_list') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-list"></i> View All Validations
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Document Validations Yet</h4>
+                            <p class="text-muted mb-3">Upload a research document to extract and validate investment thesis</p>
+                            <a href="{{ url_for('document_validation_upload') }}" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Upload First Document
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="d-grid">
+                                <a href="{{ url_for('document_validation_upload') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-upload"></i> Upload New Document
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-grid">
+                                <a href="{{ url_for('validation_list') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-list"></i> View All Validations
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-grid">
+                                <a href="{{ url_for('index') }}" class="btn btn-outline-info">
+                                    <i class="fas fa-brain"></i> New Thesis Analysis
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.progress {
+    border-radius: 10px;
+}
+
+.card {
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+</style>
+{% endblock %}

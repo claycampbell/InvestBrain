@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+
+{% block title %}All Document Validations - Investment Thesis Intelligence{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-1">
+                        <i class="fas fa-list text-primary"></i>
+                        All Document Validations
+                    </h1>
+                    <p class="text-muted mb-0">Complete history of document thesis extractions and validations</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('document_validation_upload') }}" class="btn btn-primary me-2">
+                        <i class="fas fa-upload"></i> Upload Document
+                    </a>
+                    <a href="{{ url_for('validation_dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-dashboard"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3 align-items-center">
+                        <div class="col-md-4">
+                            <label for="status_filter" class="form-label">Status</label>
+                            <select class="form-select" id="status_filter" name="status">
+                                <option value="">All Statuses</option>
+                                <option value="extracted" {% if request.args.get('status') == 'extracted' %}selected{% endif %}>Pending Review</option>
+                                <option value="validated" {% if request.args.get('status') == 'validated' %}selected{% endif %}>Validated</option>
+                                <option value="reviewed" {% if request.args.get('status') == 'reviewed' %}selected{% endif %}>Reviewed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="confidence_filter" class="form-label">Min Confidence</label>
+                            <select class="form-select" id="confidence_filter" name="confidence">
+                                <option value="">Any Confidence</option>
+                                <option value="0.8" {% if request.args.get('confidence') == '0.8' %}selected{% endif %}>80%+</option>
+                                <option value="0.6" {% if request.args.get('confidence') == '0.6' %}selected{% endif %}>60%+</option>
+                                <option value="0.4" {% if request.args.get('confidence') == '0.4' %}selected{% endif %}>40%+</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Search</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="search" name="search" 
+                                       placeholder="Search filename or thesis..." 
+                                       value="{{ request.args.get('search', '') }}">
+                                <button class="btn btn-outline-secondary" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Validation List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-file-alt"></i> Document Validations
+                        </h5>
+                        <span class="badge bg-secondary">{{ validations.total }} total</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if validations.items %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Document</th>
+                                        <th>Extracted Thesis</th>
+                                        <th>Confidence</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for validation in validations.items %}
+                                    <tr>
+                                        <td>
+                                            <div>
+                                                <i class="fas fa-file"></i>
+                                                <strong>{{ validation.filename }}</strong>
+                                            </div>
+                                            <small class="text-muted">ID: {{ validation.id }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="text-truncate" style="max-width: 400px;" 
+                                                 title="{{ validation.extracted_thesis }}">
+                                                {{ validation.extracted_thesis[:150] }}{% if validation.extracted_thesis|length > 150 %}...{% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% set confidence_percent = (validation.confidence_score * 100)|round|int %}
+                                                <div class="progress me-2" style="width: 80px; height: 20px;">
+                                                    <div class="progress-bar 
+                                                        {% if confidence_percent >= 80 %}bg-success
+                                                        {% elif confidence_percent >= 60 %}bg-warning
+                                                        {% else %}bg-danger{% endif %}" 
+                                                        role="progressbar" 
+                                                        style="width: {{ confidence_percent }}%">
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted">{{ confidence_percent }}%</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if validation.status == 'extracted' %}
+                                                <span class="badge bg-warning">Pending Review</span>
+                                            {% elif validation.status == 'validated' %}
+                                                <span class="badge bg-success">Validated</span>
+                                            {% elif validation.status == 'reviewed' %}
+                                                <span class="badge bg-info">Reviewed</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ validation.status.title() }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div>
+                                                {{ validation.created_at.strftime('%Y-%m-%d') if validation.created_at else 'Unknown' }}
+                                            </div>
+                                            <small class="text-muted">
+                                                {{ validation.created_at.strftime('%H:%M') if validation.created_at else '' }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                {% if validation.status == 'extracted' %}
+                                                    <a href="{{ url_for('validation_review', validation_id=validation.id) }}" 
+                                                       class="btn btn-sm btn-primary" title="Review">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                {% elif validation.status in ['validated', 'reviewed'] %}
+                                                    <a href="{{ url_for('validation_results', validation_id=validation.id) }}" 
+                                                       class="btn btn-sm btn-success" title="View Results">
+                                                        <i class="fas fa-chart-line"></i>
+                                                    </a>
+                                                    <a href="{{ url_for('export_validation_report', validation_id=validation.id) }}" 
+                                                       class="btn btn-sm btn-outline-secondary" title="Export Report">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if validations.pages > 1 %}
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if validations.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('validation_list', page=validations.prev_num, **request.args) }}">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+
+                                {% for page_num in validations.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != validations.page %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('validation_list', page=page_num, **request.args) }}">
+                                                    {{ page_num }}
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if validations.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('validation_list', page=validations.next_num, **request.args) }}">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Document Validations Found</h4>
+                            {% if request.args.get('search') or request.args.get('status') or request.args.get('confidence') %}
+                                <p class="text-muted mb-3">Try adjusting your filters or search terms</p>
+                                <a href="{{ url_for('validation_list') }}" class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-refresh"></i> Clear Filters
+                                </a>
+                            {% else %}
+                                <p class="text-muted mb-3">Upload a research document to get started with validation</p>
+                            {% endif %}
+                            <a href="{{ url_for('document_validation_upload') }}" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Upload Document
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    {% if validations.items %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar"></i> Summary Statistics
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h5 class="text-primary">{{ validations.total }}</h5>
+                            <small class="text-muted">Total Documents</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h5 class="text-success">
+                                {% set validated_count = validations.items|selectattr('status', 'equalto', 'validated')|list|length %}
+                                {{ validated_count }}
+                            </h5>
+                            <small class="text-muted">Validated</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h5 class="text-warning">
+                                {% set pending_count = validations.items|selectattr('status', 'equalto', 'extracted')|list|length %}
+                                {{ pending_count }}
+                            </h5>
+                            <small class="text-muted">Pending Review</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h5 class="text-info">
+                                {% set reviewed_count = validations.items|selectattr('status', 'equalto', 'reviewed')|list|length %}
+                                {{ reviewed_count }}
+                            </h5>
+                            <small class="text-muted">Reviewed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.progress {
+    border-radius: 10px;
+}
+
+.card {
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn-group .btn {
+    border-radius: 0.375rem;
+}
+
+.btn-group .btn:not(:last-child) {
+    margin-right: 4px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when filters change
+    const statusFilter = document.getElementById('status_filter');
+    const confidenceFilter = document.getElementById('confidence_filter');
+    
+    [statusFilter, confidenceFilter].forEach(filter => {
+        filter.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+});
+</script>
+{% endblock %}
