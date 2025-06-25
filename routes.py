@@ -161,41 +161,55 @@ def analyze():
                     'data': processed_data
                 })
         
-        # Use centralized analysis engine with immediate fallback on network issues
+        # Use reliable analysis service for authentic data processing
         try:
-            # Check for immediate network connectivity issues
-            error_msg = "network connectivity issue detected"
+            from services.reliable_analysis_service import ReliableAnalysisService
             
-            # Skip AI analysis if we know there are connectivity issues
-            logging.info("Starting thesis analysis with network-aware fallback system")
+            logging.info("Starting comprehensive thesis analysis with reliable analysis service")
             
-            # Try analysis with built-in fallback mechanism
-            complete_analysis = analysis_engine.analyze_investment_thesis(
-                thesis_text, processed_documents
-            )
+            # Initialize reliable analysis service
+            reliable_service = ReliableAnalysisService()
             
-            analysis_result = complete_analysis['thesis_analysis']
-            classified_signals = complete_analysis['signals']
-            monitoring_plan = complete_analysis['monitoring_plan']
+            # Perform comprehensive analysis using authentic data sources
+            complete_analysis = reliable_service.analyze_thesis_comprehensive(thesis_text)
+            
+            # Extract Eagle API signals if available
+            eagle_signals = reliable_service.extract_eagle_signals_for_thesis(thesis_text)
+            
+            # Combine all analysis components
+            analysis_result = complete_analysis
+            classified_signals = complete_analysis.get('metrics_to_track', [])
+            
+            # Add Eagle API signals to the classified signals
+            if eagle_signals:
+                classified_signals.extend(eagle_signals)
+            
+            # Generate monitoring plan from all signals
+            monitoring_plan = {
+                "total_signals": len(classified_signals),
+                "eagle_api_signals": len(eagle_signals),
+                "monitoring_active": True,
+                "last_updated": datetime.utcnow().isoformat()
+            }
             
             # Extract signals for database storage
             signals_result = {
                 'signals': [],
-                'total_signals_identified': complete_analysis['metadata']['total_signals']
+                'total_signals_identified': len(classified_signals)
             }
             
-            # Flatten classified signals for storage
-            for level, level_signals in classified_signals.items():
-                for signal in level_signals:
-                    signals_result['signals'].append({
-                        'name': signal.get('name', 'Unknown Signal'),
-                        'type': level,
-                        'description': signal.get('description', ''),
-                        'data_source': signal.get('data_source', 'Unknown'),
-                        'frequency': signal.get('frequency', 'weekly'),
-                        'threshold_type': signal.get('threshold_type', 'above'),
-                        'predictive_power': signal.get('predictive_power', 'medium')
-                    })
+            # Process classified signals for storage
+            for signal in classified_signals:
+                signals_result['signals'].append({
+                    'name': signal.get('name', 'Unknown Signal'),
+                    'type': signal.get('type', 'Level_0_Raw_Activity'),
+                    'description': signal.get('description', ''),
+                    'data_source': signal.get('data_source', 'ReliableAnalysisService'),
+                    'frequency': signal.get('frequency', 'weekly'),
+                    'threshold_type': signal.get('threshold_type', 'above'),
+                    'predictive_power': signal.get('predictive_power', 'medium'),
+                    'eagle_api': signal.get('eagle_api', False)
+                })
             
         except Exception as e:
             error_msg = str(e).lower()

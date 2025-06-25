@@ -20,33 +20,27 @@ class AnalysisEngine:
         self.analysis_cache = {}
     
     def analyze_investment_thesis(self, thesis_text: str, documents: List[Dict] = None) -> Dict[str, Any]:
-        """Complete thesis analysis workflow with network-aware fallback"""
-        # Check if Azure OpenAI is experiencing issues and use structured fallback immediately
-        if self._should_use_fallback():
-            logging.info("Using structured fallback due to network connectivity issues")
-            return self._generate_fallback_analysis(thesis_text, documents or [])
-        
+        """Complete thesis analysis workflow using reliable analysis service"""
         try:
-            # Step 1: Core AI analysis with timeout protection
-            logging.info("Starting AI-powered thesis analysis")
-            ai_analysis = self.llm_manager.analyze_thesis(thesis_text)
+            from services.reliable_analysis_service import ReliableAnalysisService
             
-            # Step 2: Extract monitoring signals with timeout protection
-            logging.info("Extracting monitoring signals")
-            signals_data = self.llm_manager.extract_signals(ai_analysis, documents or [])
+            # Use reliable analysis service for authentic data processing
+            logging.info("Delegating to reliable analysis service for authentic data processing")
+            reliable_service = ReliableAnalysisService()
             
-            # Step 3: Enrich with external data including Eagle API
-            enriched_signals = self._enrich_signals_with_data(
-                signals_data.get('signals', []), 
-                thesis_text, 
-                ai_analysis.get('metrics_to_track', [])
-            )
+            # Perform comprehensive analysis
+            analysis_result = reliable_service.analyze_thesis_comprehensive(thesis_text)
             
-            # Step 4: Classify and organize signals
-            classified_signals = self._classify_signals_by_level(enriched_signals)
+            # Extract Eagle API signals
+            eagle_signals = reliable_service.extract_eagle_signals_for_thesis(thesis_text)
             
-            # Step 5: Generate monitoring plan
-            monitoring_plan = self._create_monitoring_plan(classified_signals)
+            # Combine metrics and signals
+            all_signals = analysis_result.get('metrics_to_track', [])
+            if eagle_signals:
+                all_signals.extend(eagle_signals)
+            
+            # Generate monitoring plan
+            monitoring_plan = self._create_monitoring_plan(all_signals)
             
             logging.info(f"Analysis completed successfully with {len(enriched_signals)} signals")
             return {
