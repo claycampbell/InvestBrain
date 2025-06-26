@@ -26,8 +26,8 @@ class AzureOpenAIService:
                 api_key=self.api_key,
                 api_version=api_version,
                 azure_endpoint=endpoint,
-                timeout=120.0,  # Increased timeout
-                max_retries=3   # More retries
+                timeout=180.0,  # Extended timeout for complex analysis
+                max_retries=2   # Fewer retries but longer timeout
             )
             
             logging.info("Azure OpenAI client initialized successfully")
@@ -41,8 +41,8 @@ class AzureOpenAIService:
         if not self.client:
             raise Exception("Azure OpenAI client not initialized")
         
-        max_retries = 5
-        retry_delay = 2
+        max_retries = 2  # Reduced retries for faster fallback
+        retry_delay = 1
         
         for attempt in range(max_retries):
             try:
