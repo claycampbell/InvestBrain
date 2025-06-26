@@ -470,11 +470,31 @@ def acknowledge_notification(id):
     
     return jsonify({'status': 'success'})
 
+@app.route('/get_thesis_data/<int:id>', methods=['GET'])
 @app.route('/api/thesis/<int:id>/data', methods=['GET'])
 def get_thesis_data(id):
     """Get thesis data as JSON for frontend rendering"""
     thesis = ThesisAnalysis.query.get_or_404(id)
-    return jsonify(thesis.to_dict())
+    
+    # Ensure counter_thesis is properly structured
+    thesis_dict = thesis.to_dict()
+    
+    # Fix counter_thesis structure if it's stored as a list
+    if 'counter_thesis' in thesis_dict and isinstance(thesis_dict['counter_thesis'], list):
+        # Convert list format to proper scenarios structure
+        counter_scenarios = thesis_dict['counter_thesis']
+        if counter_scenarios and len(counter_scenarios) > 0:
+            # If it's a list of scenario objects, wrap in scenarios key
+            thesis_dict['counter_thesis'] = {
+                'scenarios': counter_scenarios
+            }
+        else:
+            # Empty list, create default structure
+            thesis_dict['counter_thesis'] = {
+                'scenarios': []
+            }
+    
+    return jsonify(thesis_dict)
 
 @app.route('/api/price_change/<int:thesis_id>')
 def get_price_change(thesis_id):
@@ -1196,6 +1216,7 @@ def get_mini_sparkline(metric_name):
         logging.error(f"Error generating mini sparkline: {str(e)}")
         return jsonify({'error': 'Failed to generate mini sparkline'}), 500
 
+@app.route('/get_alternative_companies/<int:thesis_id>', methods=['GET'])
 @app.route('/api/thesis/<int:thesis_id>/alternative-companies', methods=['GET'])
 def get_alternative_companies(thesis_id):
     """Get alternative company analysis for a thesis"""
