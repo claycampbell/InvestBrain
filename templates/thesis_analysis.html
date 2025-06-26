@@ -179,24 +179,58 @@
                         </div>
                     </div>
 
-                    <!-- Counter-Thesis -->
+                    <!-- Counter-Thesis & Risk Scenarios -->
                     <div class="card mb-4">
                         <div class="card-header">
                             <h5 class="mb-0">
-                                <i class="fas fa-shield-alt text-warning"></i> Counter-Thesis
+                                <i class="fas fa-shield-alt text-warning"></i> Counter-Thesis & Risk Scenarios
                             </h5>
                         </div>
                         <div class="card-body">
-                            {% if thesis.counter_thesis %}
+                            {% if thesis.counter_thesis and thesis.counter_thesis.scenarios %}
+                                <div class="row">
+                                    {% for scenario in thesis.counter_thesis.scenarios %}
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card border-warning">
+                                                <div class="card-body">
+                                                    <h6 class="card-title text-warning">
+                                                        <i class="fas fa-exclamation-triangle"></i> {{ scenario.scenario }}
+                                                    </h6>
+                                                    <div class="mb-2">
+                                                        <span class="badge bg-{{ 'danger' if scenario.probability == 'High' else 'warning' if scenario.probability == 'Medium' else 'secondary' }}">
+                                                            {{ scenario.probability }} Probability
+                                                        </span>
+                                                    </div>
+                                                    <p class="card-text small mb-3">{{ scenario.impact }}</p>
+                                                    {% if scenario.mitigation %}
+                                                        <div class="alert alert-light py-2 mb-0">
+                                                            <strong>Mitigation:</strong> {{ scenario.mitigation }}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% elif thesis.counter_thesis %}
+                                <!-- Fallback for legacy counter thesis format -->
                                 <div class="alert alert-warning">
                                     <ul class="mb-0">
-                                        {% for point in thesis.counter_thesis %}
-                                            <li>{{ point }}</li>
-                                        {% endfor %}
+                                        {% if thesis.counter_thesis is string %}
+                                            <li>{{ thesis.counter_thesis }}</li>
+                                        {% elif thesis.counter_thesis is iterable %}
+                                            {% for point in thesis.counter_thesis %}
+                                                <li>{{ point }}</li>
+                                            {% endfor %}
+                                        {% endif %}
                                     </ul>
                                 </div>
                             {% else %}
-                                <p class="text-muted">No counter-arguments identified</p>
+                                <div class="text-center py-4">
+                                    <i class="fas fa-shield-alt text-muted fa-2x mb-3"></i>
+                                    <h6 class="text-muted">No Risk Scenarios Identified</h6>
+                                    <p class="text-muted small">Counter-thesis analysis will appear here when available.</p>
+                                </div>
                             {% endif %}
                         </div>
                     </div>

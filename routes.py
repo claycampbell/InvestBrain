@@ -98,7 +98,7 @@ def save_thesis_analysis(thesis_text, analysis_result, signals_result):
                 causal_chain=analysis_result.get('causal_chain', []),
                 assumptions=analysis_result.get('assumptions', []),
                 mental_model=clean_text(analysis_result.get('mental_model', 'unknown')),
-                counter_thesis=analysis_result.get('counter_thesis_scenarios', []),
+                counter_thesis=analysis_result.get('counter_thesis', {}),
                 metrics_to_track=analysis_result.get('metrics_to_track', []),
                 monitoring_plan=analysis_result.get('monitoring_plan', {})
             )
