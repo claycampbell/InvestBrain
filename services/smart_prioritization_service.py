@@ -4,7 +4,6 @@ AI-powered ranking system for research elements and signal patterns
 """
 
 import json
-import logging
 from typing import Dict, List, Any, Optional, Tuple
 from services.azure_openai_service import AzureOpenAIService
 
@@ -37,7 +36,6 @@ class SmartPrioritizationService:
             return prioritization_result
             
         except Exception as e:
-            logging.warning(f"AI-powered prioritization failed: {str(e)}")
             return self._fallback_prioritization()
     
     def _analyze_research_importance(self, thesis_analysis: Dict[str, Any]) -> Dict[str, Any]:

@@ -26,8 +26,8 @@ class AzureOpenAIService:
                 api_key=self.api_key,
                 api_version=api_version,
                 azure_endpoint=endpoint,
-                timeout=60.0,   # 60 second timeout for Azure OpenAI
-                max_retries=2   # Reasonable retries
+                timeout=120.0,  # Increased timeout
+                max_retries=3   # More retries
             )
             
             logging.info("Azure OpenAI client initialized successfully")
@@ -41,37 +41,30 @@ class AzureOpenAIService:
         if not self.client:
             raise Exception("Azure OpenAI client not initialized")
         
-        max_retries = 2  # Allow retries for Azure OpenAI reliability
+        max_retries = 5
         retry_delay = 2
         
         for attempt in range(max_retries):
             try:
                 model_name = self.deployment_name.lower()
                 
-                # Use reasonable timeout for Azure OpenAI calls
-                import httpx
-                timeout_config = httpx.Timeout(30.0)  # 30 second timeout
-                
                 if 'o1' in model_name or 'o4' in model_name:
                     response = self.client.chat.completions.create(
                         messages=messages,
-                        model=self.deployment_name,
-                        timeout=timeout_config
+                        model=self.deployment_name
                     )
                 elif 'gpt-4o' in model_name:
                     response = self.client.chat.completions.create(
                         messages=messages,
                         model=self.deployment_name,
-                        max_completion_tokens=max_tokens,
-                        timeout=timeout_config
+                        max_completion_tokens=max_tokens
                     )
                 else:
                     response = self.client.chat.completions.create(
                         messages=messages,
                         model=self.deployment_name,
                         temperature=temperature,
-                        max_tokens=max_tokens,
-                        timeout=timeout_config
+                        max_tokens=max_tokens
                     )
                 
                 logging.info("Azure OpenAI response received")
@@ -212,10 +205,6 @@ class AzureOpenAIService:
                 "core_analysis": "Analysis temporarily unavailable due to service connectivity",
                 "status": "fallback_mode"
             })
-    
-    def is_available(self):
-        """Check if Azure OpenAI service is available"""
-        return self.client is not None and self.api_key is not None
     
     def _extract_company_name(self, text):
         """Extract company name from thesis text using simple pattern matching"""

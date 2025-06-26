@@ -9,7 +9,6 @@ import logging
 import json
 from datetime import datetime
 from .test_eagle_api_responses import TestEagleAPIResponses
-from .mock_eagle_api import MockEagleAPI
 
 if TYPE_CHECKING:
     from services.metric_selector import MetricSelector
@@ -19,21 +18,18 @@ class DataAdapter:
     
     def __init__(self):
         self.eagle_url = "https://eagle-gamma.capgroup.com/svc-backend/graphql"
-        self.token = os.getenv('EAGLE_API_TOKEN')
+        self.token = os.getenv('AZURE_OPENAI_TOKEN')
         self.test_api = TestEagleAPIResponses()
-        self.mock_api = MockEagleAPI()
         self.headers = {
             'Authorization': f'Bearer {self.token}',
             'Content-Type': 'application/json',
         }
-        if not self.token:
-            logging.info("EAGLE_API_TOKEN not configured, using mock Eagle API for frontend testing")
     
     def execute_query(self, query: str) -> Dict[str, Any]:
         """Execute a GraphQL query and return results"""
         if not self.token:
-            logging.info("EAGLE_API_TOKEN not configured, using mock data for testing")
-            # Return mock data when authentication not available
+            logging.warning("AZURE_OPENAI_TOKEN not configured for Eagle API, using test data")
+            # Return test data when authentication not available
             return self.test_api.get_test_response_for_company()['test_response']
             
         try:
@@ -110,49 +106,6 @@ class DataAdapter:
         
         return self.execute_query(query)
     
-    def get_eagle_metrics(self, sedol_id: str, metrics: List[str]) -> Dict[str, Any]:
-        """Fetch Eagle API metrics using SEDOL ID and metric list"""
-        if not metrics or not sedol_id:
-            return {'success': False, 'error': 'Missing sedol_id or metrics'}
-            
-        # Format metric names for GraphQL query
-        metrics_str = ','.join([f'"{m}"' for m in metrics])
-        
-        query = f"""
-        query {{
-            financialMetrics(
-                entityIds: [
-                    {{id: "{sedol_id}", type: SEDOL}}
-                ],
-                metricIds: [{metrics_str}]
-            ) {{
-                companyInfo {{
-                    name
-                    sedolId
-                    currency
-                }}
-                metrics {{
-                    name
-                    value
-                    category
-                    unit
-                    period
-                }}
-            }}
-        }}
-        """
-        
-        result = self.execute_query(query)
-        
-        if result and 'data' in result:
-            return {
-                'success': True,
-                'data': result['data'],
-                'timestamp': datetime.utcnow().isoformat()
-            }
-        else:
-            return {'success': False, 'error': 'No data returned from Eagle API'}
-
     def fetch_metric_values_with_sedol(self, metrics: List[str], company_ticker: str, sedol_id: str) -> Dict[str, Any]:
         """Fetch values for specific metrics using both ticker and SEDOL ID"""
         if not metrics:
@@ -185,7 +138,7 @@ class DataAdapter:
         """Get test response matching Eagle API schema for frontend validation"""
         return self.test_api.get_test_response_for_company(ticker=company_ticker, sedol_id=sedol_id)
     
-    def fetch_company_metrics(self, company_ticker: str, metric_categories: List[str] = None, sedol_id: str = "") -> Dict[str, Any]:
+    def fetch_company_metrics(self, company_ticker: str, metric_categories: List[str] = None, sedol_id: str = None) -> Dict[str, Any]:
         """Fetch comprehensive metrics for a company using ticker and optional SEDOL ID"""
         from services.metric_selector import MetricSelector
         
@@ -209,10 +162,6 @@ class DataAdapter:
         
         # Remove duplicates
         unique_metrics = list(set(all_metrics))
-        
-        # Use mock Eagle API for realistic testing when token not available
-        if not self.token:
-            return self.mock_api.get_company_metrics(company_ticker, metric_categories or [], sedol_id)
         
         # Fetch the metrics using both ticker and SEDOL if available
         if sedol_id:
@@ -298,9 +247,5 @@ class DataAdapter:
         }
         """
         
-        try:
-            result = self.execute_query(test_query)
-            return result.get('success', False) and 'error' not in result
-        except Exception as e:
-            logging.warning(f"Eagle API connection validation failed: {str(e)}")
-            return False
+        result = self.execute_query(test_query)
+        return result.get('success', False) or 'error' not in result

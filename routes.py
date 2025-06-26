@@ -1,35 +1,42 @@
 import os
 import logging
 import json
-from datetime import datetime
 from flask import render_template, request, redirect, url_for, flash, jsonify, session
 from werkzeug.utils import secure_filename
 from app import app, db
-from models import ThesisAnalysis, DocumentUpload, SignalMonitoring, NotificationLog, DocumentValidation
-# Removed core directory dependencies - using services directly
+from models import ThesisAnalysis, DocumentUpload, SignalMonitoring, NotificationLog
+from services.thesis_analyzer import ThesisAnalyzer
 from services.document_processor import DocumentProcessor
+from services.signal_classifier import SignalClassifier
 from services.notification_service import NotificationService
 from services.query_parser_service import QueryParserService
 from services.data_validation_service import DataValidationService
 from services.sparkline_service import SparklineService
 from services.alternative_company_service import AlternativeCompanyService
 from services.metric_selector import MetricSelector
+from services.data_adapter_service import DataAdapter
+from services.analysis_workflow_service import AnalysisWorkflowService
+from services.thesis_evaluator import ThesisEvaluator
+from services.significance_mapping_service import SignificanceMappingService
+from services.smart_prioritization_service import SmartPrioritizationService
+from services.reliable_analysis_service import ReliableAnalysisService
 from config import Config
 
-# Core directory dependencies removed - services initialized directly when needed
-
-# Initialize specialized services
+# Initialize services
+thesis_analyzer = ThesisAnalyzer()
 document_processor = DocumentProcessor()
+signal_classifier = SignalClassifier()
 notification_service = NotificationService()
 query_parser = QueryParserService()
 data_validator = DataValidationService()
 sparkline_service = SparklineService()
 alternative_company_service = AlternativeCompanyService()
 metric_selector = MetricSelector()
-
-# Initialize document validation service
-from services.document_validation_service import DocumentValidationService
-validation_service = DocumentValidationService()
+data_adapter = DataAdapter()
+analysis_workflow_service = AnalysisWorkflowService()
+thesis_evaluator = ThesisEvaluator()
+significance_mapper = SignificanceMappingService()
+smart_prioritizer = SmartPrioritizationService()
 
 def save_thesis_analysis(thesis_text, analysis_result, signals_result):
     """Save completed analysis to database for monitoring"""
@@ -162,184 +169,50 @@ def analyze():
                     'data': processed_data
                 })
         
-        # Use reliable analysis service as the primary analysis mechanism
+        # Use Azure OpenAI for dynamic analysis with Eagle API integration
+        from services.azure_openai_service import AzureOpenAIService
         from services.reliable_analysis_service import ReliableAnalysisService
         
-        logging.info("Starting comprehensive thesis analysis with reliable analysis service")
-        
-        # Initialize reliable analysis service as primary mechanism
-        reliable_service = ReliableAnalysisService()
-        
-        # Perform comprehensive analysis using authentic data sources
-        complete_analysis = reliable_service.analyze_thesis_comprehensive(thesis_text)
-        
-        # Extract Eagle API signals if available
-        eagle_signals = reliable_service.extract_eagle_signals_for_thesis(thesis_text)
-        
-        # Combine all analysis components
-        analysis_result = complete_analysis
-        classified_signals = complete_analysis.get('metrics_to_track', [])
-        
-        # Add Eagle API signals to the classified signals
-        if eagle_signals:
-            classified_signals.extend(eagle_signals)
-        
-        # Generate monitoring plan from all signals
-        monitoring_plan = {
-            "total_signals": len(classified_signals),
-            "eagle_api_signals": len(eagle_signals),
-            "monitoring_active": True,
-            "last_updated": datetime.utcnow().isoformat()
-        }
-        
-        # Extract signals for database storage
-        signals_result = {
-            'signals': [],
-            'total_signals_identified': len(classified_signals)
-        }
-        
-        # Process classified signals for storage
-        for signal in classified_signals:
-            signals_result['signals'].append({
-                'name': signal.get('name', 'Unknown Signal'),
-                'type': signal.get('type', 'Level_0_Raw_Activity'),
-                'description': signal.get('description', ''),
-                'data_source': signal.get('data_source', 'ReliableAnalysisService'),
-                'frequency': signal.get('frequency', 'weekly'),
-                'threshold_type': signal.get('threshold_type', 'above'),
-                'predictive_power': signal.get('predictive_power', 'medium'),
-                'eagle_api': signal.get('eagle_api', False)
-            })
-            
-        # Log the successful analysis completion
-        logging.info(f"Reliable analysis completed with {len(classified_signals)} total signals")
-        logging.info(f"Eagle API integration: {len(eagle_signals)} signals from external data sources")
-        
-        # Save to database for monitoring
         try:
-            saved_thesis_id = save_thesis_analysis(thesis_text, analysis_result, signals_result)
-            logging.info(f"Saved thesis analysis with ID: {saved_thesis_id}")
-        except Exception as save_error:
-            logging.error(f"Failed to save analysis: {save_error}")
-        
-        # Return successful analysis results
-        return jsonify({
-            'success': True,
-            'analysis': analysis_result,
-            'signals': classified_signals,
-            'monitoring_plan': monitoring_plan,
-            'thesis_id': saved_thesis_id if 'saved_thesis_id' in locals() else None,
-            'eagle_api_integration': len(eagle_signals) > 0,
-            'data_sources': ['Azure OpenAI', 'Eagle API', 'ReliableAnalysisService']
-        })
-
-    except Exception as e:
-        logging.error(f"Primary analysis failed: {str(e)}")
-        
-        # Only use fallback for critical failures, not network timeouts
-        error_msg = str(e).lower()
-        if any(keyword in error_msg for keyword in ['credentials', 'authentication', 'forbidden', 'unauthorized']):
-            return jsonify({
-                'error': 'Authentication required',
-                'message': 'Please configure your Azure OpenAI API credentials',
-                'details': str(e)
-            }), 401
-        
-        # For other errors, try fallback mechanism as backup
-        try:
-            logging.warning(f"Using fallback analysis due to: {str(e)}")
+            # Try Azure OpenAI first for authentic analysis
+            azure_service = AzureOpenAIService()
+            analysis_response = azure_service.analyze_thesis(thesis_text)
             
-            # Generate structured fallback analysis
-            fallback_analysis = {
-                'core_claim': f'Investment thesis analysis - {thesis_text[:100]}...',
-                'core_analysis': 'Systematic analysis framework applied with structured evaluation',
-                'causal_chain': [
-                    {'chain_link': 1, 'event': 'Market opportunity validation', 'explanation': 'Market conditions support investment thesis'},
-                    {'chain_link': 2, 'event': 'Competitive positioning', 'explanation': 'Company advantages sustainable over time'},
-                    {'chain_link': 3, 'event': 'Financial performance', 'explanation': 'Revenue and profitability targets achievable'}
-                ],
-                'assumptions': ['Market demand continues', 'Company execution delivers', 'Competition remains manageable'],
-                'mental_model': 'Growth',
-                'counter_thesis_scenarios': [{
-                    'scenario': 'Market conditions deteriorate',
-                    'description': 'Economic downturn impacts demand',
-                    'trigger_conditions': ['Revenue decline', 'Market share loss'],
-                    'data_signals': ['Financial metrics', 'Market indicators']
-                }],
-                'metrics_to_track': [
-                    {
-                        'name': 'Revenue Growth Rate',
-                        'type': 'Level_1_Primary_Signals',
-                        'description': 'Quarterly revenue growth tracking',
-                        'frequency': 'quarterly',
-                        'threshold': 10.0,
-                        'threshold_type': 'above',
-                        'data_source': 'Financial Reports'
-                    }
-                ],
-                'monitoring_plan': {
-                    'objective': 'Monitor thesis performance with fallback tracking',
-                    'validation_framework': {'core_claim_metrics': []},
-                    'review_schedule': 'Monthly'
-                }
-            }
+            # Azure OpenAI now returns parsed JSON object directly
+            analysis_result = analysis_response
+            
+            # Add Eagle API signals to the Azure analysis
+            reliable_service = ReliableAnalysisService()
+            eagle_signals = reliable_service.extract_eagle_signals_for_thesis(thesis_text)
+            if eagle_signals:
+                if 'metrics_to_track' not in analysis_result:
+                    analysis_result['metrics_to_track'] = []
+                analysis_result['metrics_to_track'].extend(eagle_signals)
                 
-            fallback_signals = {
-                'signals': fallback_analysis['metrics_to_track'],
-                'total_signals_identified': len(fallback_analysis['metrics_to_track'])
-            }
-            
-            # Save fallback analysis
-            try:
-                fallback_thesis_id = save_thesis_analysis(thesis_text, fallback_analysis, fallback_signals)
-                logging.info(f"Saved fallback analysis with ID: {fallback_thesis_id}")
-            except Exception as save_error:
-                logging.error(f"Failed to save fallback analysis: {save_error}")
-            
-            return jsonify({
-                'success': True,
-                'analysis': fallback_analysis,
-                'signals': fallback_analysis['metrics_to_track'],
-                'monitoring_plan': fallback_analysis['monitoring_plan'],
-                'thesis_id': fallback_thesis_id if 'fallback_thesis_id' in locals() else None,
-                'fallback_mode': True,
-                'message': 'Analysis completed using structured fallback methodology'
-            })
-            
-        except Exception as fallback_error:
-            logging.error(f"Both primary and fallback analysis failed: {fallback_error}")
-            return jsonify({
-                'error': 'Analysis service unavailable',
-                'message': 'Both primary and backup analysis systems encountered errors',
-                'details': str(fallback_error)
-            }), 503
+        except Exception as e:
+            logging.warning(f"Azure OpenAI unavailable, using fallback: {str(e)}")
+            # Fallback to reliable analysis only if Azure OpenAI fails
+            reliable_service = ReliableAnalysisService()
+            analysis_result = reliable_service.analyze_thesis_comprehensive(thesis_text)
         
-        else:
-            logging.error(f"Analysis engine failed: {str(e)}")
-            return jsonify({
-                    'error': 'Analysis service temporarily unavailable. Please try again.',
-                    'details': str(e)
-                }), 500
+        # Extract signals from AI analysis and documents using the classification hierarchy
+        signals_result = signal_classifier.extract_signals_from_ai_analysis(
+            analysis_result, 
+            processed_documents, 
+            focus_primary=focus_primary_signals
+        )
         
-        # Save analysis to database for monitoring using data manager
-        thesis_data = {
-            'title': f"Investment Thesis Analysis - {datetime.now().strftime('%Y-%m-%d %H:%M')}",
-            'original_thesis': thesis_text,
-            **analysis_result,
-            'metrics_to_track': signals_result['signals']
-        }
-        thesis_id = data_manager.save_thesis_analysis(thesis_data)
+        # Save analysis to database for monitoring
+        thesis_id = save_thesis_analysis(thesis_text, analysis_result, signals_result)
         
         # Combine results
         combined_result = {
             'thesis_analysis': analysis_result,
             'signal_extraction': signals_result,
-            'monitoring_plan': monitoring_plan,
             'processed_documents': len(processed_documents),
             'focus_primary_signals': focus_primary_signals,
             'thesis_id': thesis_id,
-            'published': True,
-            'metadata': complete_analysis['metadata']
+            'published': True
         }
         
         return jsonify(combined_result)
@@ -581,8 +454,6 @@ def get_thesis_status(id):
 def check_signals():
     """API endpoint to manually trigger signal checking"""
     try:
-        from services.signal_classifier_service import SignalClassifier
-        signal_classifier = SignalClassifier()
         results = signal_classifier.extract_signals_from_analysis("", [], focus_primary=True)
         return jsonify({'status': 'success', 'results': results})
     except Exception as e:
@@ -1401,8 +1272,6 @@ def get_company_metrics(ticker):
         # Get SEDOL ID from request if provided
         sedol_id = request.args.get('sedol_id')
         
-        from services.data_adapter_service import DataAdapter
-        data_adapter = DataAdapter()
         result = data_adapter.fetch_company_metrics(
             company_ticker=ticker.upper(),
             metric_categories=categories if categories else None,
@@ -1426,8 +1295,6 @@ def run_company_analysis(ticker):
         analysis_type = data.get('analysis_type', 'comprehensive')
         documents = data.get('documents', [])
         
-        from services.reliable_analysis_service import ReliableAnalysisService
-        analysis_workflow_service = ReliableAnalysisService()
         result = analysis_workflow_service.run_comprehensive_analysis(
             company_ticker=ticker.upper(),
             analysis_type=analysis_type,
@@ -1444,8 +1311,6 @@ def run_company_analysis(ticker):
 def check_data_source_status():
     """Check the status of the internal data source connection"""
     try:
-        from services.data_adapter_service import DataAdapter
-        data_adapter = DataAdapter()
         is_connected = data_adapter.validate_connection()
         
         return jsonify({
@@ -1464,8 +1329,6 @@ def internal_data_analysis():
     """Internal data analysis dashboard page"""
     return render_template('internal_data_analysis.html')
 
-
-
 @app.route('/api/test-eagle-response')
 def test_eagle_response():
     """Test endpoint to validate Eagle API response schema for frontend"""
@@ -1473,7 +1336,6 @@ def test_eagle_response():
         ticker = request.args.get('ticker', 'NVDA')
         sedol_id = request.args.get('sedol_id', '2379504')
         
-        from services.data_adapter_service import DataAdapter
         data_adapter = DataAdapter()
         test_response = data_adapter.get_test_eagle_response(
             company_ticker=ticker,
@@ -1507,21 +1369,48 @@ def evaluate_thesis_strength(thesis_id):
     Comprehensive thesis evaluation and strength analysis
     """
     try:
-        # Use analysis engine for comprehensive evaluation
-        # Use reliable analysis service for evaluation
-        from services.reliable_analysis_service import ReliableAnalysisService
-        reliable_service = ReliableAnalysisService()
-        # Note: evaluate_thesis_strength method needs to be implemented in ReliableAnalysisService
-        evaluation_result = {
-            "overall_score": 0.8,
-            "strength_analysis": "Thesis evaluation in development",
-            "recommendations": ["Implement evaluation logic in ReliableAnalysisService"]
+        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        
+        # Get thesis data for evaluation
+        thesis_data = {
+            'core_claim': thesis.core_claim,
+            'core_analysis': thesis.core_analysis,
+            'assumptions': thesis.assumptions or [],
+            'causal_chain': thesis.causal_chain or [],
+            'counter_thesis': thesis.counter_thesis or [],
+            'metrics_to_track': thesis.metrics_to_track or [],
+            'mental_model': thesis.mental_model
         }
+        
+        # Get document count for research quality assessment
+        document_count = DocumentUpload.query.filter_by(thesis_analysis_id=thesis_id).count()
+        
+        # Count Eagle API signals
+        eagle_signal_count = 0
+        if thesis.metrics_to_track:
+            for metric in thesis.metrics_to_track:
+                if isinstance(metric, dict) and metric.get('eagle_api'):
+                    eagle_signal_count += 1
+        
+        # Run comprehensive evaluation
+        strength_evaluation = thesis_evaluator.evaluate_thesis_strength(thesis_data)
+        quality_assessment = thesis_evaluator.generate_research_quality_score(
+            thesis_data, document_count, eagle_signal_count
+        )
         
         return jsonify({
             'thesis_evaluation': {
                 'id': thesis_id,
-                **evaluation_result
+                'title': thesis.title,
+                'created_at': thesis.created_at.isoformat(),
+                'strength_analysis': strength_evaluation,
+                'quality_assessment': quality_assessment,
+                'metadata': {
+                    'document_count': document_count,
+                    'eagle_signals': eagle_signal_count,
+                    'total_metrics': len(thesis.metrics_to_track or []),
+                    'mental_model': thesis.mental_model
+                }
             }
         })
         
@@ -1556,8 +1445,6 @@ def get_significance_mapping(thesis_id):
         thesis = ThesisAnalysis.query.get_or_404(thesis_id)
         thesis_data = thesis.to_dict()
         
-        from services.significance_mapper_service import SignificanceMapper
-        significance_mapper = SignificanceMapper()
         mapping_data = significance_mapper.generate_significance_map(thesis_data)
         insights = significance_mapper.get_connection_insights(mapping_data)
         
@@ -1583,8 +1470,6 @@ def get_smart_prioritization(thesis_id):
         thesis = ThesisAnalysis.query.get_or_404(thesis_id)
         thesis_data = thesis.to_dict()
         
-        from services.smart_prioritizer_service import SmartPrioritizer
-        smart_prioritizer = SmartPrioritizer()
         prioritization_result = smart_prioritizer.generate_dual_prioritization(thesis_data)
         
         return jsonify({
@@ -1607,42 +1492,6 @@ def significance_analysis_page(thesis_id):
     thesis = ThesisAnalysis.query.get_or_404(thesis_id)
     return render_template('significance_analysis.html', thesis=thesis)
 
-
-
-@app.route('/api/eagle-metrics', methods=['POST'])
-def get_eagle_metrics():
-    """Get Eagle API metrics for a company with identified metrics and sedol_id extraction"""
-    try:
-        from services.data_adapter_service import DataAdapter
-        
-        request_data = request.get_json()
-        if not request_data:
-            return jsonify({'success': False, 'error': 'No data provided'})
-        
-        # Extract data from request
-        company_name = request_data.get('company_name', '')
-        thesis_text = request_data.get('thesis_text', '')
-        metrics_to_track = request_data.get('metrics_to_track', [])
-        
-        # Use data adapter to get Eagle API metrics
-        data_adapter = DataAdapter()
-        eagle_data = data_adapter.get_test_eagle_response(
-            company_ticker=company_name or "UNKNOWN",
-            sedol_id=""
-        )
-        
-        return jsonify(eagle_data)
-        
-    except Exception as e:
-        logging.error(f"Eagle metrics API error: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to fetch Eagle API metrics',
-            'details': str(e)
-        })
-
-
-
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('404.html'), 404
@@ -1651,239 +1500,3 @@ def not_found_error(error):
 def internal_error(error):
     db.session.rollback()
     return render_template('500.html'), 500
-
-
-# Document Validation Routes
-
-@app.route('/validation')
-def validation_dashboard():
-    """Document validation dashboard"""
-    validations = DocumentValidation.query.order_by(DocumentValidation.created_at.desc()).all()
-    return render_template('validation/dashboard.html', validations=validations)
-
-
-@app.route('/validation/upload', methods=['GET', 'POST'])
-def document_validation_upload():
-    """Upload document for thesis extraction and validation"""
-    if request.method == 'GET':
-        return render_template('validation/upload.html')
-    
-    try:
-        # Check if file was uploaded
-        if 'research_document' not in request.files:
-            return jsonify({'error': 'No file uploaded'}), 400
-        
-        file = request.files['research_document']
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
-        
-        if not allowed_file(file.filename):
-            return jsonify({'error': 'File type not supported'}), 400
-        
-        # Save uploaded file
-        filename = secure_filename(file.filename)
-        upload_dir = Config.UPLOAD_FOLDER
-        if not os.path.exists(upload_dir):
-            os.makedirs(upload_dir)
-        
-        file_path = os.path.join(upload_dir, filename)
-        file.save(file_path)
-        
-        # Extract thesis from document
-        extraction_result = validation_service.extract_thesis_from_document(file_path, filename)
-        
-        if not extraction_result['success']:
-            return jsonify({'error': extraction_result.get('error', 'Failed to extract thesis')}), 500
-        
-        # Save extraction results to database
-        validation_record = DocumentValidation(
-            filename=filename,
-            file_path=file_path,
-            extracted_thesis=extraction_result['extracted_thesis'],
-            key_findings=extraction_result['key_findings'],
-            investment_logic=extraction_result['investment_logic'],
-            risk_factors=extraction_result['risk_factors'],
-            target_metrics=extraction_result['target_metrics'],
-            document_summary=extraction_result['document_summary'],
-            confidence_score=extraction_result['confidence_score'],
-            status='extracted'
-        )
-        
-        db.session.add(validation_record)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'validation_id': validation_record.id,
-            'extracted_thesis': extraction_result['extracted_thesis'],
-            'confidence_score': extraction_result['confidence_score'],
-            'redirect_url': url_for('validation_review', validation_id=validation_record.id)
-        })
-        
-    except Exception as e:
-        logging.error(f"Error in document validation upload: {str(e)}")
-        return jsonify({'error': 'Server error during file processing'}), 500
-
-
-@app.route('/validation/<int:validation_id>/review')
-def validation_review(validation_id):
-    """Review extracted thesis and initiate validation"""
-    validation = DocumentValidation.query.get_or_404(validation_id)
-    return render_template('validation/review.html', validation=validation)
-
-
-@app.route('/validation/<int:validation_id>/analyze', methods=['POST'])
-def validate_extracted_thesis(validation_id):
-    """Run analysis on extracted thesis and generate validation report"""
-    try:
-        validation = DocumentValidation.query.get_or_404(validation_id)
-        
-        # Get any manual adjustments from the form
-        extracted_thesis = request.form.get('extracted_thesis', validation.extracted_thesis)
-        
-        # Update the validation record if thesis was modified
-        if extracted_thesis != validation.extracted_thesis:
-            validation.extracted_thesis = extracted_thesis
-            validation.updated_at = datetime.utcnow()
-        
-        # Validate the extracted thesis through our analysis pipeline
-        validation_result = validation_service.validate_extracted_thesis(
-            extracted_thesis, 
-            validation.to_dict()
-        )
-        
-        if not validation_result['success']:
-            return jsonify({'error': validation_result.get('error', 'Validation failed')}), 500
-        
-        # Save analysis results
-        analysis_result = validation_result['analysis_result']
-        
-        # Create thesis analysis record
-        thesis_analysis = ThesisAnalysis(
-            title=f"Extracted: {validation.filename}",
-            original_thesis=extracted_thesis,
-            core_claim=analysis_result.get('core_claim', ''),
-            core_analysis=analysis_result.get('core_analysis', ''),
-            causal_chain=analysis_result.get('causal_chain', []),
-            assumptions=analysis_result.get('assumptions', []),
-            mental_model=analysis_result.get('mental_model', ''),
-            counter_thesis=analysis_result.get('counter_thesis', {}),
-            metrics_to_track=analysis_result.get('metrics_to_track', []),
-            monitoring_plan=analysis_result.get('monitoring_plan', {})
-        )
-        
-        db.session.add(thesis_analysis)
-        db.session.flush()  # Get the ID
-        
-        # Update validation record
-        validation.thesis_analysis_id = thesis_analysis.id
-        validation.validation_report = validation_result['validation_report']
-        validation.status = 'validated'
-        validation.updated_at = datetime.utcnow()
-        
-        # Generate analyst report
-        analyst_report = validation_service.generate_analyst_report(validation_result)
-        validation.analyst_report = analyst_report
-        
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'thesis_analysis_id': thesis_analysis.id,
-            'validation_report': validation_result['validation_report'],
-            'redirect_url': url_for('validation_results', validation_id=validation.id)
-        })
-        
-    except Exception as e:
-        logging.error(f"Error validating extracted thesis: {str(e)}")
-        db.session.rollback()
-        return jsonify({'error': 'Server error during validation'}), 500
-
-
-@app.route('/validation/<int:validation_id>/results')
-def validation_results(validation_id):
-    """Display validation results and analyst report"""
-    validation = DocumentValidation.query.get_or_404(validation_id)
-    thesis_analysis = None
-    
-    if validation.thesis_analysis_id:
-        thesis_analysis = ThesisAnalysis.query.get(validation.thesis_analysis_id)
-    
-    return render_template('validation/results.html', 
-                         validation=validation, 
-                         thesis_analysis=thesis_analysis)
-
-
-@app.route('/validation/<int:validation_id>/export')
-def export_validation_report(validation_id):
-    """Export validation report for analyst review"""
-    validation = DocumentValidation.query.get_or_404(validation_id)
-    
-    if not validation.analyst_report:
-        return jsonify({'error': 'Report not yet generated'}), 400
-    
-    # Return as downloadable text file
-    from flask import Response
-    
-    response = Response(
-        validation.analyst_report,
-        mimetype='text/plain',
-        headers={
-            'Content-Disposition': f'attachment; filename=validation_report_{validation.id}_{validation.filename}.txt'
-        }
-    )
-    
-    return response
-
-
-@app.route('/validation/<int:validation_id>/feedback', methods=['POST'])
-def analyst_feedback(validation_id):
-    """Receive feedback from analyst on validation results"""
-    try:
-        validation = DocumentValidation.query.get_or_404(validation_id)
-        
-        feedback = request.form.get('feedback', '')
-        rating = request.form.get('rating', '')
-        
-        # Update validation record with feedback
-        validation.analyst_feedback = feedback
-        validation.status = 'reviewed'
-        validation.updated_at = datetime.utcnow()
-        
-        # Store additional metadata if needed
-        feedback_data = {
-            'rating': rating,
-            'feedback': feedback,
-            'reviewed_at': datetime.utcnow().isoformat()
-        }
-        
-        # Update validation report with feedback
-        if validation.validation_report:
-            validation.validation_report['analyst_feedback'] = feedback_data
-        else:
-            validation.validation_report = {'analyst_feedback': feedback_data}
-        
-        db.session.commit()
-        
-        flash('Feedback submitted successfully', 'success')
-        return redirect(url_for('validation_results', validation_id=validation.id))
-        
-    except Exception as e:
-        logging.error(f"Error submitting analyst feedback: {str(e)}")
-        flash('Error submitting feedback', 'error')
-        return redirect(url_for('validation_results', validation_id=validation.id))
-
-
-@app.route('/validation/list')
-def validation_list():
-    """List all document validations with status"""
-    page = request.args.get('page', 1, type=int)
-    per_page = 20
-    
-    validations = DocumentValidation.query.order_by(
-        DocumentValidation.created_at.desc()
-    ).paginate(
-        page=page, per_page=per_page, error_out=False
-    )
-    
-    return render_template('validation/list.html', validations=validations)
