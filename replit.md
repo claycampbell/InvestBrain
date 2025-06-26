@@ -98,6 +98,17 @@ The Investment Thesis Intelligence System is a sophisticated Flask-based web app
 - Graceful degradation when external services unavailable
 
 ## Changelog
+- June 26, 2025: Major architectural change: Document-based thesis extraction system
+  - Implemented FinancialPositionExtractor service for automatic thesis statement generation
+  - Removed manual thesis text input requirement from user interface
+  - Added AI-powered extraction of BUY/SELL/HOLD/TRIM positions from research documents
+  - Created intelligent prompting system to identify financial positions and price targets
+  - Implemented rule-based fallback system for position extraction when AI fails
+  - Updated analysis workflow to process documents first, then generate thesis statements
+  - Enhanced frontend to guide users through document-based analysis workflow
+  - Added confidence scoring and validation for extracted financial positions
+  - Integrated with existing signal classification and monitoring systems
+  - Created comprehensive test suite for position extraction validation
 - June 26, 2025: Enhanced "Generate One Pager" with detailed signal descriptions and comprehensive tracking
   - Implemented OnePagerService for data consolidation across all analysis components
   - Created professional one-pager template with 8 structured sections

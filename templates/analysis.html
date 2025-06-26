@@ -11,44 +11,27 @@
                 <i class="fas fa-brain text-primary"></i>
                 Investment Thesis Analysis
             </h1>
-            <p class="text-muted">Input your thesis statement, attach research documents, and extract actionable signals</p>
+            <p class="text-muted">Upload research documents to automatically extract investment positions and generate actionable signals</p>
         </div>
     </div>
 
     <form id="analysis-form" method="POST" enctype="multipart/form-data">
         <div class="row">
-            <!-- Thesis Input -->
+            <!-- Research Documents -->
             <div class="col-lg-8">
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
-                            <i class="fas fa-quote-left"></i> Investment Thesis Statement
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <textarea name="thesis_text" class="form-control" rows="8" 
-                                  placeholder="Enter your investment thesis statement here. Describe your core investment logic, expected outcomes, and key assumptions..."
-                                  required></textarea>
-                        <div class="form-text">
-                            Provide a detailed thesis statement including your investment logic, key assumptions, and expected market dynamics.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Research Documents -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-paperclip"></i> Supporting Research Documents
+                            <i class="fas fa-file-alt"></i> Research Documents & Financial Analysis
                         </h5>
                     </div>
                     <div class="card-body">
                         <div id="upload-area" class="upload-area border rounded p-4 text-center">
                             <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-3"></i>
-                            <h6>Drag & Drop Research Files</h6>
-                            <p class="text-muted mb-3">PDF reports, Excel models, CSV data files</p>
+                            <h6>Upload Investment Research Documents</h6>
+                            <p class="text-muted mb-3">The system will automatically extract financial positions and thesis statements from your documents</p>
                             <input type="file" id="research-files" name="research_files" multiple 
-                                   accept=".pdf,.xlsx,.xls,.csv" class="d-none">
+                                   accept=".pdf,.xlsx,.xls,.csv" class="d-none" required>
                             <button type="button" class="btn btn-outline-primary" 
                                     onclick="document.getElementById('research-files').click()">
                                 <i class="fas fa-folder-open"></i> Browse Files
@@ -77,7 +60,7 @@
                             </div>
                             <div class="col-md-6 text-end">
                                 <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-analytics"></i> Analyze Thesis
+                                    <i class="fas fa-search-dollar"></i> Extract & Analyze Position
                                 </button>
                             </div>
                         </div>
@@ -85,8 +68,47 @@
                 </div>
             </div>
 
-            <!-- Signal Classification Guide -->
+            <!-- Document-Based Analysis Guide -->
             <div class="col-lg-4">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-file-search"></i> How It Works
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-primary me-2">Step 1</span>
+                                <strong class="small">Upload Documents</strong>
+                            </div>
+                            <small class="text-muted">
+                                PDF research reports, Excel models, analyst notes
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-success me-2">Step 2</span>
+                                <strong class="small">Extract Position</strong>
+                            </div>
+                            <small class="text-muted">
+                                AI identifies BUY/SELL/HOLD recommendations and thesis statements
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-info me-2">Step 3</span>
+                                <strong class="small">Generate Signals</strong>
+                            </div>
+                            <small class="text-muted">
+                                Extract actionable signals and monitoring plans
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="card">
                     <div class="card-header">
                         <h6 class="mb-0">

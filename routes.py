@@ -138,17 +138,24 @@ def index():
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    """Main analysis endpoint for thesis and document processing"""
+    """Main analysis endpoint for document-based thesis and signal extraction"""
     try:
-        thesis_text = request.form.get('thesis_text')
         focus_primary_signals = request.form.get('focus_primary_signals') == 'on'
         
-        if not thesis_text:
-            return jsonify({'error': 'Thesis text is required'}), 400
-        
-        # Process uploaded research files
+        # Process uploaded research files - now required for thesis extraction
         processed_documents = []
         research_files = request.files.getlist('research_files')
+        
+        if not research_files or len(research_files) == 0 or not research_files[0].filename:
+            return jsonify({'error': 'Research documents are required for analysis'}), 400
+        
+        # Extract financial position from documents
+        from services.financial_position_extractor import FinancialPositionExtractor
+        position_extractor = FinancialPositionExtractor()
+        
+        # Process each document and extract positions
+        document_positions = []
+        combined_content = ""
         
         for file in research_files:
             if file and file.filename and allowed_file(file.filename):
@@ -168,6 +175,76 @@ def analyze():
                     'filename': filename,
                     'data': processed_data
                 })
+                
+                # Extract financial position from this document
+                if processed_data:
+                    content = None
+                    
+                    # Extract content based on document type and structure
+                    if 'text_content' in processed_data:
+                        # PDF documents
+                        content = processed_data['text_content']
+                    elif 'data' in processed_data and isinstance(processed_data['data'], list):
+                        # CSV/Excel documents - extract from data rows
+                        data_rows = processed_data['data']
+                        content_parts = []
+                        for row in data_rows:
+                            if isinstance(row, dict):
+                                for key, value in row.items():
+                                    if isinstance(value, str) and len(value.strip()) > 20:
+                                        content_parts.append(value)
+                            elif isinstance(row, str):
+                                content_parts.append(row)
+                        content = "\n".join(content_parts)
+                    elif 'content' in processed_data:
+                        content = processed_data['content']
+                    
+                    logging.info(f"Document {filename} - Keys: {list(processed_data.keys())}, Content length: {len(content) if content else 0}")
+                    
+                    if content and len(content.strip()) > 20:
+                        combined_content += f"\n\n--- Document: {filename} ---\n{content}"
+                        
+                        position_data = position_extractor.extract_financial_position(content, filename)
+                        document_positions.append({
+                            'filename': filename,
+                            'position': position_data
+                        })
+                        logging.info(f"Extracted position for {filename}: {position_data.get('investment_position', 'Unknown')} (confidence: {position_data.get('confidence_level', 'Unknown')})")
+                    else:
+                        logging.warning(f"Insufficient content in {filename} for position extraction")
+        
+        # Select the primary financial position (highest confidence or first document)
+        primary_position = None
+        if document_positions:
+            # Sort by confidence level and select the best one
+            confidence_order = {'HIGH': 3, 'MEDIUM': 2, 'LOW': 1}
+            sorted_positions = sorted(document_positions, 
+                                    key=lambda x: confidence_order.get(x['position'].get('confidence_level', 'LOW'), 0), 
+                                    reverse=True)
+            primary_position = sorted_positions[0]['position']
+            
+            # Generate comprehensive thesis text from extracted position
+            thesis_text = f"""
+Investment Position: {primary_position.get('investment_position', 'HOLD')}
+Company: {primary_position.get('company_name', 'Target Company')}
+Sector: {primary_position.get('sector', 'Various')}
+
+Thesis Statement: {primary_position.get('thesis_statement', 'Investment analysis based on research documents')}
+
+Expected Return: {primary_position.get('expected_return', 'TBD')}
+Time Horizon: {primary_position.get('time_horizon', 'Medium-term')}
+Price Target: {primary_position.get('price_target', 'TBD')}
+
+Key Arguments:
+{chr(10).join(f"• {arg}" for arg in primary_position.get('key_arguments', []))}
+
+Risk Factors:
+{chr(10).join(f"• {risk}" for risk in primary_position.get('risk_factors', []))}
+
+Supporting Research: {len(processed_documents)} documents analyzed
+            """.strip()
+        else:
+            return jsonify({'error': 'Could not extract financial position from uploaded documents'}), 400
         
         # Use Azure OpenAI for dynamic analysis with Eagle API integration
         from services.azure_openai_service import AzureOpenAIService
@@ -176,7 +253,17 @@ def analyze():
         # Use reliable analysis service with smart Azure fallback
         reliable_service = ReliableAnalysisService()
         analysis_result = reliable_service.analyze_thesis(thesis_text)
-        logging.info("Analysis completed using reliable service")
+        
+        # Enhance analysis result with extracted position data
+        if isinstance(analysis_result, dict) and primary_position:
+            analysis_result['extracted_position'] = primary_position
+            analysis_result['document_count'] = len(processed_documents)
+            
+            # Update core claim with extracted thesis if available
+            if primary_position.get('thesis_statement'):
+                analysis_result['core_claim'] = primary_position['thesis_statement']
+        
+        logging.info(f"Analysis completed using document-extracted thesis from {len(processed_documents)} documents")
         
         # Always add Eagle API signals regardless of analysis source
         try:
