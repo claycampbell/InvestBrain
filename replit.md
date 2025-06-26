@@ -98,6 +98,12 @@ The Investment Thesis Intelligence System is a sophisticated Flask-based web app
 - Graceful degradation when external services unavailable
 
 ## Changelog
+- June 26, 2025: Fixed Counter Thesis and Alternative Company Analysis
+  - Resolved key mismatch in save_thesis_analysis function (counter_thesis_scenarios → counter_thesis)
+  - Implemented reliable local analysis with structured counter thesis scenarios
+  - Added proper risk scenario generation with probability and impact assessments
+  - Fixed alternative company analysis endpoint routing and error handling
+  - Enhanced fallback systems to maintain data integrity when external APIs unavailable
 - June 23, 2025: Added Significance Mapping and Smart Prioritization features
   - Implemented AI-powered research vs signal analysis
   - Created visual mapping dashboard for thesis connections
