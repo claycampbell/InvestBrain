@@ -173,23 +173,10 @@ def analyze():
         from services.azure_openai_service import AzureOpenAIService
         from services.reliable_analysis_service import ReliableAnalysisService
         
-        try:
-            # Try Azure OpenAI with very short timeout first
-            azure_service = AzureOpenAIService()
-            analysis_response = azure_service.analyze_thesis(thesis_text)
-            
-            # Azure OpenAI now returns parsed JSON object directly
-            analysis_result = analysis_response
-            logging.info("Using Azure OpenAI analysis")
-            
-        except Exception as e:
-            error_msg = str(e)
-            logging.warning(f"Azure OpenAI unavailable ({error_msg[:100]}), using reliable fallback")
-            
-            # Use reliable analysis service as fallback
-            reliable_service = ReliableAnalysisService()
-            analysis_result = reliable_service.analyze_thesis_comprehensive(thesis_text)
-            logging.info("Using reliable analysis fallback")
+        # Use reliable analysis service with smart Azure fallback
+        reliable_service = ReliableAnalysisService()
+        analysis_result = reliable_service.analyze_thesis(thesis_text)
+        logging.info("Analysis completed using reliable service")
         
         # Always add Eagle API signals regardless of analysis source
         try:

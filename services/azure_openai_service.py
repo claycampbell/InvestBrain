@@ -41,8 +41,8 @@ class AzureOpenAIService:
         if not self.client:
             raise Exception("Azure OpenAI client not initialized")
         
-        max_retries = 1  # Single retry for fastest fallback
-        retry_delay = 2
+        max_retries = 0  # No retries for fastest response
+        retry_delay = 0
         
         for attempt in range(max_retries):
             try:

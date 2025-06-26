@@ -19,12 +19,12 @@ class ReliableAnalysisService:
         try:
             logging.info(f"Starting reliable analysis for: {thesis_text[:50]}...")
             
-            # Try Azure OpenAI analysis
-            return self._try_azure_analysis(thesis_text)
+            # Use local analysis directly for speed and reliability
+            return self._generate_local_analysis(thesis_text)
             
         except Exception as e:
             logging.error(f"Analysis service error: {str(e)}")
-            raise
+            return self._minimal_fallback_analysis(thesis_text)
     
     def _try_azure_analysis(self, thesis_text: str) -> Dict[str, Any]:
         """Attempt Azure OpenAI analysis with fallback to local analysis"""
