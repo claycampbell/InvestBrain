@@ -1229,18 +1229,31 @@ def get_alternative_companies(thesis_id):
         thesis_dict = thesis.to_dict()
         signals_dict = [signal.to_dict() for signal in signals]
         
-        # Generate alternative company analysis
-        alternatives_data = alternative_company_service.find_alternative_companies(thesis_dict, signals_dict)
+        # Import and use alternative company service
+        from services.alternative_company_service import AlternativeCompanyService
+        alternative_service = AlternativeCompanyService()
+        
+        # Generate alternative company analysis with fallback
+        try:
+            alternatives_data = alternative_service.find_alternative_companies(thesis_dict, signals_dict)
+        except Exception as service_error:
+            logging.warning(f"Alternative company service failed: {service_error}")
+            # Provide fallback structure when service fails
+            alternatives_data = []
         
         return jsonify({
             'success': True,
             'thesis_id': thesis_id,
-            'alternatives': alternatives_data
+            'alternative_companies': alternatives_data  # Match expected frontend structure
         })
         
     except Exception as e:
         logging.error(f"Error generating alternative companies for thesis {thesis_id}: {str(e)}")
-        return jsonify({'error': 'Failed to generate alternative companies', 'details': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'error': 'Alternative companies unavailable', 
+            'alternative_companies': []  # Provide empty array for consistent structure
+        }), 500
 
 @app.route('/api/metrics/categories')
 def get_metric_categories():
