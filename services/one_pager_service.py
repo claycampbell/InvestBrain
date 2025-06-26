@@ -214,21 +214,34 @@ class OnePagerService:
             }
     
     def _analyze_signals_sentiment(self, thesis: ThesisAnalysis) -> Dict[str, Any]:
-        """Analyze signals and market sentiment"""
+        """Analyze signals and market sentiment with detailed descriptions"""
         try:
-            # Get signals from thesis data
-            signals_data = self._extract_signals_from_thesis(thesis)
+            # Get all signals for comprehensive analysis
+            signals = SignalMonitoring.query.filter_by(thesis_analysis_id=thesis.id).all()
+            
+            # Enhanced signal processing with detailed descriptions
+            detailed_signals = []
+            for signal in signals:
+                signal_dict = signal.to_dict()
+                enhanced_signal = self._enhance_signal_with_description(signal_dict, thesis)
+                detailed_signals.append(enhanced_signal)
             
             # Get market sentiment
             market_sentiment = self._get_market_sentiment(thesis.id)
             
-            # Count signals by level
-            signals_by_level = self._count_signals_by_level(signals_data)
+            # Categorize signals by level with detailed analysis
+            signals_by_level = self._categorize_signals_with_details(detailed_signals)
+            
+            # Generate comprehensive signal insights
+            signal_insights = self._generate_signal_insights(detailed_signals, thesis)
             
             return {
-                'total_signals_identified': len(signals_data),
+                'total_signals_identified': len(detailed_signals),
                 'signals_by_level': signals_by_level,
-                'signal_details': signals_data[:10],  # Top 10 signals
+                'detailed_signal_analysis': detailed_signals,
+                'signal_insights': signal_insights,
+                'tracking_methodology': self._describe_tracking_methodology(detailed_signals),
+                'validation_approach': self._describe_validation_approach(detailed_signals),
                 'market_sentiment': {
                     'recommendation': market_sentiment.get('recommendation', 'Hold'),
                     'avg_price_target': market_sentiment.get('price_target', 'N/A'),
@@ -242,7 +255,10 @@ class OnePagerService:
             return {
                 'total_signals_identified': 0,
                 'signals_by_level': {},
-                'signal_details': [],
+                'detailed_signal_analysis': [],
+                'signal_insights': {},
+                'tracking_methodology': 'Signal tracking methodology not available',
+                'validation_approach': 'Validation approach not available',
                 'market_sentiment': {
                     'recommendation': 'Hold',
                     'avg_price_target': 'N/A',
