@@ -184,10 +184,11 @@ def analyze():
             # Add Eagle API signals to the Azure analysis
             reliable_service = ReliableAnalysisService()
             eagle_signals = reliable_service.extract_eagle_signals_for_thesis(thesis_text)
-            if eagle_signals:
+            if eagle_signals and isinstance(analysis_result, dict):
                 if 'metrics_to_track' not in analysis_result:
                     analysis_result['metrics_to_track'] = []
-                analysis_result['metrics_to_track'].extend(eagle_signals)
+                if isinstance(analysis_result['metrics_to_track'], list):
+                    analysis_result['metrics_to_track'].extend(eagle_signals)
                 
         except Exception as e:
             logging.warning(f"Azure OpenAI unavailable, using fallback: {str(e)}")
@@ -196,6 +197,12 @@ def analyze():
             analysis_result = reliable_service.analyze_thesis_comprehensive(thesis_text)
         
         # Extract signals from AI analysis and documents using the classification hierarchy
+        # Ensure analysis_result is a dictionary before processing
+        if not isinstance(analysis_result, dict):
+            logging.warning("Analysis result not in expected format, using fallback")
+            reliable_service = ReliableAnalysisService()
+            analysis_result = reliable_service.analyze_thesis_comprehensive(thesis_text)
+        
         signals_result = signal_classifier.extract_signals_from_ai_analysis(
             analysis_result, 
             processed_documents, 
