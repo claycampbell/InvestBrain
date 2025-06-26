@@ -266,10 +266,16 @@ class AzureOpenAIService:
   "counter_thesis": {
     "scenarios": [
       {
-        "scenario": "Primary risk scenario",
+        "scenario": "Primary risk scenario name",
         "probability": "Low/Medium/High",
         "impact": "Description of negative impact on thesis",
         "mitigation": "How to reduce this risk"
+      },
+      {
+        "scenario": "Secondary risk scenario name", 
+        "probability": "Low/Medium/High",
+        "impact": "Alternative failure mode description",
+        "mitigation": "Risk reduction strategy"
       }
     ]
   },

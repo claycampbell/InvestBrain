@@ -146,8 +146,18 @@ Format as JSON array:
         import re
         
         try:
+            # Handle empty or invalid responses
+            if not response or not response.strip():
+                logging.error("Empty response from Azure OpenAI")
+                return self._get_fallback_companies()
+            
             # Clean the response to extract JSON
             response_cleaned = response.strip()
+            
+            # Check for very short responses that indicate timeout/error
+            if len(response_cleaned) < 20:
+                logging.warning(f"Response too short ({len(response_cleaned)} chars) - likely timeout")
+                return self._get_fallback_companies()
             
             # Remove markdown formatting
             if '```json' in response_cleaned:
@@ -158,6 +168,12 @@ Format as JSON array:
                 match = re.search(r'```\s*(.*?)\s*```', response_cleaned, re.DOTALL)
                 if match:
                     response_cleaned = match.group(1)
+            
+            # Additional cleanup for JSON parsing
+            response_cleaned = response_cleaned.strip()
+            if not response_cleaned:
+                logging.error("Cleaned response is empty")
+                return self._get_fallback_companies()
             
             # Parse JSON array
             companies_data = json.loads(response_cleaned)
@@ -194,10 +210,16 @@ Format as JSON array:
             
         except json.JSONDecodeError as e:
             logging.error(f"Failed to parse LLM JSON response: {e}")
-            return []
+            logging.error(f"Raw response content: {response[:500]}")
+            return self._get_fallback_companies()
         except Exception as e:
             logging.error(f"Error processing LLM response: {e}")
-            return []
+            return self._get_fallback_companies()
+    
+    def _get_fallback_companies(self) -> List[Dict[str, Any]]:
+        """Return empty list when authentic data is unavailable"""
+        logging.info("Using fallback - no authentic alternative companies available")
+        return []
     
     def _get_recommendation_strength(self, score: int) -> str:
         """Get recommendation strength based on composite score"""
