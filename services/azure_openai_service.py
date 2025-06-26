@@ -26,8 +26,8 @@ class AzureOpenAIService:
                 api_key=self.api_key,
                 api_version=api_version,
                 azure_endpoint=endpoint,
-                timeout=180.0,  # Extended timeout for complex analysis
-                max_retries=2   # Fewer retries but longer timeout
+                timeout=30.0,   # Shorter timeout for faster failure detection
+                max_retries=1   # Single retry for faster response
             )
             
             logging.info("Azure OpenAI client initialized successfully")
@@ -88,11 +88,13 @@ class AzureOpenAIService:
                 error_message = str(e)
                 is_retryable = any(keyword in error_message.lower() for keyword in [
                     'timeout', 'read timeout', 'connection timeout', 'ssl', 
-                    'connection', 'network', 'reset', 'broken pipe', 'recv'
+                    'connection', 'network', 'reset', 'broken pipe', 'recv',
+                    'systemexit', 'ssl.sslerror', 'connectionerror'
                 ])
                 
                 if is_retryable and attempt < max_retries - 1:
-                    logging.warning(f"Attempt {attempt + 1} failed with network error, retrying...")
+                    logging.warning(f"Attempt {attempt + 1} failed with network error: {error_message[:100]}")
+                    logging.warning(f"Retrying in {retry_delay} seconds...")
                     import time
                     time.sleep(retry_delay)
                     retry_delay *= 2
@@ -107,8 +109,12 @@ class AzureOpenAIService:
                 else:
                     logging.error(f"Error generating completion after {attempt + 1} attempts: {error_message}")
                     if attempt == max_retries - 1:
-                        # Instead of fallback, raise an informative error for the user
-                        raise Exception("Azure OpenAI service is temporarily unavailable due to network connectivity issues. Please check your API credentials and try again.")
+                        # For network/timeout errors, provide clear user guidance
+                        if is_retryable:
+                            raise Exception("Network connection to Azure OpenAI failed. Please check your internet connection and try again. If the problem persists, the service may be temporarily unavailable.")
+                        else:
+                            # For other errors, re-raise the original
+                            raise Exception(f"Azure OpenAI analysis failed: {error_message}")
                     raise
     
     def _generate_fallback_response(self, messages):

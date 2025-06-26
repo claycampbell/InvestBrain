@@ -191,10 +191,22 @@ def analyze():
                     analysis_result['metrics_to_track'].extend(eagle_signals)
                 
         except Exception as e:
-            logging.warning(f"Azure OpenAI unavailable, using fallback: {str(e)}")
-            # Fallback to reliable analysis only if Azure OpenAI fails
-            reliable_service = ReliableAnalysisService()
-            analysis_result = reliable_service.analyze_thesis_comprehensive(thesis_text)
+            error_msg = str(e)
+            logging.error(f"Azure OpenAI analysis failed: {error_msg}")
+            
+            # Return user-friendly error message for network issues
+            if any(keyword in error_msg.lower() for keyword in ['network', 'connection', 'timeout', 'unavailable']):
+                flash(f"Analysis failed due to network connectivity: {error_msg}", 'error')
+                return render_template('index.html', error=error_msg)
+            else:
+                # For other errors, try fallback
+                logging.warning(f"Attempting fallback analysis")
+                try:
+                    reliable_service = ReliableAnalysisService()
+                    analysis_result = reliable_service.analyze_thesis_comprehensive(thesis_text)
+                except Exception as fallback_error:
+                    flash(f"Analysis service temporarily unavailable: {str(fallback_error)}", 'error')
+                    return render_template('index.html', error=str(fallback_error))
         
         # Extract signals from AI analysis and documents using the classification hierarchy
         # Ensure analysis_result is a dictionary before processing
