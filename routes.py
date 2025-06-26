@@ -1527,6 +1527,31 @@ def significance_analysis_page(thesis_id):
     thesis = ThesisAnalysis.query.get_or_404(thesis_id)
     return render_template('significance_analysis.html', thesis=thesis)
 
+@app.route('/generate_one_pager/<int:thesis_id>')
+def generate_one_pager(thesis_id):
+    """
+    Generate comprehensive one-pager investment report consolidating all analysis data
+    """
+    try:
+        from services.one_pager_service import OnePagerService
+        
+        # Get thesis data
+        thesis = ThesisAnalysis.query.get_or_404(thesis_id)
+        
+        # Initialize one pager service
+        one_pager_service = OnePagerService()
+        
+        # Generate comprehensive one pager data
+        one_pager_data = one_pager_service.generate_comprehensive_report(thesis)
+        
+        return render_template('one_pager.html', 
+                             thesis=thesis, 
+                             report_data=one_pager_data)
+        
+    except Exception as e:
+        app.logger.error(f"Error generating one pager for thesis {thesis_id}: {str(e)}")
+        return f"Error generating one pager: {str(e)}", 500
+
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('404.html'), 404

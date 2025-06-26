@@ -199,10 +199,18 @@
     <!-- Analysis Results (Hidden until analysis is complete) -->
     <div id="analysis-results" style="display: none;" class="mt-5">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="fas fa-chart-line"></i> Signal Analysis Results
                 </h5>
+                <div id="analysis-actions" style="display: none;">
+                    <a id="generate-one-pager-btn" href="#" class="btn btn-warning me-2" target="_blank">
+                        <i class="fas fa-file-alt"></i> Generate One Pager
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="exportAnalysis()">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <div id="results-content">
@@ -346,6 +354,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // Store thesis ID for market sentiment loading
         if (data.thesis_id) {
             window.currentThesisId = data.thesis_id;
+            
+            // Show analysis actions and set up Generate One Pager button
+            const actionsDiv = document.getElementById('analysis-actions');
+            const onePagerBtn = document.getElementById('generate-one-pager-btn');
+            if (actionsDiv && onePagerBtn) {
+                actionsDiv.style.display = 'block';
+                onePagerBtn.href = `/generate_one_pager/${data.thesis_id}`;
+            }
+            
             // Load alternative companies analysis
             window.loadAlternativeCompanies(data.thesis_id);
         }

@@ -98,6 +98,13 @@ The Investment Thesis Intelligence System is a sophisticated Flask-based web app
 - Graceful degradation when external services unavailable
 
 ## Changelog
+- June 26, 2025: Added comprehensive "Generate One Pager" functionality
+  - Implemented OnePagerService for data consolidation across all analysis components
+  - Created professional one-pager template with 8 structured sections
+  - Added Generate One Pager buttons to analysis.html and thesis_analysis.html
+  - Integrated Executive Summary, Key Findings, Company Metrics, Signal Analysis, Thesis Structure, Monitoring, Alternative Investments, and Evaluation Criteria
+  - Built evaluation scorecard system for portfolio managers and analysts
+  - Added print-friendly CSS and PDF export functionality
 - June 23, 2025: Added Significance Mapping and Smart Prioritization features
   - Implemented AI-powered research vs signal analysis
   - Created visual mapping dashboard for thesis connections

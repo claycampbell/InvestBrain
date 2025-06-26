@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+
+{% block title %}Investment One-Pager - {{ thesis.title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .one-pager {
+        max-width: 1200px;
+        margin: 0 auto;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .section-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 8px;
+    }
+    
+    .metric-card {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .score-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    
+    .score-excellent { background-color: #d4edda; color: #155724; }
+    .score-good { background-color: #d1ecf1; color: #0c5460; }
+    .score-satisfactory { background-color: #fff3cd; color: #856404; }
+    .score-needs-work { background-color: #f8d7da; color: #721c24; }
+    
+    .signal-level {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-right: 0.5rem;
+    }
+    
+    .level-0 { background-color: #e3f2fd; color: #1565c0; }
+    .level-1 { background-color: #f3e5f5; color: #7b1fa2; }
+    .level-2 { background-color: #e8f5e8; color: #388e3c; }
+    .level-3 { background-color: #fff3e0; color: #f57c00; }
+    .level-4 { background-color: #ffebee; color: #d32f2f; }
+    .level-5 { background-color: #fce4ec; color: #c2185b; }
+    
+    .company-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        background: white;
+    }
+    
+    .evaluation-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .print-friendly {
+        background: white !important;
+        color: black !important;
+    }
+    
+    @media print {
+        .no-print { display: none !important; }
+        .section-header { 
+            background: #333 !important; 
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="one-pager">
+    <!-- Header with Controls -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <div>
+            <h1 class="h3 mb-1">Investment Analysis One-Pager</h1>
+            <p class="text-muted mb-0">{{ thesis.title }}</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary me-2" onclick="window.print()">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <button class="btn btn-outline-secondary" onclick="exportToPDF()">
+                <i class="fas fa-file-pdf"></i> Export PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- 1. Executive Summary -->
+    <div class="section-header">
+        <h2 class="h4 mb-0"><i class="fas fa-chart-line me-2"></i>1. Executive Summary</h2>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="metric-card">
+                <h5>Core Claim</h5>
+                <p>{{ report_data.executive_summary.core_claim }}</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card text-center">
+                <h6>Investment Recommendation</h6>
+                <div class="h3 text-primary">{{ report_data.executive_summary.investment_recommendation }}</div>
+                <small class="text-muted">Confidence: {{ "%.1f"|format(report_data.executive_summary.confidence_score * 100) }}%</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Key Findings & Insights -->
+    <div class="section-header">
+        <h2 class="h4 mb-0"><i class="fas fa-lightbulb me-2"></i>2. Key Findings & Insights</h2>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="metric-card">
+                <h6>Key Findings</h6>
+                <ul class="mb-0">
+                    {% for finding in report_data.key_findings.key_findings %}
+                    <li>{{ finding }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="metric-card">
+                <h6>Risk Assessment</h6>
+                <p><strong>Overall Risk:</strong> {{ report_data.key_findings.risk_assessment.overall_risk }}</p>
+                {% if report_data.key_findings.risk_assessment.key_risks %}
+                <ul class="small mb-0">
+                    {% for risk in report_data.key_findings.risk_assessment.key_risks %}
+                    <li>{{ risk }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Counter-Thesis Scenarios -->
+    {% if report_data.key_findings.counter_thesis %}
+    <div class="metric-card mb-4">
+        <h6>Counter-Thesis Scenarios</h6>
+        <div class="row">
+            {% for scenario in report_data.key_findings.counter_thesis %}
+            <div class="col-md-4 mb-2">
+                <div class="border rounded p-2">
+                    <strong>{{ scenario.scenario }}</strong>
+                    <br><small class="text-muted">Probability: {{ scenario.probability }}</small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 3. Company Metrics Overview -->
+    <div class="section-header">
+        <h2 class="h4 mb-0"><i class="fas fa-building me-2"></i>3. Company Metrics Overview</h2>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="metric-card text-center">
+                <h6>Company Ticker</h6>
+                <div class="h4 text-primary">{{ report_data.company_metrics.company_ticker }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card text-center">
+                <h6>Total Metrics</h6>
+                <div class="h4 text-success">{{ report_data.company_metrics.metrics_summary.total_metrics }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card text-center">
+                <h6>Coverage Score</h6>
+                <div class="h4 text-info">{{ "%.1f"|format(report_data.company_metrics.coverage_score * 100) }}%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Signal & Sentiment Analysis -->
+    <div class="section-header">
+        <h2 class="h4 mb-0"><i class="fas fa-signal me-2"></i>4. Signal & Sentiment Analysis</h2>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="metric-card">
+                <h6>Signals Identified</h6>
+                <div class="h4 text-primary mb-2">{{ report_data.signal_analysis.total_signals_identified }}</div>
+                
+                <h6 class="mt-3">Signals by Level</h6>
+                {% for level, count in report_data.signal_analysis.signals_by_level.items() %}
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="signal-level level-{{ level.split(' ')[1] if ' ' in level else '0' }}">{{ level }}</span>
+                    <span>{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="metric-card">
+                <h6>Market Sentiment</h6>
+                <div class="mb-2">
+                    <strong>Recommendation:</strong> {{ report_data.signal_analysis.market_sentiment.recommendation }}
+                </div>
+                <div class="mb-2">
+                    <strong>Sentiment Trend:</strong> {{ report_data.signal_analysis.market_sentiment.sentiment_trend }}
+                </div>
+                <div class="mb-2">
+                    <strong>Confidence:</strong> {{ "%.1f"|format(report_data.signal_analysis.market_sentiment.confidence_score * 100) }}%
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Thesis Structure & Logic -->
+    <div class="section-header">
+        <h2 class="h4 mb-0"><i class="fas fa-project-diagram me-2"></i>5. Thesis Structure & Logic</h2>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="metric-card">
+                <h6>Mental Model</h6>
+                <p>{{ report_data.thesis_structure.mental_model }}</p>
+                
+                {% if report_data.thesis_structure.causal_chain %}
+                <h6 class="mt-3">Causal Chain</h6>
+                <ol class="small">
+                    {% for item in report_data.thesis_structure.causal_chain %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ol>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="metric-card">
+                {% if report_data.thesis_structure.assumptions %}
+                <h6>Key Assumptions</h6>
+                <ul class="small">
+                    {% for assumption in report_data.thesis_structure.assumptions %}
+                    <li>{{ assumption }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <h6>Logical Flow Score</h6>
+                    <div class="progress">
+                        <div class="progress-bar" style="width: {{ report_data.thesis_structure.logical_flow_score * 100 }}%"></div>
+                    </div>
+                    <small class="text-muted">{{ "%.1f"|format(report_data.thesis_structure.logical_flow_score * 100) }}%</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Monitoring & Recommendations -->
+    <div class="section-header">
+        <h2 class="h4 mb-0"><i class="fas fa-eye me-2"></i>6. Monitoring & Recommendations</h2>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="metric-card">
+                <h6>Active Signals: {{ report_data.monitoring_plan.active_signals_count }}</h6>
+                {% if report_data.monitoring_plan.signal_monitoring_events %}
+                {% for event in report_data.monitoring_plan.signal_monitoring_events %}
+                <div class="small border-bottom pb-1 mb-1">
+                    <strong>{{ event.signal_name }}</strong>
+                    <br>Current: {{ event.current_value }} | Threshold: {{ event.threshold_value }}
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="metric-card">
+                <h6>Metrics to Track</h6>
+                {% if report_data.monitoring_plan.metrics_to_track %}
+                <ul class="small mb-0">
+                    {% for metric in report_data.monitoring_plan.metrics_to_track %}
+                    <li>{{ metric }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted small">Monitoring plan in development</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Alternative Investment Ideas -->
+    <div class="section-header">
+        <h2 class="h4 mb-0"><i class="fas fa-exchange-alt me-2"></i>7. Alternative Investment Ideas</h2>
+    </div>
+    
+    <div class="row mb-4">
+        {% if report_data.alternative_investments.alternative_companies %}
+        {% for company in report_data.alternative_investments.alternative_companies %}
+        <div class="col-md-4 mb-3">
+            <div class="company-card">
+                <h6>{{ company.name }}</h6>
+                <div class="small text-muted mb-2">{{ company.ticker }}</div>
+                <div class="small">
+                    <strong>Score:</strong> {{ "%.1f"|format(company.composite_score) }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="metric-card text-center text-muted">
+                <p>Alternative company analysis in progress</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 8. Evaluation Criteria for PMs/Analysts -->
+    <div class="section-header">
+        <h2 class="h4 mb-0"><i class="fas fa-clipboard-check me-2"></i>8. Evaluation Criteria</h2>
+    </div>
+    
+    <div class="evaluation-grid mb-4">
+        {% for criterion in report_data.evaluation_criteria.scorecard_criteria %}
+        <div class="metric-card">
+            <h6>{{ criterion.criterion }}</h6>
+            <div class="mb-2">
+                <div class="progress">
+                    <div class="progress-bar" style="width: {{ criterion.score * 100 }}%"></div>
+                </div>
+                <small class="text-muted">{{ "%.1f"|format(criterion.score * 100) }}% (Weight: {{ "%.0f"|format(criterion.weight * 100) }}%)</small>
+            </div>
+            <small class="text-muted">{{ criterion.notes }}</small>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Overall Score -->
+    <div class="metric-card text-center mb-4">
+        <h5>Overall Evaluation Score</h5>
+        <div class="h2 text-primary">{{ "%.1f"|format(report_data.evaluation_criteria.overall_score * 100) }}%</div>
+        <div class="score-badge score-{{ 'excellent' if report_data.evaluation_criteria.overall_score >= 0.8 else 'good' if report_data.evaluation_criteria.overall_score >= 0.7 else 'satisfactory' if report_data.evaluation_criteria.overall_score >= 0.6 else 'needs-work' }}">
+            {{ report_data.evaluation_criteria.recommendation }}
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-muted mt-4 mb-4">
+        <small>
+            Generated on {{ report_data.generated_at[:10] }} | 
+            Investment Thesis Intelligence System | 
+            Thesis ID: {{ report_data.thesis_id }}
+        </small>
+    </div>
+</div>
+
+<script>
+function exportToPDF() {
+    // Simple PDF export using browser print functionality
+    window.print();
+}
+
+// Auto-hide navigation for cleaner print view
+window.addEventListener('beforeprint', function() {
+    document.body.classList.add('print-friendly');
+});
+
+window.addEventListener('afterprint', function() {
+    document.body.classList.remove('print-friendly');
+});
+</script>
+{% endblock %}
