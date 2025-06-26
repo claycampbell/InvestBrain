@@ -174,14 +174,25 @@ def analyze():
         from services.reliable_analysis_service import ReliableAnalysisService
         
         try:
-            # Try Azure OpenAI first for authentic analysis
+            # Try Azure OpenAI with very short timeout first
             azure_service = AzureOpenAIService()
             analysis_response = azure_service.analyze_thesis(thesis_text)
             
             # Azure OpenAI now returns parsed JSON object directly
             analysis_result = analysis_response
+            logging.info("Using Azure OpenAI analysis")
             
-            # Add Eagle API signals to the Azure analysis
+        except Exception as e:
+            error_msg = str(e)
+            logging.warning(f"Azure OpenAI unavailable ({error_msg[:100]}), using reliable fallback")
+            
+            # Use reliable analysis service as fallback
+            reliable_service = ReliableAnalysisService()
+            analysis_result = reliable_service.analyze_thesis_comprehensive(thesis_text)
+            logging.info("Using reliable analysis fallback")
+        
+        # Always add Eagle API signals regardless of analysis source
+        try:
             reliable_service = ReliableAnalysisService()
             eagle_signals = reliable_service.extract_eagle_signals_for_thesis(thesis_text)
             if eagle_signals and isinstance(analysis_result, dict):
@@ -189,24 +200,8 @@ def analyze():
                     analysis_result['metrics_to_track'] = []
                 if isinstance(analysis_result['metrics_to_track'], list):
                     analysis_result['metrics_to_track'].extend(eagle_signals)
-                
-        except Exception as e:
-            error_msg = str(e)
-            logging.error(f"Azure OpenAI analysis failed: {error_msg}")
-            
-            # Return user-friendly error message for network issues
-            if any(keyword in error_msg.lower() for keyword in ['network', 'connection', 'timeout', 'unavailable']):
-                flash(f"Analysis failed due to network connectivity: {error_msg}", 'error')
-                return render_template('index.html', error=error_msg)
-            else:
-                # For other errors, try fallback
-                logging.warning(f"Attempting fallback analysis")
-                try:
-                    reliable_service = ReliableAnalysisService()
-                    analysis_result = reliable_service.analyze_thesis_comprehensive(thesis_text)
-                except Exception as fallback_error:
-                    flash(f"Analysis service temporarily unavailable: {str(fallback_error)}", 'error')
-                    return render_template('index.html', error=str(fallback_error))
+        except Exception as eagle_error:
+            logging.warning(f"Eagle API signals unavailable: {eagle_error}")
         
         # Extract signals from AI analysis and documents using the classification hierarchy
         # Ensure analysis_result is a dictionary before processing

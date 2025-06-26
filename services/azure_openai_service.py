@@ -36,13 +36,13 @@ class AzureOpenAIService:
             logging.error(f"Failed to initialize Azure OpenAI client: {str(e)}")
             self.client = None
     
-    def generate_completion(self, messages, temperature=1.0, max_tokens=4000):
+    def generate_completion(self, messages, temperature=1.0, max_tokens=2000):
         """Generate a completion using Azure OpenAI with robust timeout and retry handling"""
         if not self.client:
             raise Exception("Azure OpenAI client not initialized")
         
-        max_retries = 2  # Reduced retries for faster fallback
-        retry_delay = 1
+        max_retries = 1  # Single retry for fastest fallback
+        retry_delay = 2
         
         for attempt in range(max_retries):
             try:
