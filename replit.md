@@ -98,6 +98,17 @@ The Investment Thesis Intelligence System is a sophisticated Flask-based web app
 - Graceful degradation when external services unavailable
 
 ## Changelog
+- June 27, 2025: Major restructuring: Thesis Validation Framework for One Pager Generation
+  - Replaced composite metrics with specific validation components in one pager reports
+  - Implemented Core Claim Validation Framework with primary/supporting/contrarian validators
+  - Added Assumption Testing Framework with risk-weighted priorities and testing timelines
+  - Built Causal Chain Tracking system with specific monitoring points and failure indicators
+  - Created Data Acquisition Plan with source prioritization and quality standards
+  - Decomposed complex signals into actionable validation metrics with clear success criteria
+  - Enhanced one pager template to display validation-focused structure instead of composite metrics
+  - Added specific data sources, frequencies, and methodologies for each validation component
+  - Integrated systematic testing approach for investment thesis assumptions
+  - Provided clear frameworks for thesis validation, assumption testing, causal chain tracking, and data acquisition
 - June 26, 2025: Major architectural change: Document-based thesis extraction system
   - Implemented FinancialPositionExtractor service for automatic thesis statement generation
   - Removed manual thesis text input requirement from user interface

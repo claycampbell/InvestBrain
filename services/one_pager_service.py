@@ -870,8 +870,12 @@ class OnePagerService:
             # Calculate pattern match score
             pattern_match_score = self._calculate_pattern_match_score(alternative_companies)
             
+            alt_companies_list = alternative_companies.get('alternative_companies', [])
+            if not isinstance(alt_companies_list, list):
+                alt_companies_list = []
+            
             return {
-                'alternative_companies': alternative_companies.get('alternative_companies', [])[:6],
+                'alternative_companies': alt_companies_list[:6],
                 'pattern_match_score': pattern_match_score,
                 'comparison_metrics': self._generate_comparison_metrics(alternative_companies),
                 'diversification_score': self._calculate_diversification_score(alternative_companies)

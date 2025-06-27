@@ -469,29 +469,24 @@
     <div class="row mb-4">
         <div class="col-md-6">
             <div class="metric-card">
-                <h6>Active Signals: {{ report_data.monitoring_plan.active_signals_count }}</h6>
-                {% if report_data.monitoring_plan.signal_monitoring_events %}
-                {% for event in report_data.monitoring_plan.signal_monitoring_events %}
-                <div class="small border-bottom pb-1 mb-1">
-                    <strong>{{ event.signal_name }}</strong>
-                    <br>Current: {{ event.current_value }} | Threshold: {{ event.threshold_value }}
+                <h6>Validation Status</h6>
+                <div class="small">
+                    <div><strong>Core Validators:</strong> {{ report_data.core_claim_validation.primary_validators|length }} active</div>
+                    <div><strong>Assumption Tests:</strong> {{ report_data.assumption_testing.total_assumptions }} tracked</div>
+                    <div><strong>Chain Elements:</strong> {{ report_data.causal_chain_tracking.chain_length }} monitored</div>
                 </div>
-                {% endfor %}
-                {% endif %}
             </div>
         </div>
         <div class="col-md-6">
             <div class="metric-card">
-                <h6>Metrics to Track</h6>
-                {% if report_data.monitoring_plan.metrics_to_track %}
-                <ul class="small mb-0">
-                    {% for metric in report_data.monitoring_plan.metrics_to_track %}
-                    <li>{{ metric }}</li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="text-muted small">Monitoring plan in development</p>
-                {% endif %}
+                <h6>Data Acquisition</h6>
+                <div class="small">
+                    <div><strong>Primary Sources:</strong> {{ report_data.data_acquisition_plan.primary_data_sources|length }}</div>
+                    <div><strong>Alternative Sources:</strong> {{ report_data.data_acquisition_plan.alternative_data_sources|length }}</div>
+                    {% if report_data.data_acquisition_plan.acquisition_timeline %}
+                    <div><strong>Timeline:</strong> {{ report_data.data_acquisition_plan.acquisition_timeline.immediate_priorities|length }} immediate priorities</div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
