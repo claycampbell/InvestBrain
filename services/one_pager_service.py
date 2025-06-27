@@ -54,8 +54,8 @@ class OnePagerService:
         return {
             'investment_position': thesis.title or 'Investment Analysis',
             'core_claim': thesis.core_claim or 'Investment thesis analysis',
-            'recommendation': 'HOLD',
-            'confidence_level': 'Medium',
+            'investment_recommendation': 'HOLD',
+            'confidence_level': 75,
             'key_risks': ['Market volatility', 'Execution risk', 'Competitive pressure'],
             'upside_potential': 'Moderate growth potential',
             'investment_horizon': '12-18 months'

@@ -144,10 +144,10 @@
         <div class="col-md-6">
             <div class="metric-card">
                 <h6>Risk Assessment</h6>
-                <p><strong>Overall Risk:</strong> {{ report_data.key_findings.risk_assessment.overall_risk }}</p>
-                {% if report_data.key_findings.risk_assessment.key_risks %}
+                <p><strong>Analysis Depth:</strong> {{ report_data.key_findings.analysis_depth }}</p>
+                {% if report_data.executive_summary.key_risks %}
                 <ul class="small mb-0">
-                    {% for risk in report_data.key_findings.risk_assessment.key_risks %}
+                    {% for risk in report_data.executive_summary.key_risks %}
                     <li>{{ risk }}</li>
                     {% endfor %}
                 </ul>
@@ -315,7 +315,7 @@
             <div class="metric-card text-center">
                 <h6>Monitoring Framework</h6>
                 <div class="h4 text-success">Active</div>
-                <small class="text-muted">{{ report_data.causal_chain_tracking.monitoring_framework.validation_frequency }}</small>
+                <small class="text-muted">Quarterly validation cycles</small>
             </div>
         </div>
     </div>
