@@ -30,7 +30,7 @@ class DataAdapter:
         if not self.token:
             logging.warning("AZURE_OPENAI_TOKEN not configured for Eagle API, using test data")
             # Return test data when authentication not available
-            return self.test_api.get_test_response_for_company()['test_response']
+            return self.test_api.get_test_response_for_company()
             
         try:
             response = requests.post(

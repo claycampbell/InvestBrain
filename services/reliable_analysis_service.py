@@ -522,14 +522,16 @@ class ReliableAnalysisService:
         
         if "revenue" in text_lower or "growth" in text_lower:
             signals.append({
-                "name": "Quarterly Revenue Growth",
-                "type": "Level_1_Simple_Aggregation",
-                "description": "Year-over-year revenue growth percentage",
+                "name": "Revenue Growth Rate",
+                "type": "Level_1_Simple_Aggregation", 
+                "description": "Year-over-year revenue growth percentage with trend analysis",
+                "category": "growth_metrics",
                 "frequency": "quarterly",
                 "threshold": 15.0,
                 "threshold_type": "above",
                 "data_source": "FactSet",
-                "value_chain_position": "downstream"
+                "value_chain_position": "downstream",
+                "validation_method": "Multi-period trend analysis with industry benchmarks"
             })
         
         if "market share" in text_lower or "adoption" in text_lower:
@@ -556,17 +558,43 @@ class ReliableAnalysisService:
                 "value_chain_position": "downstream"
             })
         
-        # Add standard financial signals
+        # Add standard financial signals with proper categorization
         signals.extend([
             {
                 "name": "Operating Margin",
                 "type": "Level_1_Simple_Aggregation",
-                "description": "Operating margin percentage trends",
+                "description": "Operating margin percentage trends and profitability analysis",
+                "category": "profitability_metrics",
                 "frequency": "quarterly",
                 "threshold": 20.0,
                 "threshold_type": "above",
                 "data_source": "FactSet",
-                "value_chain_position": "midstream"
+                "value_chain_position": "midstream",
+                "validation_method": "Sequential quarter analysis with peer comparison"
+            },
+            {
+                "name": "Return on Equity",
+                "type": "Level_1_Simple_Aggregation",
+                "description": "Management efficiency in generating shareholder returns",
+                "category": "profitability_metrics",
+                "frequency": "quarterly",
+                "threshold": 15.0,
+                "threshold_type": "above",
+                "data_source": "FactSet",
+                "value_chain_position": "downstream",
+                "validation_method": "ROE decomposition analysis"
+            },
+            {
+                "name": "Debt to Equity Ratio",
+                "type": "Level_1_Simple_Aggregation",
+                "description": "Financial leverage and balance sheet strength assessment",
+                "category": "risk_metrics",
+                "frequency": "quarterly",
+                "threshold": 0.5,
+                "threshold_type": "below",
+                "data_source": "FactSet",
+                "value_chain_position": "midstream",
+                "validation_method": "Industry peer comparison and credit rating correlation"
             },
             {
                 "name": "Free Cash Flow",
