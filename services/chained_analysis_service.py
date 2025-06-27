@@ -497,7 +497,8 @@ Focus on metrics that can be tracked via FactSet/Xpressfeed APIs with specific q
             data_source = category_signals[0].get('data_source', 'FactSet') if category_signals else 'FactSet'
             frequency = category_signals[0].get('frequency', 'quarterly') if category_signals else 'quarterly'
             
-            company_filter = f"symbol IN ({', '.join([f'\'{c}\'' for c in companies])})" if companies else "symbol = ?"
+            company_symbols = ', '.join([f"'{c}'" for c in companies]) if companies else "''"
+            company_filter = f"symbol IN ({company_symbols})" if companies else "symbol = ?"
             
             acquisition_plan.append({
                 "category": category,

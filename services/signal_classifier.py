@@ -46,6 +46,99 @@ class SignalClassifier:
         from services.internal_research_service import InternalResearchService
         self.research_service = InternalResearchService()
         
+    def classify_signals(self, thesis_text: str, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Main method to classify signals from thesis and analysis data"""
+        try:
+            # Generate comprehensive signal classification
+            raw_signals = self._generate_raw_signals(thesis_text)
+            level_0_signals = self._generate_level_0_signals(thesis_text)
+            hierarchical_signals = self._generate_hierarchical_signals(thesis_text, analysis_data)
+            
+            return {
+                'raw_signals': raw_signals,
+                'level_0_signals': level_0_signals,
+                'hierarchical_signals': hierarchical_signals,
+                'total_signals': len(raw_signals) + len(level_0_signals) + len(hierarchical_signals)
+            }
+        except Exception as e:
+            logging.error(f"Signal classification failed: {e}")
+            return {
+                'raw_signals': [],
+                'level_0_signals': [],
+                'hierarchical_signals': [],
+                'total_signals': 0
+            }
+    
+    def _generate_raw_signals(self, thesis_text: str) -> List[Dict[str, Any]]:
+        """Generate raw financial and operational signals"""
+        signals = []
+        
+        # Revenue and growth signals
+        if any(word in thesis_text.lower() for word in ['revenue', 'growth', 'sales']):
+            signals.append({
+                'name': 'Quarterly Revenue Growth',
+                'type': 'Level_1_Simple_Aggregation',
+                'description': 'Year-over-year revenue growth percentage',
+                'data_source': 'Financial Statements',
+                'frequency': 'quarterly',
+                'category': 'growth_metrics'
+            })
+        
+        # Profitability signals
+        if any(word in thesis_text.lower() for word in ['margin', 'efficiency', 'profitability']):
+            signals.append({
+                'name': 'Operating Margin Expansion',
+                'type': 'Level_2_Cross_Functional',
+                'description': 'Operating margin improvement trends',
+                'data_source': 'Income Statements',
+                'frequency': 'quarterly',
+                'category': 'profitability_metrics'
+            })
+        
+        # Market signals
+        if any(word in thesis_text.lower() for word in ['market', 'competitive', 'share']):
+            signals.append({
+                'name': 'Market Share Trends',
+                'type': 'Level_3_Strategic_Insight',
+                'description': 'Competitive positioning analysis',
+                'data_source': 'Industry Reports',
+                'frequency': 'monthly',
+                'category': 'market_metrics'
+            })
+        
+        return signals
+    
+    def _generate_level_0_signals(self, thesis_text: str) -> List[Dict[str, Any]]:
+        """Generate Level 0 research validation signals"""
+        return [
+            {
+                'name': 'Core Thesis Validation',
+                'type': 'Level_0_Raw_Activity',
+                'description': 'Structured validation of core investment thesis claims',
+                'validation_framework': 'Primary evidence assessment',
+                'frequency': 'continuous'
+            },
+            {
+                'name': 'Assumption Testing',
+                'type': 'Level_0_Raw_Activity', 
+                'description': 'Systematic testing of investment assumptions',
+                'validation_framework': 'Risk-weighted assumption analysis',
+                'frequency': 'monthly'
+            }
+        ]
+    
+    def _generate_hierarchical_signals(self, thesis_text: str, analysis_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate hierarchical signal structure"""
+        return [
+            {
+                'name': 'Multi-Level Signal Integration',
+                'type': 'Level_4_Complex_Ratios',
+                'description': 'Integration of signals across all classification levels',
+                'components': ['Financial metrics', 'Market indicators', 'Research validation'],
+                'methodology': 'Weighted signal aggregation'
+            }
+        ]
+
     def extract_signals_from_ai_analysis(self, ai_analysis: Dict[str, Any], processed_documents: List[Dict], focus_primary: bool = True) -> Dict[str, Any]:
         """
         Extract and classify signals from AI analysis results with Level 0-5 hierarchy
