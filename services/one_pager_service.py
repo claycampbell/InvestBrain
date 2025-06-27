@@ -822,7 +822,6 @@ class OnePagerService:
             
             return {
                 'metrics_to_track': thesis.metrics_to_track if isinstance(thesis.metrics_to_track, list) else [],
-                'monitoring_plan': thesis.monitoring_plan if isinstance(thesis.monitoring_plan, dict) else {},
                 'active_signals_count': len(active_signals),
                 'signal_monitoring_events': [
                     {
@@ -847,7 +846,6 @@ class OnePagerService:
             print(f"Error compiling monitoring recommendations: {e}")
             return {
                 'metrics_to_track': [],
-                'monitoring_plan': {},
                 'active_signals_count': 0,
                 'signal_monitoring_events': [],
                 'notification_events': []
