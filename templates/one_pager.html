@@ -321,27 +321,32 @@
     </div>
     
     <!-- Causal Chain Details -->
-    {% if report_data.causal_chain_tracking.tracking_points %}
+    {% if report_data.causal_chain_tracking.causal_chains %}
     <div class="mb-4">
         <h6 class="mb-3">Causal Chain Elements</h6>
-        {% for point in report_data.causal_chain_tracking.tracking_points[:5] %}
+        {% for chain in report_data.causal_chain_tracking.causal_chains %}
         <div class="causal-point-card mb-3 p-3 border rounded">
             <div class="d-flex justify-content-between align-items-start mb-2">
-                <h6 class="mb-0">{{ point.position }}. {{ point.element }}</h6>
-                <span class="badge bg-info">{{ point.monitoring_frequency }}</span>
+                <h6 class="mb-0">{{ chain.chain_name }}</h6>
+                <span class="badge bg-info">Active</span>
             </div>
             
             <div class="row small">
                 <div class="col-md-6">
-                    <div><strong>Tracking Metrics:</strong></div>
+                    <div><strong>Monitoring Points:</strong></div>
                     <ul class="small mb-1">
-                        {% for metric in point.tracking_metrics[:3] %}
-                        <li>{{ metric }}</li>
+                        {% for point in chain.monitoring_points[:3] %}
+                        <li>{{ point }}</li>
                         {% endfor %}
                     </ul>
                 </div>
                 <div class="col-md-6">
-                    <div><strong>Validation Method:</strong> {{ point.validation_method }}</div>
+                    <div><strong>Validation Methods:</strong></div>
+                    <ul class="small mb-1">
+                        {% for method in chain.validation_methods[:2] %}
+                        <li>{{ method }}</li>
+                        {% endfor %}
+                    </ul>
                     <div><strong>Failure Indicators:</strong></div>
                     <ul class="small mb-1">
                         {% for indicator in point.failure_indicators[:2] %}
