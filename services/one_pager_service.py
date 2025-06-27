@@ -329,7 +329,7 @@ class OnePagerService:
                 'assumption': assumption,
                 'test_type': 'Growth Validation',
                 'specific_metrics': ['Revenue Growth Rate', 'Market Expansion', 'Customer Acquisition'],
-                'test_methodology': 'Quarterly trend analysis with peer benchmarking',
+
                 'success_criteria': 'Sustained growth above market average',
                 'risk_level': 'Medium',
                 'testing_timeline': '6 months',
@@ -340,7 +340,7 @@ class OnePagerService:
                 'assumption': assumption,
                 'test_type': 'Market Validation',
                 'specific_metrics': ['Market Share', 'TAM Analysis', 'Competitive Position'],
-                'test_methodology': 'Market research and competitive analysis',
+
                 'success_criteria': 'Market share maintenance or growth',
                 'risk_level': 'High',
                 'testing_timeline': '12 months',
@@ -351,7 +351,7 @@ class OnePagerService:
                 'assumption': assumption,
                 'test_type': 'Technology Validation',
                 'specific_metrics': ['R&D Efficiency', 'Patent Portfolio', 'Innovation Pipeline'],
-                'test_methodology': 'Technology assessment and competitive benchmarking',
+
                 'success_criteria': 'Sustained technology leadership',
                 'risk_level': 'High',
                 'testing_timeline': '18 months',
@@ -361,8 +361,8 @@ class OnePagerService:
             return {
                 'assumption': assumption,
                 'test_type': 'General Validation',
-                'specific_metrics': ['Performance indicators relevant to assumption'],
-                'test_methodology': 'Systematic monitoring and analysis',
+                'specific_metrics': ['Quarterly Revenue Growth Rate', 'Market Share Percentage', 'Customer Acquisition Cost'],
+
                 'success_criteria': 'Assumption remains valid under testing',
                 'risk_level': 'Medium',
                 'testing_timeline': '9 months',
@@ -593,14 +593,7 @@ class OnePagerService:
             'roi_assessment': f"{len(high_value)} high-value signals justify investment"
         }
     
-    def _define_quality_standards(self, data_requirements: List[Dict]) -> Dict[str, Any]:
-        """Define data quality standards"""
-        return {
-            'accuracy_requirements': 'Financial data: 99%+ accuracy, Market data: 95%+ accuracy',
-            'timeliness_standards': 'Financial: T+1 day, Market: Real-time to T+1 week',
-            'completeness_criteria': 'All critical signals: 100% data availability',
-            'validation_protocols': 'Automated quality checks with manual validation for anomalies'
-        }
+
 
     def _generate_executive_summary(self, thesis: ThesisAnalysis) -> Dict[str, Any]:
         """Generate executive summary with core claim and investment recommendation"""
@@ -851,42 +844,7 @@ class OnePagerService:
                 'notification_events': []
             }
     
-    def _get_alternative_investments(self, thesis: ThesisAnalysis) -> Dict[str, Any]:
-        """Get alternative investment ideas and analysis"""
-        try:
-            # Get signals for alternative company analysis
-            signals = SignalMonitoring.query.filter_by(thesis_analysis_id=thesis.id).all()
-            thesis_dict = thesis.to_dict()
-            signals_dict = [signal.to_dict() for signal in signals]
-            
-            # Get alternative companies using the correct method
-            alternative_companies_list = self.alternative_service.find_alternative_companies(thesis_dict, signals_dict)
-            alternative_companies = {
-                'alternative_companies': alternative_companies_list
-            }
-            
-            # Calculate pattern match score
-            pattern_match_score = self._calculate_pattern_match_score(alternative_companies)
-            
-            alt_companies_list = alternative_companies.get('alternative_companies', [])
-            if not isinstance(alt_companies_list, list):
-                alt_companies_list = []
-            
-            return {
-                'alternative_companies': alt_companies_list[:6],
-                'pattern_match_score': pattern_match_score,
-                'comparison_metrics': self._generate_comparison_metrics(alternative_companies),
-                'diversification_score': self._calculate_diversification_score(alternative_companies)
-            }
-            
-        except Exception as e:
-            print(f"Error getting alternative investments: {e}")
-            return {
-                'alternative_companies': [],
-                'pattern_match_score': 0.0,
-                'comparison_metrics': {},
-                'diversification_score': 0.0
-            }
+
     
     def _generate_evaluation_criteria(self, thesis: ThesisAnalysis) -> Dict[str, Any]:
         """Generate evaluation criteria scorecard for PMs/Analysts"""
