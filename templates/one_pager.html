@@ -173,86 +173,251 @@
     </div>
     {% endif %}
 
-    <!-- 3. Company Metrics Overview -->
+    <!-- 3. Core Claim Validation Framework -->
     <div class="section-header">
-        <h2 class="h4 mb-0"><i class="fas fa-building me-2"></i>3. Company Metrics Overview</h2>
+        <h2 class="h4 mb-0"><i class="fas fa-check-circle me-2"></i>3. Core Claim Validation Framework</h2>
     </div>
     
     <div class="row mb-4">
         <div class="col-md-4">
-            <div class="metric-card text-center">
-                <h6>Company Ticker</h6>
-                <div class="h4 text-primary">{{ report_data.company_metrics.company_ticker }}</div>
+            <div class="metric-card">
+                <h6>Primary Validators</h6>
+                <div class="h5 text-primary">{{ report_data.core_claim_validation.primary_validators|length }}</div>
+                {% for validator in report_data.core_claim_validation.primary_validators[:3] %}
+                <div class="small border-bottom pb-1 mb-1">
+                    <strong>{{ validator.metric_name }}</strong><br>
+                    <span class="text-muted">{{ validator.data_source }} - {{ validator.frequency }}</span>
+                </div>
+                {% endfor %}
             </div>
         </div>
         <div class="col-md-4">
-            <div class="metric-card text-center">
-                <h6>Total Metrics</h6>
-                <div class="h4 text-success">{{ report_data.company_metrics.metrics_summary.total_metrics }}</div>
+            <div class="metric-card">
+                <h6>Supporting Validators</h6>
+                <div class="h5 text-success">{{ report_data.core_claim_validation.supporting_validators|length }}</div>
+                {% for validator in report_data.core_claim_validation.supporting_validators[:3] %}
+                <div class="small border-bottom pb-1 mb-1">
+                    <strong>{{ validator.metric_name }}</strong><br>
+                    <span class="text-muted">{{ validator.success_threshold }}</span>
+                </div>
+                {% endfor %}
             </div>
         </div>
         <div class="col-md-4">
-            <div class="metric-card text-center">
-                <h6>Coverage Score</h6>
-                <div class="h4 text-info">{{ "%.1f"|format(report_data.company_metrics.coverage_score * 100) }}%</div>
+            <div class="metric-card">
+                <h6>Validation Frequency</h6>
+                <div class="h5 text-info">{{ report_data.core_claim_validation.validation_frequency }}</div>
+                <div class="small">
+                    <strong>Success Criteria:</strong><br>
+                    {{ report_data.core_claim_validation.success_criteria }}
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- 4. Signal & Sentiment Analysis -->
+    <!-- 4. Assumption Testing Framework -->
     <div class="section-header">
-        <h2 class="h4 mb-0"><i class="fas fa-signal me-2"></i>4. Signal & Sentiment Analysis</h2>
+        <h2 class="h4 mb-0"><i class="fas fa-flask me-2"></i>4. Assumption Testing Framework</h2>
     </div>
     
     <div class="row mb-4">
         <div class="col-md-6">
             <div class="metric-card">
-                <h6>Signal Monitoring Framework</h6>
-                <div class="h4 text-primary mb-2">{{ report_data.signal_analysis.total_signals_identified }} Signals Tracked</div>
+                <h6>Testing Overview</h6>
+                <div class="h4 text-primary mb-2">{{ report_data.assumption_testing.total_assumptions }} Assumptions</div>
                 
-                {% if report_data.signal_analysis.tracking_methodology %}
                 <div class="mt-3">
-                    <h6>Tracking Methodology</h6>
-                    <p class="small">{{ report_data.signal_analysis.tracking_methodology }}</p>
-                </div>
-                {% endif %}
-                
-                {% if report_data.signal_analysis.validation_approach %}
-                <div class="mt-3">
-                    <h6>Validation Approach</h6>
-                    <p class="small">{{ report_data.signal_analysis.validation_approach }}</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="metric-card">
-                <h6>Market Sentiment</h6>
-                <div class="mb-2">
-                    <strong>Recommendation:</strong> {{ report_data.signal_analysis.market_sentiment.recommendation }}
-                </div>
-                <div class="mb-2">
-                    <strong>Sentiment Trend:</strong> {{ report_data.signal_analysis.market_sentiment.sentiment_trend }}
-                </div>
-                <div class="mb-2">
-                    <strong>Confidence:</strong> {{ "%.1f"|format(report_data.signal_analysis.market_sentiment.confidence_score * 100) }}%
+                    <h6>Testing Methodology</h6>
+                    <p class="small">{{ report_data.assumption_testing.testing_methodology }}</p>
                 </div>
                 
-                {% if report_data.signal_analysis.signal_insights %}
+                {% if report_data.assumption_testing.validation_timeline %}
                 <div class="mt-3">
-                    <h6>Framework Insights</h6>
+                    <h6>Validation Timeline</h6>
                     <div class="small">
-                        <div><strong>Validation Strength:</strong> {{ report_data.signal_analysis.signal_insights.validation_strength }}</div>
-                        <div><strong>Risk Coverage:</strong> {{ report_data.signal_analysis.signal_insights.risk_coverage }}</div>
+                        <div><strong>Immediate:</strong> {{ report_data.assumption_testing.validation_timeline.immediate_tests|length }} tests</div>
+                        <div><strong>Short-term:</strong> {{ report_data.assumption_testing.validation_timeline.short_term_tests|length }} tests</div>
+                        <div><strong>Long-term:</strong> {{ report_data.assumption_testing.validation_timeline.long_term_tests|length }} tests</div>
                     </div>
                 </div>
                 {% endif %}
             </div>
         </div>
+        <div class="col-md-6">
+            <div class="metric-card">
+                <h6>Risk-Weighted Priorities</h6>
+                {% for priority_group in report_data.assumption_testing.risk_weighted_priorities %}
+                <div class="mb-2">
+                    <strong>{{ priority_group.priority }}:</strong>
+                    <ul class="small mb-1">
+                        {% for assumption in priority_group.assumptions[:3] %}
+                        <li>{{ assumption }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
     
-    <!-- Detailed Signal Analysis -->
-    {% if report_data.signal_analysis.detailed_signal_analysis %}
+    <!-- Detailed Assumption Tests -->
+    {% if report_data.assumption_testing.assumption_tests %}
+    <div class="mb-4">
+        <h6 class="mb-3">Detailed Assumption Tests</h6>
+        {% for test in report_data.assumption_testing.assumption_tests[:5] %}
+        <div class="assumption-test-card mb-3 p-3 border rounded">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="mb-0">{{ test.assumption }}</h6>
+                <span class="badge bg-{{ 'danger' if test.risk_level == 'High' else 'warning' if test.risk_level == 'Medium' else 'success' }}">{{ test.risk_level }} Risk</span>
+            </div>
+            
+            <div class="row small">
+                <div class="col-md-6">
+                    <div><strong>Test Type:</strong> {{ test.test_type }}</div>
+                    <div><strong>Timeline:</strong> {{ test.testing_timeline }}</div>
+                    <div><strong>Success Criteria:</strong> {{ test.success_criteria }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div><strong>Specific Metrics:</strong></div>
+                    <ul class="small mb-1">
+                        {% for metric in test.specific_metrics %}
+                        <li>{{ metric }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 5. Causal Chain Tracking -->
+    <div class="section-header">
+        <h2 class="h4 mb-0"><i class="fas fa-link me-2"></i>5. Causal Chain Tracking</h2>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="metric-card text-center">
+                <h6>Chain Elements</h6>
+                <div class="h4 text-primary">{{ report_data.causal_chain_tracking.chain_length }}</div>
+                <small class="text-muted">Tracking Points</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card text-center">
+                <h6>Critical Linkages</h6>
+                <div class="h4 text-warning">{{ report_data.causal_chain_tracking.critical_linkages|length }}</div>
+                <small class="text-muted">High Priority</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card text-center">
+                <h6>Monitoring Framework</h6>
+                <div class="h4 text-success">Active</div>
+                <small class="text-muted">{{ report_data.causal_chain_tracking.monitoring_framework.validation_frequency }}</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Causal Chain Details -->
+    {% if report_data.causal_chain_tracking.tracking_points %}
+    <div class="mb-4">
+        <h6 class="mb-3">Causal Chain Elements</h6>
+        {% for point in report_data.causal_chain_tracking.tracking_points[:5] %}
+        <div class="causal-point-card mb-3 p-3 border rounded">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="mb-0">{{ point.position }}. {{ point.element }}</h6>
+                <span class="badge bg-info">{{ point.monitoring_frequency }}</span>
+            </div>
+            
+            <div class="row small">
+                <div class="col-md-6">
+                    <div><strong>Tracking Metrics:</strong></div>
+                    <ul class="small mb-1">
+                        {% for metric in point.tracking_metrics[:3] %}
+                        <li>{{ metric }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <div><strong>Validation Method:</strong> {{ point.validation_method }}</div>
+                    <div><strong>Failure Indicators:</strong></div>
+                    <ul class="small mb-1">
+                        {% for indicator in point.failure_indicators[:2] %}
+                        <li>{{ indicator }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 6. Data Acquisition Plan -->
+    <div class="section-header">
+        <h2 class="h4 mb-0"><i class="fas fa-database me-2"></i>6. Data Acquisition Plan</h2>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="metric-card">
+                <h6>Primary Data Sources</h6>
+                <div class="h5 text-primary">{{ report_data.data_acquisition_plan.primary_data_sources|length }}</div>
+                {% for source in report_data.data_acquisition_plan.primary_data_sources[:3] %}
+                <div class="small border-bottom pb-1 mb-1">
+                    <strong>{{ source.signal_name }}</strong><br>
+                    <span class="text-muted">{{ source.data_provider }} - {{ source.frequency }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card">
+                <h6>Alternative Sources</h6>
+                <div class="h5 text-warning">{{ report_data.data_acquisition_plan.alternative_data_sources|length }}</div>
+                {% for source in report_data.data_acquisition_plan.alternative_data_sources[:3] %}
+                <div class="small border-bottom pb-1 mb-1">
+                    <strong>{{ source.signal_name }}</strong><br>
+                    <span class="text-muted">{{ source.cost_estimate }} cost - {{ source.criticality }} priority</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card">
+                <h6>Acquisition Timeline</h6>
+                {% if report_data.data_acquisition_plan.acquisition_timeline %}
+                <div class="small">
+                    <div><strong>Immediate:</strong> {{ report_data.data_acquisition_plan.acquisition_timeline.immediate_priorities|length }} items</div>
+                    <div><strong>Short-term:</strong> {{ report_data.data_acquisition_plan.acquisition_timeline.short_term_goals|length }} items</div>
+                    <div><strong>Long-term:</strong> {{ report_data.data_acquisition_plan.acquisition_timeline.long_term_objectives|length }} items</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Data Quality Standards -->
+    {% if report_data.data_acquisition_plan.data_quality_standards %}
+    <div class="metric-card mb-4">
+        <h6>Data Quality Standards</h6>
+        <div class="row small">
+            <div class="col-md-6">
+                <div><strong>Accuracy:</strong> {{ report_data.data_acquisition_plan.data_quality_standards.accuracy_requirements }}</div>
+                <div><strong>Timeliness:</strong> {{ report_data.data_acquisition_plan.data_quality_standards.timeliness_standards }}</div>
+            </div>
+            <div class="col-md-6">
+                <div><strong>Completeness:</strong> {{ report_data.data_acquisition_plan.data_quality_standards.completeness_criteria }}</div>
+                <div><strong>Validation:</strong> {{ report_data.data_acquisition_plan.data_quality_standards.validation_protocols }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Original Signal Analysis (if still needed) -->
+    {% if report_data.signal_analysis and report_data.signal_analysis.detailed_signal_analysis %}
     <div class="mb-4">
         <h6 class="mb-3">Detailed Signal Analysis</h6>
         {% for signal in report_data.signal_analysis.detailed_signal_analysis %}

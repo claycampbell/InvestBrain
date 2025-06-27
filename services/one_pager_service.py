@@ -22,34 +22,31 @@ class OnePagerService:
     
     def generate_comprehensive_report(self, thesis: ThesisAnalysis) -> Dict[str, Any]:
         """
-        Generate comprehensive one-pager report consolidating all analysis data
+        Generate comprehensive one-pager report organized around thesis validation framework
         """
         try:
             # 1. Executive Summary
             executive_summary = self._generate_executive_summary(thesis)
             
-            # 2. Key Findings & Insights
-            key_findings = self._extract_key_findings(thesis)
+            # 2. Core Claim Validation Framework
+            core_claim_validation = self._build_core_claim_validation(thesis)
             
-            # 3. Company Metrics Overview
-            company_metrics = self._get_company_metrics_overview(thesis)
+            # 3. Assumption Testing Framework
+            assumption_testing = self._build_assumption_testing_framework(thesis)
             
-            # 4. Research & Document Analysis
-            research_analysis = self._analyze_research_documents(thesis)
+            # 4. Causal Chain Tracking
+            causal_chain_tracking = self._build_causal_chain_tracking(thesis)
             
-            # 5. Signal & Sentiment Analysis
-            signal_analysis = self._analyze_signals_sentiment(thesis)
+            # 5. Data Acquisition Plan
+            data_acquisition_plan = self._build_data_acquisition_plan(thesis)
             
             # 6. Thesis Structure & Logic
             thesis_structure = self._extract_thesis_structure(thesis)
             
-            # 7. Monitoring & Recommendations
-            monitoring_plan = self._compile_monitoring_recommendations(thesis)
-            
-            # 8. Alternative Investment Ideas
+            # 7. Alternative Investment Ideas
             alternative_investments = self._get_alternative_investments(thesis)
             
-            # 9. Evaluation Criteria for PMs/Analysts
+            # 8. Evaluation Criteria for PMs/Analysts
             evaluation_criteria = self._generate_evaluation_criteria(thesis)
             
             # Compile comprehensive report
@@ -58,12 +55,11 @@ class OnePagerService:
                 'thesis_id': thesis.id,
                 'thesis_title': thesis.title,
                 'executive_summary': executive_summary,
-                'key_findings': key_findings,
-                'company_metrics': company_metrics,
-                'research_analysis': research_analysis,
-                'signal_analysis': signal_analysis,
+                'core_claim_validation': core_claim_validation,
+                'assumption_testing': assumption_testing,
+                'causal_chain_tracking': causal_chain_tracking,
+                'data_acquisition_plan': data_acquisition_plan,
                 'thesis_structure': thesis_structure,
-                'monitoring_plan': monitoring_plan,
                 'alternative_investments': alternative_investments,
                 'evaluation_criteria': evaluation_criteria
             }
@@ -74,6 +70,534 @@ class OnePagerService:
             print(f"Error generating comprehensive report: {e}")
             return self._generate_fallback_report(thesis)
     
+    def _build_core_claim_validation(self, thesis: ThesisAnalysis) -> Dict[str, Any]:
+        """Build core claim validation framework with specific metrics"""
+        try:
+            # Get signals and break them down by core claim relevance
+            signals = SignalMonitoring.query.filter_by(thesis_analysis_id=thesis.id).all()
+            
+            # Decompose composite metrics into validation components
+            validation_metrics = []
+            for signal in signals:
+                metric_breakdown = self._decompose_signal_to_validation_metrics(signal, thesis.core_claim)
+                validation_metrics.extend(metric_breakdown)
+            
+            # Group by validation type
+            core_validation_plan = {
+                'primary_validators': [m for m in validation_metrics if m['validation_type'] == 'primary'],
+                'supporting_validators': [m for m in validation_metrics if m['validation_type'] == 'supporting'],
+                'contrarian_indicators': [m for m in validation_metrics if m['validation_type'] == 'contrarian'],
+                'validation_frequency': self._determine_validation_frequency(validation_metrics),
+                'success_criteria': self._define_success_criteria(thesis.core_claim, validation_metrics)
+            }
+            
+            return core_validation_plan
+            
+        except Exception as e:
+            print(f"Error building core claim validation: {e}")
+            return {
+                'primary_validators': [],
+                'supporting_validators': [],
+                'contrarian_indicators': [],
+                'validation_frequency': 'Weekly',
+                'success_criteria': 'Comprehensive validation pending'
+            }
+    
+    def _build_assumption_testing_framework(self, thesis: ThesisAnalysis) -> Dict[str, Any]:
+        """Build assumption testing framework with specific data points"""
+        try:
+            assumptions = thesis.assumptions if isinstance(thesis.assumptions, list) else []
+            
+            assumption_tests = []
+            for assumption in assumptions:
+                test_framework = self._create_assumption_test(assumption, thesis)
+                assumption_tests.append(test_framework)
+            
+            return {
+                'total_assumptions': len(assumptions),
+                'assumption_tests': assumption_tests,
+                'testing_methodology': self._define_testing_methodology(assumption_tests),
+                'validation_timeline': self._create_assumption_validation_timeline(assumption_tests),
+                'risk_weighted_priorities': self._prioritize_assumptions_by_risk(assumption_tests)
+            }
+            
+        except Exception as e:
+            print(f"Error building assumption testing framework: {e}")
+            return {
+                'total_assumptions': 0,
+                'assumption_tests': [],
+                'testing_methodology': 'Comprehensive testing framework pending',
+                'validation_timeline': {},
+                'risk_weighted_priorities': []
+            }
+    
+    def _build_causal_chain_tracking(self, thesis: ThesisAnalysis) -> Dict[str, Any]:
+        """Build causal chain tracking with specific monitoring points"""
+        try:
+            causal_chain = thesis.causal_chain if isinstance(thesis.causal_chain, list) else []
+            
+            tracking_points = []
+            for i, chain_element in enumerate(causal_chain):
+                tracking_point = self._create_causal_tracking_point(chain_element, i, thesis)
+                tracking_points.append(tracking_point)
+            
+            # Identify critical linkages
+            critical_linkages = self._identify_critical_linkages(tracking_points)
+            
+            return {
+                'chain_length': len(causal_chain),
+                'tracking_points': tracking_points,
+                'critical_linkages': critical_linkages,
+                'monitoring_framework': self._create_causal_monitoring_framework(tracking_points),
+                'failure_scenarios': self._identify_causal_failure_scenarios(tracking_points)
+            }
+            
+        except Exception as e:
+            print(f"Error building causal chain tracking: {e}")
+            return {
+                'chain_length': 0,
+                'tracking_points': [],
+                'critical_linkages': [],
+                'monitoring_framework': {},
+                'failure_scenarios': []
+            }
+    
+    def _build_data_acquisition_plan(self, thesis: ThesisAnalysis) -> Dict[str, Any]:
+        """Build comprehensive data acquisition plan with specific sources and metrics"""
+        try:
+            # Get all signals and their data requirements
+            signals = SignalMonitoring.query.filter_by(thesis_analysis_id=thesis.id).all()
+            
+            data_requirements = []
+            for signal in signals:
+                requirement = self._extract_data_requirement(signal, thesis)
+                data_requirements.append(requirement)
+            
+            # Organize by data source and priority
+            acquisition_plan = {
+                'primary_data_sources': self._categorize_by_source(data_requirements, 'primary'),
+                'alternative_data_sources': self._categorize_by_source(data_requirements, 'alternative'),
+                'internal_data_needs': self._categorize_by_source(data_requirements, 'internal'),
+                'acquisition_timeline': self._create_acquisition_timeline(data_requirements),
+                'cost_benefit_analysis': self._analyze_data_costs(data_requirements),
+                'data_quality_standards': self._define_quality_standards(data_requirements)
+            }
+            
+            return acquisition_plan
+            
+        except Exception as e:
+            print(f"Error building data acquisition plan: {e}")
+            return {
+                'primary_data_sources': [],
+                'alternative_data_sources': [],
+                'internal_data_needs': [],
+                'acquisition_timeline': {},
+                'cost_benefit_analysis': {},
+                'data_quality_standards': {}
+            }
+    
+    def _decompose_signal_to_validation_metrics(self, signal: SignalMonitoring, core_claim: str) -> List[Dict[str, Any]]:
+        """Decompose composite signals into specific validation metrics"""
+        validation_metrics = []
+        signal_name = signal.signal_name.lower()
+        
+        # For revenue signals, break down into specific validation components
+        if 'revenue' in signal_name and 'growth' in signal_name:
+            validation_metrics.extend([
+                {
+                    'metric_name': 'Quarterly Revenue Growth Rate',
+                    'validation_type': 'primary',
+                    'data_source': 'Company Earnings Reports',
+                    'frequency': 'Quarterly',
+                    'success_threshold': f'>= {signal.threshold_value}%' if signal.threshold_value else '>= 10%',
+                    'relevance_to_claim': 'Direct validation of revenue growth assumptions'
+                },
+                {
+                    'metric_name': 'Year-over-Year Revenue Comparison',
+                    'validation_type': 'supporting',
+                    'data_source': 'Financial Statements',
+                    'frequency': 'Monthly',
+                    'success_threshold': 'Positive trend sustained',
+                    'relevance_to_claim': 'Confirms sustainable growth pattern'
+                },
+                {
+                    'metric_name': 'Revenue Quality Assessment',
+                    'validation_type': 'supporting',
+                    'data_source': 'Segment Reporting',
+                    'frequency': 'Quarterly',
+                    'success_threshold': 'Recurring > 80% of total',
+                    'relevance_to_claim': 'Validates revenue sustainability'
+                }
+            ])
+        
+        # For market position signals
+        elif 'market' in signal_name and ('position' in signal_name or 'share' in signal_name):
+            validation_metrics.extend([
+                {
+                    'metric_name': 'Market Share Percentage',
+                    'validation_type': 'primary',
+                    'data_source': 'Industry Research Reports',
+                    'frequency': 'Quarterly',
+                    'success_threshold': 'Maintain or increase share',
+                    'relevance_to_claim': 'Validates competitive positioning'
+                },
+                {
+                    'metric_name': 'Customer Win-Loss Ratio',
+                    'validation_type': 'supporting',
+                    'data_source': 'Sales Data',
+                    'frequency': 'Monthly',
+                    'success_threshold': 'Win rate > 60%',
+                    'relevance_to_claim': 'Confirms competitive advantage'
+                },
+                {
+                    'metric_name': 'Brand Recognition Index',
+                    'validation_type': 'contrarian',
+                    'data_source': 'Consumer Surveys',
+                    'frequency': 'Semi-annually',
+                    'success_threshold': 'Top 3 in category',
+                    'relevance_to_claim': 'Tests brand strength assumptions'
+                }
+            ])
+        
+        # For profitability signals
+        elif 'margin' in signal_name or 'profit' in signal_name:
+            validation_metrics.extend([
+                {
+                    'metric_name': 'Gross Margin Percentage',
+                    'validation_type': 'primary',
+                    'data_source': 'Income Statement',
+                    'frequency': 'Quarterly',
+                    'success_threshold': f'>= {signal.threshold_value}%' if signal.threshold_value else '>= 40%',
+                    'relevance_to_claim': 'Validates pricing power and efficiency'
+                },
+                {
+                    'metric_name': 'Operating Leverage',
+                    'validation_type': 'supporting',
+                    'data_source': 'Financial Analysis',
+                    'frequency': 'Quarterly',
+                    'success_threshold': 'Positive operating leverage',
+                    'relevance_to_claim': 'Confirms scalability assumptions'
+                }
+            ])
+        
+        # Default breakdown for other signals
+        else:
+            validation_metrics.append({
+                'metric_name': f'{signal.signal_name} Primary Validator',
+                'validation_type': 'primary',
+                'data_source': 'Primary Data Sources',
+                'frequency': 'Monthly',
+                'success_threshold': f'Target: {signal.threshold_value}' if signal.threshold_value else 'Above baseline',
+                'relevance_to_claim': 'Validates core thesis assumptions'
+            })
+        
+        return validation_metrics
+    
+    def _determine_validation_frequency(self, validation_metrics: List[Dict]) -> str:
+        """Determine optimal validation frequency based on metrics"""
+        frequencies = [m.get('frequency', 'Monthly') for m in validation_metrics]
+        if 'Daily' in frequencies:
+            return 'Daily'
+        elif 'Weekly' in frequencies:
+            return 'Weekly'
+        elif 'Monthly' in frequencies:
+            return 'Monthly'
+        else:
+            return 'Quarterly'
+    
+    def _define_success_criteria(self, core_claim: str, validation_metrics: List[Dict]) -> str:
+        """Define clear success criteria for core claim validation"""
+        primary_metrics = [m for m in validation_metrics if m['validation_type'] == 'primary']
+        
+        if len(primary_metrics) >= 2:
+            return f"Core claim validated when 80% of primary validation metrics meet success thresholds consistently over 2+ consecutive periods"
+        elif len(primary_metrics) == 1:
+            return f"Core claim validated when primary metric '{primary_metrics[0]['metric_name']}' meets {primary_metrics[0]['success_threshold']} for 3+ consecutive periods"
+        else:
+            return "Core claim validation criteria pending - requires primary validation metrics definition"
+    
+    def _create_assumption_test(self, assumption: str, thesis: ThesisAnalysis) -> Dict[str, Any]:
+        """Create specific test framework for each assumption"""
+        assumption_lower = assumption.lower() if isinstance(assumption, str) else str(assumption).lower()
+        
+        if 'growth' in assumption_lower:
+            return {
+                'assumption': assumption,
+                'test_type': 'Growth Validation',
+                'specific_metrics': ['Revenue Growth Rate', 'Market Expansion', 'Customer Acquisition'],
+                'test_methodology': 'Quarterly trend analysis with peer benchmarking',
+                'success_criteria': 'Sustained growth above market average',
+                'risk_level': 'Medium',
+                'testing_timeline': '6 months',
+                'data_requirements': ['Financial statements', 'Market research', 'Customer data']
+            }
+        elif 'market' in assumption_lower:
+            return {
+                'assumption': assumption,
+                'test_type': 'Market Validation',
+                'specific_metrics': ['Market Share', 'TAM Analysis', 'Competitive Position'],
+                'test_methodology': 'Market research and competitive analysis',
+                'success_criteria': 'Market share maintenance or growth',
+                'risk_level': 'High',
+                'testing_timeline': '12 months',
+                'data_requirements': ['Industry reports', 'Customer surveys', 'Competitive intelligence']
+            }
+        elif 'technology' in assumption_lower or 'innovation' in assumption_lower:
+            return {
+                'assumption': assumption,
+                'test_type': 'Technology Validation',
+                'specific_metrics': ['R&D Efficiency', 'Patent Portfolio', 'Innovation Pipeline'],
+                'test_methodology': 'Technology assessment and competitive benchmarking',
+                'success_criteria': 'Sustained technology leadership',
+                'risk_level': 'High',
+                'testing_timeline': '18 months',
+                'data_requirements': ['R&D reports', 'Patent filings', 'Technology assessments']
+            }
+        else:
+            return {
+                'assumption': assumption,
+                'test_type': 'General Validation',
+                'specific_metrics': ['Performance indicators relevant to assumption'],
+                'test_methodology': 'Systematic monitoring and analysis',
+                'success_criteria': 'Assumption remains valid under testing',
+                'risk_level': 'Medium',
+                'testing_timeline': '9 months',
+                'data_requirements': ['Relevant data sources for assumption validation']
+            }
+    
+    def _define_testing_methodology(self, assumption_tests: List[Dict]) -> str:
+        """Define comprehensive testing methodology"""
+        if not assumption_tests:
+            return "Testing methodology pending assumption identification"
+        
+        methodology = "Comprehensive assumption testing employs systematic validation across multiple dimensions: "
+        
+        test_types = list(set([test['test_type'] for test in assumption_tests]))
+        methodology += f"Testing framework includes {', '.join(test_types)}. "
+        
+        methodology += "Each assumption undergoes structured validation through specific metrics, defined success criteria, and time-bound testing periods. "
+        methodology += "Validation incorporates both quantitative analysis and qualitative assessment to ensure robust assumption testing."
+        
+        return methodology
+    
+    def _create_assumption_validation_timeline(self, assumption_tests: List[Dict]) -> Dict[str, Any]:
+        """Create timeline for assumption validation"""
+        timeline = {
+            'immediate_tests': [],
+            'short_term_tests': [],
+            'long_term_tests': []
+        }
+        
+        for test in assumption_tests:
+            testing_period = test.get('testing_timeline', '9 months')
+            if '3' in testing_period or '6' in testing_period:
+                timeline['short_term_tests'].append(test['assumption'])
+            elif '12' in testing_period or '18' in testing_period:
+                timeline['long_term_tests'].append(test['assumption'])
+            else:
+                timeline['immediate_tests'].append(test['assumption'])
+        
+        return timeline
+    
+    def _prioritize_assumptions_by_risk(self, assumption_tests: List[Dict]) -> List[Dict[str, Any]]:
+        """Prioritize assumptions by risk level and impact"""
+        high_risk = [test for test in assumption_tests if test.get('risk_level') == 'High']
+        medium_risk = [test for test in assumption_tests if test.get('risk_level') == 'Medium']
+        low_risk = [test for test in assumption_tests if test.get('risk_level') == 'Low']
+        
+        return [
+            {'priority': 'High Risk', 'assumptions': [t['assumption'] for t in high_risk]},
+            {'priority': 'Medium Risk', 'assumptions': [t['assumption'] for t in medium_risk]},
+            {'priority': 'Low Risk', 'assumptions': [t['assumption'] for t in low_risk]}
+        ]
+    
+    def _create_causal_tracking_point(self, chain_element: str, position: int, thesis: ThesisAnalysis) -> Dict[str, Any]:
+        """Create tracking point for causal chain element"""
+        element_str = str(chain_element).lower()
+        
+        return {
+            'position': position + 1,
+            'element': chain_element,
+            'tracking_metrics': self._identify_tracking_metrics_for_element(element_str),
+            'validation_method': self._define_element_validation_method(element_str),
+            'failure_indicators': self._identify_failure_indicators(element_str),
+            'dependency_links': self._identify_dependencies(element_str, position),
+            'monitoring_frequency': self._determine_element_monitoring_frequency(element_str)
+        }
+    
+    def _identify_tracking_metrics_for_element(self, element: str) -> List[str]:
+        """Identify specific metrics for tracking causal chain element"""
+        if 'revenue' in element or 'sales' in element:
+            return ['Monthly Revenue', 'Sales Volume', 'Average Deal Size', 'Conversion Rates']
+        elif 'market' in element:
+            return ['Market Share', 'Customer Acquisition', 'Brand Recognition', 'Competitive Position']
+        elif 'cost' in element or 'efficiency' in element:
+            return ['Unit Costs', 'Operating Margin', 'Productivity Metrics', 'Resource Utilization']
+        else:
+            return ['Performance Indicators', 'Key Metrics', 'Operational Data']
+    
+    def _define_element_validation_method(self, element: str) -> str:
+        """Define validation method for causal chain element"""
+        if 'revenue' in element:
+            return 'Financial statement analysis with quarterly validation'
+        elif 'market' in element:
+            return 'Market research and competitive analysis'
+        elif 'operational' in element:
+            return 'Operational metrics tracking and efficiency analysis'
+        else:
+            return 'Systematic monitoring and data validation'
+    
+    def _identify_failure_indicators(self, element: str) -> List[str]:
+        """Identify early warning indicators for element failure"""
+        if 'revenue' in element:
+            return ['Declining conversion rates', 'Customer churn increase', 'Pricing pressure']
+        elif 'market' in element:
+            return ['Market share loss', 'Competitive threats', 'Customer satisfaction decline']
+        else:
+            return ['Performance degradation', 'Threshold breaches', 'Trend reversals']
+    
+    def _identify_dependencies(self, element: str, position: int) -> List[str]:
+        """Identify dependencies for causal chain element"""
+        if position == 0:
+            return ['Initial assumptions', 'Market conditions']
+        else:
+            return [f'Previous chain element {position}', 'Supporting factors', 'External conditions']
+    
+    def _determine_element_monitoring_frequency(self, element: str) -> str:
+        """Determine monitoring frequency for element"""
+        if 'critical' in element or 'core' in element:
+            return 'Weekly'
+        elif 'financial' in element or 'revenue' in element:
+            return 'Monthly'
+        else:
+            return 'Quarterly'
+    
+    def _identify_critical_linkages(self, tracking_points: List[Dict]) -> List[Dict[str, Any]]:
+        """Identify critical linkages in causal chain"""
+        critical_linkages = []
+        
+        for i, point in enumerate(tracking_points):
+            if i < len(tracking_points) - 1:
+                linkage = {
+                    'from_element': point['element'],
+                    'to_element': tracking_points[i + 1]['element'],
+                    'linkage_strength': 'High' if 'revenue' in str(point['element']).lower() else 'Medium',
+                    'validation_requirements': f"Validate connection between {point['element']} and {tracking_points[i + 1]['element']}"
+                }
+                critical_linkages.append(linkage)
+        
+        return critical_linkages
+    
+    def _create_causal_monitoring_framework(self, tracking_points: List[Dict]) -> Dict[str, Any]:
+        """Create comprehensive monitoring framework for causal chain"""
+        return {
+            'total_tracking_points': len(tracking_points),
+            'monitoring_approach': 'Sequential validation of causal linkages',
+            'validation_frequency': 'Monthly for critical points, quarterly for supporting elements',
+            'escalation_triggers': 'Two consecutive failures or critical linkage break',
+            'success_criteria': 'All tracking points maintain positive trends'
+        }
+    
+    def _identify_causal_failure_scenarios(self, tracking_points: List[Dict]) -> List[Dict[str, Any]]:
+        """Identify potential failure scenarios in causal chain"""
+        scenarios = []
+        
+        for point in tracking_points:
+            scenario = {
+                'failure_point': point['element'],
+                'failure_scenario': f"Breakdown in {point['element']} performance",
+                'impact_assessment': 'Disruption to downstream causal elements',
+                'mitigation_strategy': f"Alternative validation and contingency planning for {point['element']}"
+            }
+            scenarios.append(scenario)
+        
+        return scenarios
+    
+    def _extract_data_requirement(self, signal: SignalMonitoring, thesis: ThesisAnalysis) -> Dict[str, Any]:
+        """Extract specific data requirements for signal monitoring"""
+        signal_name = signal.signal_name.lower()
+        
+        if 'revenue' in signal_name:
+            return {
+                'signal_name': signal.signal_name,
+                'primary_data_source': 'Financial Statements',
+                'data_type': 'Financial',
+                'frequency': 'Quarterly',
+                'specific_requirements': ['Revenue by segment', 'Geographic revenue', 'Recurring vs one-time'],
+                'data_provider': 'Company Reports',
+                'cost_estimate': 'Low',
+                'criticality': 'High'
+            }
+        elif 'market' in signal_name:
+            return {
+                'signal_name': signal.signal_name,
+                'primary_data_source': 'Market Research',
+                'data_type': 'Market Intelligence',
+                'frequency': 'Monthly',
+                'specific_requirements': ['Market share data', 'Competitive landscape', 'Industry trends'],
+                'data_provider': 'Third-party Research',
+                'cost_estimate': 'Medium',
+                'criticality': 'High'
+            }
+        else:
+            return {
+                'signal_name': signal.signal_name,
+                'primary_data_source': 'Multiple Sources',
+                'data_type': 'Mixed',
+                'frequency': 'Monthly',
+                'specific_requirements': ['Relevant performance metrics'],
+                'data_provider': 'Various',
+                'cost_estimate': 'Medium',
+                'criticality': 'Medium'
+            }
+    
+    def _categorize_by_source(self, data_requirements: List[Dict], source_type: str) -> List[Dict[str, Any]]:
+        """Categorize data requirements by source type"""
+        if source_type == 'primary':
+            return [req for req in data_requirements if req['data_provider'] in ['Company Reports', 'Financial Statements']]
+        elif source_type == 'alternative':
+            return [req for req in data_requirements if req['data_provider'] in ['Third-party Research', 'Market Intelligence']]
+        elif source_type == 'internal':
+            return [req for req in data_requirements if req['data_provider'] in ['Internal Analysis', 'Proprietary Data']]
+        else:
+            return data_requirements
+    
+    def _create_acquisition_timeline(self, data_requirements: List[Dict]) -> Dict[str, Any]:
+        """Create timeline for data acquisition"""
+        immediate = [req for req in data_requirements if req['criticality'] == 'High']
+        short_term = [req for req in data_requirements if req['criticality'] == 'Medium']
+        long_term = [req for req in data_requirements if req['criticality'] == 'Low']
+        
+        return {
+            'immediate_priorities': [req['signal_name'] for req in immediate],
+            'short_term_goals': [req['signal_name'] for req in short_term],
+            'long_term_objectives': [req['signal_name'] for req in long_term]
+        }
+    
+    def _analyze_data_costs(self, data_requirements: List[Dict]) -> Dict[str, Any]:
+        """Analyze cost-benefit of data acquisition"""
+        total_cost = sum(1 for req in data_requirements if req['cost_estimate'] == 'High') * 3 + \
+                    sum(1 for req in data_requirements if req['cost_estimate'] == 'Medium') * 2 + \
+                    sum(1 for req in data_requirements if req['cost_estimate'] == 'Low') * 1
+        
+        high_value = [req for req in data_requirements if req['criticality'] == 'High']
+        
+        return {
+            'estimated_total_cost': f"Cost Score: {total_cost}",
+            'high_value_data': [req['signal_name'] for req in high_value],
+            'cost_optimization': 'Prioritize high-criticality, low-cost data sources',
+            'roi_assessment': f"{len(high_value)} high-value signals justify investment"
+        }
+    
+    def _define_quality_standards(self, data_requirements: List[Dict]) -> Dict[str, Any]:
+        """Define data quality standards"""
+        return {
+            'accuracy_requirements': 'Financial data: 99%+ accuracy, Market data: 95%+ accuracy',
+            'timeliness_standards': 'Financial: T+1 day, Market: Real-time to T+1 week',
+            'completeness_criteria': 'All critical signals: 100% data availability',
+            'validation_protocols': 'Automated quality checks with manual validation for anomalies'
+        }
+
     def _generate_executive_summary(self, thesis: ThesisAnalysis) -> Dict[str, Any]:
         """Generate executive summary with core claim and investment recommendation"""
         try:
