@@ -22,6 +22,13 @@ class AzureOpenAIService:
                 logging.error("Azure OpenAI credentials not found in environment variables")
                 return
             
+            # Fix endpoint format - extract base URL if full API URL provided
+            if endpoint and '/openai/deployments/' in endpoint:
+                # Extract base endpoint from full API URL
+                base_endpoint = endpoint.split('/openai/deployments/')[0]
+                logging.info(f"Correcting endpoint from {endpoint} to {base_endpoint}")
+                endpoint = base_endpoint
+            
             self.client = AzureOpenAI(
                 api_key=self.api_key,
                 api_version=api_version,
@@ -36,87 +43,62 @@ class AzureOpenAIService:
             logging.error(f"Failed to initialize Azure OpenAI client: {str(e)}")
             self.client = None
     
-    def generate_completion(self, messages, temperature=1.0, max_tokens=2000):
+    def generate_completion(self, prompt, temperature=1.0, max_tokens=2000):
         """Generate a completion using Azure OpenAI with robust timeout and retry handling"""
         if not self.client:
-            raise Exception("Azure OpenAI client not initialized")
+            logging.error("Azure OpenAI client not initialized")
+            return None
         
-        max_retries = 0  # No retries for fastest response
-        retry_delay = 0
-        
-        for attempt in range(max_retries):
-            try:
-                model_name = self.deployment_name.lower()
+        try:
+            # Convert string prompt to proper message format
+            if isinstance(prompt, str):
+                messages = [{"role": "user", "content": prompt}]
+            else:
+                messages = prompt
+            
+            model_name = self.deployment_name.lower()
+            
+            if 'o1' in model_name or 'o4' in model_name:
+                response = self.client.chat.completions.create(
+                    messages=messages,
+                    model=self.deployment_name
+                )
+            elif 'gpt-4o' in model_name:
+                response = self.client.chat.completions.create(
+                    messages=messages,
+                    model=self.deployment_name,
+                    max_completion_tokens=max_tokens
+                )
+            else:
+                response = self.client.chat.completions.create(
+                    messages=messages,
+                    model=self.deployment_name,
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                )
                 
-                if 'o1' in model_name or 'o4' in model_name:
-                    response = self.client.chat.completions.create(
-                        messages=messages,
-                        model=self.deployment_name
-                    )
-                elif 'gpt-4o' in model_name:
-                    response = self.client.chat.completions.create(
-                        messages=messages,
-                        model=self.deployment_name,
-                        max_completion_tokens=max_tokens
-                    )
-                else:
-                    response = self.client.chat.completions.create(
-                        messages=messages,
-                        model=self.deployment_name,
-                        temperature=temperature,
-                        max_tokens=max_tokens
-                    )
-                
-                logging.info("Azure OpenAI response received")
-                
-                if not response.choices:
-                    raise Exception("No choices in Azure OpenAI response")
-                
-                choice = response.choices[0]
-                logging.info(f"Choice finish reason: {choice.finish_reason}")
-                
-                content = choice.message.content if hasattr(choice.message, 'content') else None
-                
-                if not content or content.strip() == "":
-                    logging.error(f"Empty content from Azure OpenAI (finish_reason: {choice.finish_reason})")
-                    # Instead of raising exception, provide a structured fallback
-                    return self._generate_structured_fallback(messages)
-                
-                logging.info(f"Received valid response: {len(content)} characters")
-                return content
-                
-            except Exception as e:
-                error_message = str(e)
-                is_retryable = any(keyword in error_message.lower() for keyword in [
-                    'timeout', 'read timeout', 'connection timeout', 'ssl', 
-                    'connection', 'network', 'reset', 'broken pipe', 'recv',
-                    'systemexit', 'ssl.sslerror', 'connectionerror'
-                ])
-                
-                if is_retryable and attempt < max_retries - 1:
-                    logging.warning(f"Attempt {attempt + 1} failed with network error: {error_message[:100]}")
-                    logging.warning(f"Retrying in {retry_delay} seconds...")
-                    import time
-                    time.sleep(retry_delay)
-                    retry_delay *= 2
-                    
-                    try:
-                        self._initialize_client()
-                        logging.info("Client reinitialized for retry")
-                    except:
-                        pass
-                    
-                    continue
-                else:
-                    logging.error(f"Error generating completion after {attempt + 1} attempts: {error_message}")
-                    if attempt == max_retries - 1:
-                        # For network/timeout errors, provide clear user guidance
-                        if is_retryable:
-                            raise Exception("Network connection to Azure OpenAI failed. Please check your internet connection and try again. If the problem persists, the service may be temporarily unavailable.")
-                        else:
-                            # For other errors, re-raise the original
-                            raise Exception(f"Azure OpenAI analysis failed: {error_message}")
-                    raise
+            logging.info("Azure OpenAI response received")
+            
+            if not response.choices:
+                logging.error("No choices in Azure OpenAI response")
+                return None
+            
+            choice = response.choices[0]
+            logging.info(f"Choice finish reason: {choice.finish_reason}")
+            
+            content = choice.message.content if hasattr(choice.message, 'content') else None
+            
+            if not content or content.strip() == "":
+                logging.error(f"Empty content from Azure OpenAI (finish_reason: {choice.finish_reason})")
+                return None
+            
+            logging.info(f"Received valid response: {len(content)} characters")
+            return content
+            
+        except Exception as e:
+            error_message = str(e)
+            logging.error(f"Azure OpenAI API call failed: {error_message}")
+            return None
     
     def _generate_structured_fallback(self, messages):
         """Generate structured fallback response for empty API responses"""
