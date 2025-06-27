@@ -47,7 +47,7 @@ class OnePagerService:
             thesis_structure = self._extract_thesis_structure(thesis)
             
             # 8. Alternative Investment Ideas
-            alternative_investments = self._get_alternative_investments(thesis)
+            # Alternative investments section removed per user request
             
             # 9. Evaluation Criteria for PMs/Analysts
             evaluation_criteria = self._generate_evaluation_criteria(thesis)
@@ -64,7 +64,7 @@ class OnePagerService:
                 'causal_chain_tracking': causal_chain_tracking,
                 'data_acquisition_plan': data_acquisition_plan,
                 'thesis_structure': thesis_structure,
-                'alternative_investments': alternative_investments,
+                # Alternative investments section removed per user request
                 'evaluation_criteria': evaluation_criteria
             }
             
@@ -184,7 +184,7 @@ class OnePagerService:
                 'internal_data_needs': self._categorize_by_source(data_requirements, 'internal'),
                 'acquisition_timeline': self._create_acquisition_timeline(data_requirements),
                 'cost_benefit_analysis': self._analyze_data_costs(data_requirements),
-                'data_quality_standards': self._define_quality_standards(data_requirements)
+
             }
             
             return acquisition_plan
@@ -851,40 +851,40 @@ class OnePagerService:
         return {
             'scorecard_criteria': [
                 {
-                    'criterion': 'Alignment with Thesis Goals',
-                    'weight': 0.20,
+                    'criterion': 'Core Claim Validation Framework Effectiveness',
+                    'weight': 0.25,
                     'score': self._score_thesis_alignment(thesis),
-                    'notes': 'Investment logic coherence and goal alignment'
+                    'description': 'Evaluates how well the primary validation metrics directly measure the investment thesis core claims. Assesses whether the 8 primary validators comprehensively test fundamental assumptions and provide actionable data for investment decisions. Reviews the logical connection between thesis premises and validation methodology.'
                 },
                 {
-                    'criterion': 'Accuracy of Extracted Insights',
-                    'weight': 0.18,
+                    'criterion': 'Assumption Testing Framework Rigor',
+                    'weight': 0.20,
                     'score': self._score_insight_accuracy(thesis),
-                    'notes': 'Quality and relevance of analytical insights'
+                    'description': 'Measures the systematic approach to testing investment assumptions through specific metrics and validation timelines. Evaluates risk-weighted prioritization of assumptions, clarity of success criteria, and appropriateness of testing methodologies for each assumption category.'
                 },
                 {
-                    'criterion': 'Completeness of Data Coverage',
-                    'weight': 0.16,
+                    'criterion': 'Causal Chain Tracking Precision',
+                    'weight': 0.18,
                     'score': self._score_data_completeness(thesis),
-                    'notes': 'Breadth and depth of data analysis'
+                    'description': 'Assesses the ability to monitor specific causal relationships between market events and investment outcomes. Reviews the identification of monitoring points, failure indicators, and validation methods for tracking cause-and-effect relationships in the investment thesis.'
                 },
                 {
-                    'criterion': 'Relevance of Signals and Sentiment',
-                    'weight': 0.15,
+                    'criterion': 'Data Acquisition Plan Quality',
+                    'weight': 0.17,
                     'score': self._score_signal_relevance(thesis),
-                    'notes': 'Signal quality and market sentiment alignment'
+                    'description': 'Evaluates the systematic approach to data sourcing with clear prioritization of primary, secondary, and alternative data sources. Assesses cost-benefit analysis, acquisition timelines, and the strategic alignment of data collection with validation requirements.'
                 },
                 {
-                    'criterion': 'Usefulness of Monitoring Recommendations',
-                    'weight': 0.15,
+                    'criterion': 'Signal Specificity and Actionability',
+                    'weight': 0.12,
                     'score': self._score_monitoring_usefulness(thesis),
-                    'notes': 'Practicality and effectiveness of monitoring plan'
+                    'description': 'Measures how specific and actionable the validation signals are for portfolio management decisions. Evaluates whether signals provide clear success criteria, measurable thresholds, and direct relevance to investment thesis validation rather than generic market indicators.'
                 },
                 {
-                    'criterion': 'Risk Assessment Quality',
-                    'weight': 0.16,
+                    'criterion': 'Validation Framework Integration',
+                    'weight': 0.08,
                     'score': self._score_risk_assessment(thesis),
-                    'notes': 'Thoroughness and accuracy of risk analysis'
+                    'description': 'Assesses how well the four validation frameworks (Core Claim, Assumption Testing, Causal Chain, Data Acquisition) work together as an integrated system. Reviews consistency in methodologies, complementary coverage of thesis elements, and systematic approach to comprehensive validation.'
                 }
             ],
             'overall_score': self._calculate_overall_evaluation_score(thesis),
