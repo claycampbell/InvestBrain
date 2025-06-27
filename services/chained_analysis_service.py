@@ -676,8 +676,12 @@ Focus on metrics that can be tracked via FactSet/Xpressfeed APIs with specific q
         ]
     
     def _create_intelligent_fallback(self, thesis_text: str) -> Dict[str, Any]:
-        """Create intelligent fallback analysis based on thesis content"""
+        """Create contextually intelligent analysis based on thesis content with enhanced specificity"""
         text_lower = thesis_text.lower()
+        
+        # Extract company and sector context
+        company_context = self._extract_company_context(thesis_text)
+        sector_context = self._extract_sector_context(thesis_text)
         
         # Determine primary mental model based on thesis content
         primary_model = "Growth"
@@ -720,56 +724,255 @@ Focus on metrics that can be tracked via FactSet/Xpressfeed APIs with specific q
         # Sort by weight descending
         mental_models.sort(key=lambda x: x["weight"], reverse=True)
         
-        # Generate conviction drivers based on content
-        conviction_drivers = [
-            "Strong fundamental business characteristics support thesis",
-            "Multiple catalysts identified for value creation",
-            "Favorable risk-reward profile over investment horizon"
-        ]
+        # Generate contextual conviction drivers based on sector and company
+        conviction_drivers = self._generate_contextual_conviction_drivers(
+            company_context, sector_context, primary_model, text_lower
+        )
+        
+        # Generate sector-specific causal chain
+        causal_chain = self._generate_contextual_causal_chain(
+            company_context, sector_context, text_lower
+        )
+        
+        # Generate contextual assumptions
+        assumptions = self._generate_contextual_assumptions(
+            company_context, sector_context, text_lower
+        )
+        
+        # Generate sector-specific counter-thesis scenarios
+        counter_scenarios = self._generate_contextual_counter_scenarios(
+            company_context, sector_context, text_lower
+        )
         
         return {
             "core_claim": f"Investment thesis: {thesis_text[:120]}{'...' if len(thesis_text) > 120 else ''}",
-            "core_analysis": f"Analysis reveals a {primary_model.lower()} investment opportunity with multiple supporting frameworks. Key catalysts must materialize while monitoring for execution risks and market headwinds that could challenge core assumptions.",
+            "core_analysis": f"Analysis reveals a {primary_model.lower()} investment opportunity in {sector_context.lower()} sector with multiple supporting frameworks. Key sector-specific catalysts must materialize while monitoring for execution risks and market headwinds that could challenge core assumptions.",
             "mental_models": mental_models,
             "primary_mental_model": primary_model,
             "conviction_drivers": conviction_drivers,
-            "causal_chain": [
+            "causal_chain": causal_chain,
+            "assumptions": assumptions,
+            "counter_thesis_scenarios": counter_scenarios
+        }
+
+    def _generate_contextual_conviction_drivers(self, company_context: Dict, sector_context: str, primary_model: str, text_lower: str) -> List[str]:
+        """Generate sector and company-specific conviction drivers"""
+        drivers = []
+        
+        if sector_context == 'Travel & Tourism':
+            drivers.extend([
+                "Travel demand recovery drives booking volume growth",
+                "Digital platform advantages in market share capture",
+                "Operational efficiency improvements expand margins"
+            ])
+        elif sector_context == 'Technology':
+            drivers.extend([
+                "Platform network effects create competitive moats",
+                "Innovation capabilities drive market differentiation",
+                "Scalable technology infrastructure enables growth"
+            ])
+        else:
+            drivers.extend([
+                f"{sector_context} sector fundamentals support investment thesis",
+                "Market positioning advantages drive competitive performance",
+                "Operational execution capabilities enable value creation"
+            ])
+        
+        # Add model-specific drivers
+        if primary_model == "Growth":
+            drivers.append("Revenue expansion opportunities exceed market expectations")
+        elif primary_model == "Value":
+            drivers.append("Asset valuation discount provides attractive risk-adjusted returns")
+        
+        return drivers[:4]
+
+    def _generate_contextual_causal_chain(self, company_context: Dict, sector_context: str, text_lower: str) -> List[Dict]:
+        """Generate sector-specific causal chain events"""
+        if sector_context == 'Travel & Tourism':
+            return [
                 {
                     "chain_link": 1,
-                    "event": "Thesis catalysts begin materializing",
-                    "explanation": "Core investment drivers show early validation through measurable metrics"
+                    "event": "Travel demand normalization accelerates",
+                    "explanation": "Post-pandemic recovery drives sustained booking volume growth across travel segments"
                 },
                 {
                     "chain_link": 2,
-                    "event": "Operational execution delivers results",
-                    "explanation": "Management successfully converts strategic opportunities into financial performance"
+                    "event": "Platform optimization delivers market share gains",
+                    "explanation": "Digital booking advantages and user experience improvements capture increasing travel spend"
                 },
                 {
                     "chain_link": 3,
-                    "event": "Market recognition of value creation",
-                    "explanation": "Investment returns materialize as thesis proves successful over time horizon"
-                }
-            ],
-            "assumptions": [
-                "Market conditions remain supportive of thesis drivers",
-                "Company maintains competitive positioning and execution capability",
-                "External disruptions do not materially impact investment case"
-            ],
-            "counter_thesis_scenarios": [
-                {
-                    "scenario": "Execution Risk",
-                    "description": "Management fails to deliver on strategic initiatives critical to thesis",
-                    "trigger_conditions": ["Missed guidance targets", "Strategic delays announced"],
-                    "data_signals": ["FactSet estimate revisions", "Management commentary changes"]
-                },
-                {
-                    "scenario": "Market Headwinds",
-                    "description": "Adverse market conditions undermine fundamental thesis assumptions",
-                    "trigger_conditions": ["Sector rotation", "Economic downturn"],
-                    "data_signals": ["Xpressfeed sentiment shifts", "FactSet peer performance"]
+                    "event": "Operational leverage drives margin expansion",
+                    "explanation": "Fixed cost absorption and efficiency gains translate volume growth into profitability"
                 }
             ]
+        elif sector_context == 'Technology':
+            return [
+                {
+                    "chain_link": 1,
+                    "event": "Innovation capabilities drive differentiation",
+                    "explanation": "Technical product advantages establish competitive positioning in addressable market"
+                },
+                {
+                    "chain_link": 2,
+                    "event": "Platform scaling captures network effects",
+                    "explanation": "User growth and engagement drive revenue per user expansion through network dynamics"
+                },
+                {
+                    "chain_link": 3,
+                    "event": "Market validation drives valuation re-rating",
+                    "explanation": "Proven execution and growth sustainability command premium market multiples"
+                }
+            ]
+        else:
+            return [
+                {
+                    "chain_link": 1,
+                    "event": f"{sector_context} market fundamentals improve",
+                    "explanation": "Sector-specific drivers create favorable operating environment for thesis execution"
+                },
+                {
+                    "chain_link": 2,
+                    "event": "Competitive advantages translate to financial outperformance",
+                    "explanation": "Strategic positioning enables revenue growth and margin expansion above sector averages"
+                },
+                {
+                    "chain_link": 3,
+                    "event": "Investment returns materialize through multiple expansion",
+                    "explanation": "Demonstrated execution drives market recognition and valuation re-rating"
+                }
+            ]
+
+    def _generate_contextual_assumptions(self, company_context: Dict, sector_context: str, text_lower: str) -> List[str]:
+        """Generate sector-specific assumptions"""
+        assumptions = []
+        
+        if sector_context == 'Travel & Tourism':
+            assumptions.extend([
+                "Travel demand recovery continues without major disruptions",
+                "Digital booking penetration increases across customer segments",
+                "Competitive dynamics remain favorable for platform operators"
+            ])
+        elif sector_context == 'Technology':
+            assumptions.extend([
+                "Innovation pace maintains competitive differentiation",
+                "Market adoption of technology solutions accelerates",
+                "Regulatory environment remains supportive of platform business models"
+            ])
+        else:
+            assumptions.extend([
+                f"{sector_context} sector conditions remain supportive of growth",
+                "Management execution capabilities deliver on strategic initiatives",
+                "Market conditions enable thesis validation over investment horizon"
+            ])
+        
+        return assumptions[:4]
+
+    def _generate_contextual_counter_scenarios(self, company_context: Dict, sector_context: str, text_lower: str) -> List[Dict]:
+        """Generate sector-specific counter-thesis scenarios"""
+        if sector_context == 'Travel & Tourism':
+            return [
+                {
+                    "scenario": "Travel Demand Disruption",
+                    "description": "External shocks disrupt travel patterns and booking behavior",
+                    "trigger_conditions": ["Health crisis emergence", "Economic recession", "Geopolitical tensions"],
+                    "data_signals": ["TSA checkpoint volumes", "Hotel occupancy rates", "Airline capacity utilization"]
+                },
+                {
+                    "scenario": "Platform Disintermediation",
+                    "description": "Direct booking trends reduce travel platform market share",
+                    "trigger_conditions": ["Supplier direct booking incentives", "New distribution models"],
+                    "data_signals": ["Direct booking percentage trends", "Commission rate pressures"]
+                }
+            ]
+        elif sector_context == 'Technology':
+            return [
+                {
+                    "scenario": "Innovation Obsolescence",
+                    "description": "Technology disruption renders current platform advantages ineffective",
+                    "trigger_conditions": ["Breakthrough competitor technology", "Market paradigm shift"],
+                    "data_signals": ["R&D investment comparisons", "Patent filing trends", "User adoption metrics"]
+                },
+                {
+                    "scenario": "Regulatory Restrictions",
+                    "description": "Government intervention limits platform business model effectiveness",
+                    "trigger_conditions": ["Antitrust enforcement", "Data privacy regulations"],
+                    "data_signals": ["Regulatory filing activity", "Policy proposal developments"]
+                }
+            ]
+        else:
+            return [
+                {
+                    "scenario": "Sector Headwinds",
+                    "description": f"{sector_context} sector faces structural challenges that undermine thesis",
+                    "trigger_conditions": ["Industry disruption", "Regulatory changes", "Economic cycles"],
+                    "data_signals": ["Sector performance metrics", "Industry analyst revisions"]
+                },
+                {
+                    "scenario": "Execution Failure",
+                    "description": "Management fails to deliver on strategic initiatives critical to investment thesis",
+                    "trigger_conditions": ["Missed financial targets", "Strategic plan delays"],
+                    "data_signals": ["Quarterly earnings results", "Management guidance changes"]
+                }
+            ]
+
+    def _extract_company_context(self, thesis_text: str) -> Dict[str, Any]:
+        """Extract company-specific context from thesis text"""
+        import re
+        
+        # Extract company names and tickers
+        ticker_pattern = r'\b([A-Z]{1,5})\b'
+        company_pattern = r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+Inc\.?|\s+Corp\.?|\s+Group)?)\b'
+        
+        tickers = re.findall(ticker_pattern, thesis_text)
+        companies = re.findall(company_pattern, thesis_text)
+        
+        # Filter out common words that match ticker pattern
+        excluded_words = {'BUY', 'SELL', 'HOLD', 'TRIM', 'AI', 'IT', 'US', 'OR', 'SO', 'TO', 'ON', 'IN', 'OF'}
+        tickers = [t for t in tickers if t not in excluded_words]
+        
+        return {
+            'tickers': tickers[:3],
+            'companies': companies[:3],
+            'sector_keywords': self._extract_sector_keywords(thesis_text)
         }
+    
+    def _extract_sector_context(self, thesis_text: str) -> str:
+        """Extract sector context from thesis text"""
+        text_lower = thesis_text.lower()
+        
+        if any(word in text_lower for word in ['travel', 'booking', 'tourism', 'hotel', 'airline']):
+            return 'Travel & Tourism'
+        elif any(word in text_lower for word in ['tech', 'software', 'digital', 'platform', 'ai', 'cloud']):
+            return 'Technology'
+        elif any(word in text_lower for word in ['financial', 'bank', 'credit', 'payment', 'fintech']):
+            return 'Financial Services'
+        elif any(word in text_lower for word in ['healthcare', 'biotech', 'pharma', 'medical']):
+            return 'Healthcare'
+        elif any(word in text_lower for word in ['energy', 'oil', 'renewable', 'utilities']):
+            return 'Energy'
+        elif any(word in text_lower for word in ['retail', 'consumer', 'e-commerce', 'shopping']):
+            return 'Consumer & Retail'
+        else:
+            return 'General Market'
+    
+    def _extract_sector_keywords(self, thesis_text: str) -> List[str]:
+        """Extract relevant sector keywords from thesis"""
+        text_lower = thesis_text.lower()
+        keywords = []
+        
+        sector_keywords = {
+            'travel': ['travel', 'booking', 'vacation', 'hospitality', 'tourism'],
+            'technology': ['innovation', 'digital', 'platform', 'software', 'automation'],
+            'growth': ['growth', 'expansion', 'scaling', 'revenue', 'market share'],
+            'efficiency': ['efficiency', 'optimization', 'margins', 'productivity', 'cost reduction']
+        }
+        
+        for category, words in sector_keywords.items():
+            if any(word in text_lower for word in words):
+                keywords.extend([w for w in words if w in text_lower])
+        
+        return list(set(keywords))[:5]
 
     def _generate_alternative_companies(self, thesis_text: str, analysis_data: Dict) -> List[Dict]:
         """Generate alternative company analysis"""

@@ -33,8 +33,8 @@ class AzureOpenAIService:
                 api_key=self.api_key,
                 api_version=api_version,
                 azure_endpoint=endpoint,
-                timeout=30.0,   # Shorter timeout for faster failure detection
-                max_retries=1   # Single retry for faster response
+                timeout=5.0,    # Very short timeout to prevent blocking
+                max_retries=0   # No retries for fastest response
             )
             
             logging.info("Azure OpenAI client initialized successfully")
