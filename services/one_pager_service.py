@@ -88,7 +88,7 @@ class OnePagerService:
                 'supporting_validators': [m for m in validation_metrics if m['validation_type'] == 'supporting'],
                 'contrarian_indicators': [m for m in validation_metrics if m['validation_type'] == 'contrarian'],
                 'validation_frequency': self._determine_validation_frequency(validation_metrics),
-                'success_criteria': self._define_success_criteria(thesis.core_claim, validation_metrics)
+                'success_criteria': self._define_validation_success_criteria(thesis.core_claim, validation_metrics)
             }
             
             return core_validation_plan
@@ -305,7 +305,7 @@ class OnePagerService:
         else:
             return 'Quarterly'
     
-    def _define_success_criteria(self, core_claim: str, validation_metrics: List[Dict]) -> str:
+    def _define_validation_success_criteria(self, core_claim: str, validation_metrics: List[Dict]) -> str:
         """Define clear success criteria for core claim validation"""
         primary_metrics = [m for m in validation_metrics if m['validation_type'] == 'primary']
         
