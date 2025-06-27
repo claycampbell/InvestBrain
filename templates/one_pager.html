@@ -120,7 +120,7 @@
             <div class="metric-card text-center">
                 <h6>Investment Recommendation</h6>
                 <div class="h3 text-primary">{{ report_data.executive_summary.investment_recommendation }}</div>
-                <small class="text-muted">Confidence: {{ "%.1f"|format(report_data.executive_summary.confidence_score * 100) }}%</small>
+                <small class="text-muted">Confidence: {{ "%.1f"|format(report_data.executive_summary.get('confidence_level', 75)) }}%</small>
             </div>
         </div>
     </div>
