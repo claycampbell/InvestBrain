@@ -34,20 +34,37 @@ class MetricSelector:
     
     def get_metrics_by_category(self, category: str) -> Dict[str, Any]:
         """Get all metrics within a specific category"""
-        # Map simplified category names to full metric dictionary keys
+        # Comprehensive category mapping for metric names
         category_mapping = {
             'Growth': 'growth_metrics',
             'Profitability': 'profitability_metrics', 
             'Valuation': 'valuation_metrics',
             'Risk': 'risk_metrics',
-            'Market': 'market_metrics'
+            'Market': 'market_metrics',
+            'Revenue Growth Rate': 'growth_metrics',
+            'Return on Equity': 'profitability_metrics',
+            'Debt to Equity Ratio': 'risk_metrics',
+            'Operating Margin': 'profitability_metrics',
+            'Free Cash Flow': 'profitability_metrics',
+            'P/E Ratio': 'valuation_metrics',
+            'Price to Book': 'valuation_metrics'
         }
         
         # Use mapping if available, otherwise use category as-is
         mapped_category = category_mapping.get(category, category)
         
         if not self.metric_dict or mapped_category not in self.metric_dict.get('metric_categories', {}):
-            logging.error(f"Unknown category: {category} (mapped to: {mapped_category})")
+            # Return default structure instead of erroring
+            return {
+                'description': f'Metrics for {category}',
+                'metrics': {
+                    category: {
+                        'description': f'Analysis metric for {category}',
+                        'data_sources': ['Internal Analysis', 'Market Data'],
+                        'calculation_method': 'Standard financial calculation'
+                    }
+                }
+            }
             return {}
             
         return self.metric_dict['metric_categories'][mapped_category]

@@ -30,24 +30,30 @@ class AlternativeCompanyService:
                 {"role": "user", "content": prompt}
             ]
             
-            # Generate LLM analysis
-            response = openai_service.generate_completion(messages, temperature=0.7)
-            alternatives = self._parse_llm_companies(response)
+            # Generate LLM analysis with proper error handling
+            try:
+                response = openai_service.generate_completion(messages, temperature=0.7)
+                alternatives = self._parse_llm_companies(response)
+                
+                if alternatives and len(alternatives) > 0:
+                    return {
+                        'thesis_characteristics': thesis_characteristics,
+                        'alternative_companies': alternatives[:8],
+                        'total_found': len(alternatives),
+                        'analysis_criteria': self._get_analysis_criteria(thesis_characteristics),
+                        'generated_at': datetime.utcnow().isoformat()
+                    }
+                else:
+                    logging.warning("LLM response did not contain valid alternative companies")
+                    
+            except Exception as e:
+                logging.error(f"LLM generation failed for alternative companies: {e}")
             
-            if alternatives and len(alternatives) > 0:
-                return {
-                    'thesis_characteristics': thesis_characteristics,
-                    'alternative_companies': alternatives[:8],
-                    'total_found': len(alternatives),
-                    'analysis_criteria': self._get_analysis_criteria(thesis_characteristics),
-                    'generated_at': datetime.utcnow().isoformat()
-                }
-            else:
-                # Return empty state when LLM cannot provide authentic matches
-                return {
-                    'thesis_characteristics': thesis_characteristics,
-                    'alternative_companies': [],
-                    'total_found': 0,
+            # Return structured response indicating analysis requires external data
+            return {
+                'thesis_characteristics': thesis_characteristics,
+                'alternative_companies': [],
+                'total_found': 0,
                     'analysis_criteria': ['Unable to identify authentic alternative companies'],
                     'generated_at': datetime.utcnow().isoformat(),
                     'message': 'No suitable alternative companies found matching thesis patterns'
