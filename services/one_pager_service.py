@@ -28,25 +28,28 @@ class OnePagerService:
             # 1. Executive Summary
             executive_summary = self._generate_executive_summary(thesis)
             
-            # 2. Core Claim Validation Framework
+            # 2. Key Findings (for template compatibility)
+            key_findings = self._extract_key_findings(thesis)
+            
+            # 3. Core Claim Validation Framework
             core_claim_validation = self._build_core_claim_validation(thesis)
             
-            # 3. Assumption Testing Framework
+            # 4. Assumption Testing Framework
             assumption_testing = self._build_assumption_testing_framework(thesis)
             
-            # 4. Causal Chain Tracking
+            # 5. Causal Chain Tracking
             causal_chain_tracking = self._build_causal_chain_tracking(thesis)
             
-            # 5. Data Acquisition Plan
+            # 6. Data Acquisition Plan
             data_acquisition_plan = self._build_data_acquisition_plan(thesis)
             
-            # 6. Thesis Structure & Logic
+            # 7. Thesis Structure & Logic
             thesis_structure = self._extract_thesis_structure(thesis)
             
-            # 7. Alternative Investment Ideas
+            # 8. Alternative Investment Ideas
             alternative_investments = self._get_alternative_investments(thesis)
             
-            # 8. Evaluation Criteria for PMs/Analysts
+            # 9. Evaluation Criteria for PMs/Analysts
             evaluation_criteria = self._generate_evaluation_criteria(thesis)
             
             # Compile comprehensive report
@@ -55,6 +58,7 @@ class OnePagerService:
                 'thesis_id': thesis.id,
                 'thesis_title': thesis.title,
                 'executive_summary': executive_summary,
+                'key_findings': key_findings,
                 'core_claim_validation': core_claim_validation,
                 'assumption_testing': assumption_testing,
                 'causal_chain_tracking': causal_chain_tracking,
